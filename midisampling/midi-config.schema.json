@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sampling_output_dir": {
+      "type": "string"
+    },
+    "sampling_processed_output_dir": {
+      "type": "string"
+    },
+    "sampling_file_name_base": {
+      "type": "string"
+    },
+    "sampling_midi_channel": {
+      "type": "integer"
+    },
+    "sampling_midi_notes": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "sampling_midi_velocities": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "sampling_midi_pre_wait_duration": {
+      "type": "number"
+    },
+    "sampling_midi_note_duration": {
+      "type": "integer"
+    },
+    "sampling_midi_release_duration": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "sampling_output_dir",
+    "sampling_processed_output_dir",
+    "sampling_file_name_base",
+    "sampling_midi_channel",
+    "sampling_midi_notes",
+    "sampling_midi_velocities",
+    "sampling_midi_pre_wait_duration",
+    "sampling_midi_note_duration",
+    "sampling_midi_release_duration"
+  ]
+}

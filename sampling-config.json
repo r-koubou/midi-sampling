@@ -1,0 +1,15 @@
+{
+    "audio_channels": 2,
+    "audio_sample_rate": 48000,
+    "audio_sample_bits": 32,
+    "audio_sample_bits_format": "int",
+    "audio_in_device": "Yamaha Steinberg USB ASIO",
+    "use_asio": true,
+    "asio_audio_ins": [
+        2, 3
+    ],
+    "midi_out_device": "Roland SC-8850 PART A",
+    "sampling_target_peak": -8,
+    "sampling_trim_threshold": -60,
+    "sampling_trim_min_silence_duration": 250
+}
