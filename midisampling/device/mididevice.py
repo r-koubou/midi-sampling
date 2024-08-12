@@ -1,3 +1,4 @@
+from typing import List
 import abc
 
 class NotFoundMidiDeviceError(Exception):
@@ -38,7 +39,7 @@ class IMidiDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_midi_devices() -> list[MidiDeviceInfo]:
+    def get_midi_devices() -> List[MidiDeviceInfo]:
         """
         Get a list of MIDI devices.
         """

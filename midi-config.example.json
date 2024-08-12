@@ -10,6 +10,6 @@
         127
     ],
     "sampling_midi_pre_wait_duration": 0.6,
-    "sampling_midi_note_duration": 10,
+    "sampling_midi_note_duration": 2,
     "sampling_midi_release_duration": 1.5
 }

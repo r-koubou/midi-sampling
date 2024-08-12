@@ -2,16 +2,15 @@ import math
 import os
 import sys
 import time
-import numpy as np
-import rtmidi
-import sounddevice as sd
-import wave
 
 import normalize
 import trim
 
 from device.mididevice import IMidiDevice
 from device.RtmidiMidiDevice import RtmidiMidiDevice
+
+from device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
+from device.SdAudioDevice import SdAudioDevice
 
 import config as cfg
 
@@ -36,53 +35,36 @@ def main(args):
     #---------------------------------------------------------------------------
     # Audio
     #---------------------------------------------------------------------------
-    audio_channels    = common_config.audio_channels
-    audio_samplerate  = common_config.audio_sample_rate
-    audio_bits        = common_config.audio_sample_bits
-    audio_bits_format = common_config.audio_sample_bits_format
+    audio_data_format: AudioDataFormat = AudioDataFormat.parse(
+        f"{common_config.audio_sample_bits_format}{common_config.audio_sample_bits}"
+    )
 
-    sd_format_table = {
-        "int8": np.int8,
-        "int16": np.int16,
-        "int32": np.int32,
-        "float32": np.float32,
-        "float64": np.float64
-    }
-    sd_format = sd_format_table.get(f"{audio_bits}{audio_bits_format}", np.int32)
+    audio_option: AudioDeviceOption = AudioDeviceOption(
+        device_name=common_config.audio_in_device,
+        sample_rate=common_config.audio_sample_rate,
+        channels=common_config.audio_channels,
+        data_format=audio_data_format,
+        input_ports=common_config.asio_audio_ins,
+        use_asio=common_config.use_asio
+    )
+    audio_device: IAudioDevice = SdAudioDevice(audio_option)
 
     try:
-        #region Setup MIDI
         #---------------------------------------------------------------------------
         # Setup MIDI
         #---------------------------------------------------------------------------
+        print("Initialize MIDI")
         midi_device.initialize()
-        #endregion ~Setup MIDI
 
-        #region Setup Audio
         #---------------------------------------------------------------------------
         # Setup Audio
         #---------------------------------------------------------------------------
-        audio_devices = sd.query_devices()
+        print("Initialize audio")
+        audio_device.initialize()
 
-        audio_in_device_id = -1
-        for note, x in enumerate(audio_devices):
-            if x["name"].find(common_config.audio_in_device) != -1:
-                audio_in_device_id = note
-                break
-        if audio_in_device_id == -1:
-            print("No Audio in device found")
-            sys.exit(1)
-
-        print("initialize audio")
-        sd.default.device       = [audio_in_device_id, None] # input, output. (Use input only)
-        sd.default.dtype        = sd_format
-        sd.default.samplerate   = audio_samplerate
-        sd.default.channels     = audio_channels
-        if common_config.use_asio:
-            asio_in = sd.AsioSettings(channel_selectors=common_config.asio_audio_ins)
-            sd.default.extra_settings = asio_in
-        #endregion ~Setup Audio
-
+        #---------------------------------------------------------------------------
+        # Get config values
+        #---------------------------------------------------------------------------
         common_config.dump()
         config.dump()
 
@@ -115,7 +97,7 @@ def main(args):
                 # Record Audio
                 record_duration = math.floor(sampling_midi_pre_duration + sampling_midi_note_duration + sampling_midi_release_duration)
 
-                recorded = sd.rec(record_duration * audio_samplerate) # 録音時間を指定する必要がある seconds * samplerate
+                audio_device.start_recording(record_duration)
                 time.sleep(sampling_midi_pre_duration)
 
                 # Play MIDI
@@ -124,15 +106,11 @@ def main(args):
 
                 time.sleep(sampling_midi_release_duration)
 
-                sd.wait()
+                audio_device.stop_recording()
 
                 # Save Audio
                 output_path = os.path.join(sampling_output_dir, get_output_file_prefix(config, sampling_midi_channel, note, velocity) + ".wav")
-                with wave.open(output_path, "wb") as f:
-                    f.setnchannels(audio_channels)
-                    f.setsampwidth(audio_bits // 8)
-                    f.setframerate(audio_samplerate)
-                    f.writeframes(recorded)
+                audio_device.export_audio(output_path)
 
                 process_count += 1
         #endregion ~Sampling
@@ -155,6 +133,7 @@ def main(args):
         #endregion ~Waveform Processing
 
     finally:
+        audio_device.dispose() if audio_device else None
         midi_device.dispose() if midi_device else None
 
 if __name__ == "__main__":
