@@ -10,6 +10,9 @@ import wave
 import normalize
 import trim
 
+from device.mididevice import IMidiDevice
+from device.RtmidiMidiDevice import RtmidiMidiDevice
+
 import config as cfg
 
 
@@ -18,28 +21,17 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 def get_output_file_prefix(config: cfg.SamplingConfig, channel: int, note: int, velocity: int):
     return f"{config.sampling_file_name_base}_{note}_{velocity}"
 
-def play_note(midiout, channel, note, velocity, duration):
-    MIDI_ON  = 0x90
-    MIDI_OFF = 0x80
-
-    note_on = [MIDI_ON + channel - 1, note, velocity]
-    midiout.send_message(note_on)
-    time.sleep(duration)
-    note_off = [MIDI_OFF + channel - 1, note, 0]
-    midiout.send_message(note_off)
-
 def main(args):
 
     config_common_path = args[0]
     config_path = args[1]
-    common_config: cfg.CommonConfig = cfg.load_sampling_config(config_common_path)
+    common_config: cfg.SamplingConfig = cfg.load_sampling_config(config_common_path)
     config: cfg.MidiConfig = cfg.load_midi_config(config_path)
 
     #---------------------------------------------------------------------------
     # MIDI
     #---------------------------------------------------------------------------
-    midiout = rtmidi.MidiOut()
-    available_midi_ports = midiout.get_ports()
+    midi_device: IMidiDevice = RtmidiMidiDevice(common_config.midi_out_device)
 
     #---------------------------------------------------------------------------
     # Audio
@@ -63,19 +55,7 @@ def main(args):
         #---------------------------------------------------------------------------
         # Setup MIDI
         #---------------------------------------------------------------------------
-        midiout_port = -1
-        if not available_midi_ports:
-            print("No MIDI devices found")
-            sys.exit(1)
-        for note, x in enumerate(available_midi_ports):
-            if x.find(common_config.midi_out_device) != -1:
-                midiout_port = note
-                break
-        if midiout_port == -1:
-            print("No MIDI devices found")
-            sys.exit(1)
-
-        midiout.open_port(midiout_port)
+        midi_device.initialize()
         #endregion ~Setup MIDI
 
         #region Setup Audio
@@ -140,7 +120,7 @@ def main(args):
 
                 # Play MIDI
                 print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {sampling_midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
-                play_note(midiout, sampling_midi_channel, note, velocity, sampling_midi_note_duration)
+                midi_device.play_note(sampling_midi_channel, note, velocity, sampling_midi_note_duration)
 
                 time.sleep(sampling_midi_release_duration)
 
@@ -175,7 +155,7 @@ def main(args):
         #endregion ~Waveform Processing
 
     finally:
-        del midiout
+        midi_device.dispose() if midi_device else None
 
 if __name__ == "__main__":
 
