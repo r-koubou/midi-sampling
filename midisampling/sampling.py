@@ -37,6 +37,31 @@ def main(args):
     config_path = args[1]
     common_config: SamplingConfig = load_samplingconfig(config_common_path)
     config: MidiConfig = load_midi_config(config_path)
+    #---------------------------------------------------------------------------
+    # Load config values
+    #---------------------------------------------------------------------------
+    sampling_config_path = args[0]
+    midi_config_path = args[1]
+    sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
+    midi_config: MidiConfig = load_midi_config(midi_config_path)
+
+    #---------------------------------------------------------------------------
+    # Get config values
+    #---------------------------------------------------------------------------
+    print(utility.as_json_structure(sampling_config))
+    print(utility.as_json_structure(midi_config))
+
+    sampling_midi_notes                 = midi_config.sampling_midi_notes
+    sampling_midi_velocities            = midi_config.sampling_midi_velocities
+    sampling_midi_note_duration         = midi_config.sampling_midi_note_duration
+    sampling_midi_pre_duration          = midi_config.sampling_midi_pre_wait_duration
+    sampling_midi_channel               = midi_config.sampling_midi_channel
+    sampling_midi_release_duration      = midi_config.sampling_midi_release_duration
+    sampling_target_peak                = sampling_config.sampling_target_peak
+    sampling_output_dir                 = midi_config.sampling_output_dir
+    sampling_processed_output_dir       = midi_config.sampling_processed_output_dir
+    sampling_trim_threshold             = sampling_config.sampling_trim_threshold
+    sampling_trim_min_silence_duration  = sampling_config.sampling_trim_min_silence_duration
 
     #---------------------------------------------------------------------------
     # MIDI
@@ -72,24 +97,6 @@ def main(args):
         #---------------------------------------------------------------------------
         print("Initialize audio")
         audio_device.initialize()
-
-        #---------------------------------------------------------------------------
-        # Get config values
-        #---------------------------------------------------------------------------
-        print(utility.as_json_structure(common_config))
-        print(utility.as_json_structure(config))
-
-        sampling_midi_notes                 = config.sampling_midi_notes
-        sampling_midi_velocities            = config.sampling_midi_velocities
-        sampling_midi_note_duration         = config.sampling_midi_note_duration
-        sampling_midi_pre_duration          = config.sampling_midi_pre_wait_duration
-        sampling_midi_channel               = config.sampling_midi_channel
-        sampling_midi_release_duration      = config.sampling_midi_release_duration
-        sampling_target_peak                = common_config.sampling_target_peak
-        sampling_output_dir                 = config.sampling_output_dir
-        sampling_processed_output_dir       = config.sampling_processed_output_dir
-        sampling_trim_threshold             = common_config.sampling_trim_threshold
-        sampling_trim_min_silence_duration  = common_config.sampling_trim_min_silence_duration
 
         #region Sampling
         #---------------------------------------------------------------------------
