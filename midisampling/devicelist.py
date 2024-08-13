@@ -1,32 +1,28 @@
-import sounddevice as sd
-import rtmidi
+from device.RtmidiMidiDevice import RtmidiMidiDevice
+from device.SdAudioDevice import SdAudioDevice
 
-midiout = rtmidi.MidiOut()
-available_midi_ports = midiout.get_ports()
+from prettytable import PrettyTable
 
-DIVIDER = "-" * 80
+audio_device = SdAudioDevice(None)
+midi_device  = RtmidiMidiDevice(None)
+
+table = PrettyTable()
+table.align = "l"
 
 try:
-    audio_devices = sd.query_devices()
-    print(DIVIDER)
-    print("Audio devices:")
-    print(audio_devices)
-    print(DIVIDER)
-    for i, x in enumerate(audio_devices):
-        print(i, x)
+    table.title = "Audio Devices"
+    table.field_names = ["Name", "Platform"]
+    for x in audio_device.get_audio_devices():
+        table.add_row([x.name, x.platform_name])
+    print(table)
 
-    print(DIVIDER)
-    print("Audio Hosts(ASIO)")
-    for x in sd.query_hostapis():
-        if x['name'] == 'ASIO':
-            print(x)
+    table.clear()
+    table.title = "MIDI Devices"
+    table.field_names = ["Name"]
+    for x in midi_device.get_midi_devices():
+        table.add_row([x.name])
+    print(table)
 
-    if available_midi_ports:
-        print(DIVIDER)
-        print("MIDI devices:")
-        for i in available_midi_ports:
-            print(i)
-    else:
-        print("No MIDI devices found")
 finally:
-    del midiout
+    audio_device.dispose()
+    midi_device.dispose()
