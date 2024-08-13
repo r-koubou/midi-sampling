@@ -3,8 +3,10 @@
     "audio_sample_rate": 48000,
     "audio_sample_bits": 32,
     "audio_sample_bits_format": "int",
-    "audio_in_device": "Yamaha Steinberg USB ASIO",
-    "use_asio": true,
+    "audio_in_device": {
+        "name": "Yamaha Steinberg USB ASIO",
+        "platform": "ASIO"
+    },
     "asio_audio_ins": [
         2, 3
     ],

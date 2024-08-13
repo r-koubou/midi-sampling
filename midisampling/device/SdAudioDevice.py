@@ -25,10 +25,12 @@ class SdAudioDevice(IAudioDevice):
         self.option = option
         self.audio_devices: List[AudioDeviceInfo] = []
 
-        for sd_device in sd.query_devices():
-            self.audio_devices.append(
-                AudioDeviceInfo(sd_device["index"], sd_device["name"])
-            )
+        for sd_device in sorted(sd.query_devices(), key=lambda x: x["name"].lower()):
+            if sd_device["max_input_channels"] > 0:
+                hostapi_info = sd.query_hostapis(sd_device["hostapi"])
+                self.audio_devices.append(
+                    AudioDeviceInfo(sd_device["index"], sd_device["name"], hostapi_info["name"])
+                )
 
         self.recorded: any = None
 
@@ -41,7 +43,7 @@ class SdAudioDevice(IAudioDevice):
             raise NotFoundAudioDeviceError()
 
         for device in audio_devices:
-            if device.name.find(self.option.device_name) != -1:
+            if device.name.find(self.option.device_name) != -1 and device.platform_name.find(self.option.device_platform) != -1:
                 audio_in_device_index = device.index
                 break
         if audio_in_device_index == -1:
@@ -63,7 +65,8 @@ class SdAudioDevice(IAudioDevice):
         sd.default.dtype        = sd_type_table[self.option.data_format]
         sd.default.samplerate   = self.option.sample_rate
         sd.default.channels     = self.option.channels
-        if self.option.use_asio:
+
+        if self.option.device_platform.lower() == "asio":
             asio_in = sd.AsioSettings(channel_selectors=self.option.input_ports)
             sd.default.extra_settings = asio_in
 

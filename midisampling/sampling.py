@@ -44,18 +44,15 @@ def main(args):
     #---------------------------------------------------------------------------
     # Get config values
     #---------------------------------------------------------------------------
-    print(utility.as_json_structure(sampling_config))
-    print(utility.as_json_structure(midi_config))
-
 
     audio_device_name           = sampling_config.audio_in_device
+    audio_device_platform       = sampling_config.audio_in_device_platform
     audio_sample_rate           = sampling_config.audio_sample_rate
     audio_channels              = sampling_config.audio_channels
     audio_data_format           = AudioDataFormat.parse(
                                     f"{sampling_config.audio_sample_bits_format}{sampling_config.audio_sample_bits}"
                                 )
     audio_input_ports           = sampling_config.asio_audio_ins
-    use_asio                    = sampling_config.use_asio
 
     midi_out_device_name        = sampling_config.midi_out_device
 
@@ -83,11 +80,11 @@ def main(args):
     #---------------------------------------------------------------------------
     audio_option: AudioDeviceOption = AudioDeviceOption(
         device_name=audio_device_name,
+        device_platform=audio_device_platform,
         sample_rate=audio_sample_rate,
         channels=audio_channels,
         data_format=audio_data_format,
         input_ports=audio_input_ports,
-        use_asio=use_asio
     )
     audio_device: IAudioDevice = SdAudioDevice(audio_option)
 

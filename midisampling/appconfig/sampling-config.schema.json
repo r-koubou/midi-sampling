@@ -18,11 +18,19 @@
             "enum": ["int", "float"]
         },
         "audio_in_device": {
-            "type": "string"
-        },
-        "use_asio": {
-            "type": "boolean",
-            "default": false
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "platform"
+            ]
         },
         "asio_audio_ins": {
             "type": "array",

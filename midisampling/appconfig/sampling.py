@@ -14,21 +14,16 @@ class SamplingConfig:
         self.audio_sample_rate: int         = config["audio_sample_rate"]
         self.audio_sample_bits: int         = config["audio_sample_bits"]
         self.audio_sample_bits_format:str   = config["audio_sample_bits_format"]
-        self.audio_in_device: str           = config["audio_in_device"]
-        self.use_asio: bool                 = config.get("use_asio", False)
+        self.audio_in_device: str           = config["audio_in_device"]["name"]
+        self.audio_in_device_platform: str  = config["audio_in_device"]["platform"]
         self.asio_audio_ins: List[int]      = config.get("asio_audio_ins", [])
         self.midi_out_device: str           = config["midi_out_device"]
         self.target_peak: float             = config["target_peak"]
         self.trim_threshold: float          = config["trim_threshold"]
         self.trim_min_silence_duration: int = config["trim_min_silence_duration"]
 
-def __load_config_hook(obj: any) -> any:
-    if type(obj) == dict:
-        jsonschema.validate(obj, common_config_json_schema)
-        return SamplingConfig(obj)
-    else:
-        return obj
-
 def load(config_path: str) -> SamplingConfig:
     with open(config_path, "r") as f:
-        return json.load(f, object_hook=__load_config_hook)
+        json_body = json.load(f)
+        jsonschema.validate(json_body, common_config_json_schema)
+        return SamplingConfig(json_body)
