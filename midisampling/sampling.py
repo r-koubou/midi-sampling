@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import sys
@@ -6,25 +7,33 @@ import time
 import waveprocess.normalize as normalize
 import waveprocess.trim as trim
 
+import utility
+
 from device.mididevice import IMidiDevice
 from device.RtmidiMidiDevice import RtmidiMidiDevice
 
 from device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
 from device.SdAudioDevice import SdAudioDevice
 
-import config as cfg
+import appconfig.config as cfg
+
+from appconfig.sampling import SamplingConfig
+from appconfig.sampling import load as load_samplingconfig
 
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def get_output_file_prefix(config: cfg.SamplingConfig, channel: int, note: int, velocity: int):
+def get_output_file_prefix(config: SamplingConfig, channel: int, note: int, velocity: int):
     return f"{config.sampling_file_name_base}_{note}_{velocity}"
+
+def dump_as_json(obj: object) -> str:
+    return json.dumps(obj.__dict__, ensure_ascii=False, indent=2)
 
 def main(args):
 
     config_common_path = args[0]
     config_path = args[1]
-    common_config: cfg.SamplingConfig = cfg.load_sampling_config(config_common_path)
+    common_config: SamplingConfig = load_samplingconfig(config_common_path)
     config: cfg.MidiConfig = cfg.load_midi_config(config_path)
 
     #---------------------------------------------------------------------------
@@ -65,7 +74,7 @@ def main(args):
         #---------------------------------------------------------------------------
         # Get config values
         #---------------------------------------------------------------------------
-        common_config.dump()
+        print(utility.as_json_structure(common_config))
         config.dump()
 
         sampling_midi_notes                 = config.sampling_midi_notes

@@ -77,7 +77,7 @@ def __midi_config_hook(obj: any) -> any:
     else:
         return obj
 
-def load_sampling_config(config_path: str) -> MidiConfig:
+def load_sampling_config(config_path: str) -> SamplingConfig:
     with open(config_path, "r") as f:
         return json.load(f, object_hook=__sampling_config_hook)
 
