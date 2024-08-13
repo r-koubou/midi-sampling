@@ -3,8 +3,8 @@ import os
 import sys
 import time
 
-import normalize
-import trim
+import waveprocess.normalize as normalize
+import waveprocess.trim as trim
 
 from device.mididevice import IMidiDevice
 from device.RtmidiMidiDevice import RtmidiMidiDevice
@@ -119,10 +119,11 @@ def main(args):
         #---------------------------------------------------------------------------
         # Normalize, Trim
         #---------------------------------------------------------------------------
-        normalize.normalize_to_peak_level(
+        normalize.normalize_across_mitiple(
             input_directory=sampling_output_dir,
             output_directory=sampling_processed_output_dir,
-            target_peak_dBFS=sampling_target_peak)
+            target_peak_dBFS=sampling_target_peak
+        )
 
         trim.batch_trim(
             input_directory=sampling_processed_output_dir,

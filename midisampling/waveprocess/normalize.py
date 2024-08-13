@@ -2,7 +2,20 @@ import os
 import sys
 from pydub import AudioSegment
 
-def normalize_to_peak_level(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0):
+def normalize_across_mitiple(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0):
+    """
+    Normalize with respect to the highest peak of the audio file(s) in the input directory.
+
+    Parameters
+    ----------
+    input_directory : str
+        Input directory containing audio files (*.wav).
+
+    output_directory : str
+        Output directory to save normalized audio files.
+
+    target_peak_dBFS : float (default=-1.0)
+    """
     max_peak_dBFS = None
     audio_segments = []
 
@@ -26,7 +39,7 @@ def normalize_to_peak_level(input_directory: str, output_directory: str, target_
     # 各ファイルに対して同じゲインを適用
     for audio, output_filepath in audio_segments:
         normalized_audio = audio.apply_gain(change_in_dBFS)
-        normalized_audio.export(output_filepath, format='wav')
+        normalized_audio.export(output_filepath, format="wav")
         print(f'Normalized {output_filepath} -> {target_peak_dBFS} dBFS (gain={change_in_dBFS:.3f} dB)')
 
 
@@ -40,4 +53,4 @@ if __name__ == '__main__':
     output_directory = args[1]
     target_peak_dBFS = float(args[2])
 
-    normalize_to_peak_level(input_directory, output_directory, target_peak_dBFS)
+    normalize_across_mitiple(input_directory, output_directory, target_peak_dBFS)
