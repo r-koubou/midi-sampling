@@ -12,14 +12,14 @@ table.align = "l"
 try:
     table.title = "Audio Devices"
     table.field_names = ["Name", "Platform"]
-    for x in audio_device.get_audio_devices():
+    for x in sorted(audio_device.get_audio_devices(), key=lambda x: x.name):
         table.add_row([x.name, x.platform_name])
     print(table)
 
     table.clear()
     table.title = "MIDI Devices"
     table.field_names = ["Name"]
-    for x in midi_device.get_midi_devices():
+    for x in sorted(midi_device.get_midi_devices(), key=lambda x: x.name):
         table.add_row([x.name])
     print(table)
 

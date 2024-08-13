@@ -25,7 +25,7 @@ class SdAudioDevice(IAudioDevice):
         self.option = option
         self.audio_devices: List[AudioDeviceInfo] = []
 
-        for sd_device in sorted(sd.query_devices(), key=lambda x: x["name"].lower()):
+        for sd_device in sd.query_devices():
             if sd_device["max_input_channels"] > 0:
                 hostapi_info = sd.query_hostapis(sd_device["hostapi"])
                 self.audio_devices.append(

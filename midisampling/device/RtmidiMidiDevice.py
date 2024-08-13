@@ -29,7 +29,7 @@ class RtmidiMidiDevice(IMidiDevice):
 
         regex_trim = re.compile(r'\s[0-9]+$')
 
-        for index, name in enumerate(sorted(self.midiout.get_ports(), key=lambda x: x.lower())):
+        for index, name in enumerate(self.midiout.get_ports()):
             trimed_name = regex_trim.sub('', name)
             self.midi_devices.append(MidiDeviceInfo(index, trimed_name))
 
@@ -47,6 +47,7 @@ class RtmidiMidiDevice(IMidiDevice):
             raise NotFoundMidiDeviceError(self.midi_out_device_name)
 
         self.midiout.open_port(midiout_port)
+        print(f"Opened MIDI port: {self.midi_out_device_name}")
 
     @override
     def dispose(self) -> None:
@@ -63,6 +64,7 @@ class RtmidiMidiDevice(IMidiDevice):
     def play_note(self, channel: int, note: int, velocity: int, duration: float) -> None:
         MIDI_ON  = 0x90
         MIDI_OFF = 0x80
+        print(self.midiout)
         self.midiout.send_message([MIDI_ON + channel, note, velocity])
         time.sleep(duration)
         self.midiout.send_message([MIDI_OFF + channel, note, 0])
