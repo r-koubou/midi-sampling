@@ -10,27 +10,15 @@ with open(os.path.join(THIS_SCRIPT_DIR, "midi-config.schema.json"), "r") as f:
 
 class MidiConfig:
     def __init__(self, config: dict) -> None:
-        self.sampling_output_dir: str                   = config["sampling_output_dir"]
-        self.sampling_processed_output_dir: str         = config["sampling_processed_output_dir"]
-        self.sampling_file_name_base: str               = config["sampling_file_name_base"]
-        self.sampling_midi_channel: int                 = config["sampling_midi_channel"]
-        self.sampling_midi_notes: List[int]             = config["sampling_midi_notes"]
-        self.sampling_midi_velocities: List[int]        = config["sampling_midi_velocities"]
-        self.sampling_midi_pre_wait_duration: float     = config["sampling_midi_pre_wait_duration"]
-        self.sampling_midi_note_duration: int           = config["sampling_midi_note_duration"]
-        self.sampling_midi_release_duration: float      = config["sampling_midi_release_duration"]
-
-    def dump(self) -> None:
-        print("#### Config ####")
-        print(f"sampling_output_dir: {self.sampling_output_dir}")
-        print(f"sampling_processed_output_dir: {self.sampling_processed_output_dir}")
-        print(f"sampling_file_name_base: {self.sampling_file_name_base}")
-        print(f"sampling_midi_channel: {self.sampling_midi_channel}")
-        print(f"sampling_midi_notes: {self.sampling_midi_notes}")
-        print(f"sampling_midi_velocities: {self.sampling_midi_velocities}")
-        print(f"sampling_midi_pre_wait_duration: {self.sampling_midi_pre_wait_duration}")
-        print(f"sampling_midi_note_duration: {self.sampling_midi_note_duration}")
-        print(f"sampling_midi_release_duration: {self.sampling_midi_release_duration}")
+        self.output_dir: str                   = config["output_dir"]
+        self.processed_output_dir: str         = config["processed_output_dir"]
+        self.output_prefix: str                = config["output_prefix"]
+        self.midi_channel: int                 = config["midi_channel"]
+        self.midi_notes: List[int]             = config["midi_notes"]
+        self.midi_velocities: List[int]        = config["midi_velocities"]
+        self.midi_pre_wait_duration: float     = config["midi_pre_wait_duration"]
+        self.midi_note_duration: int           = config["midi_note_duration"]
+        self.midi_release_duration: float      = config["midi_release_duration"]
 
 def __midi_config_hook(obj: any) -> any:
     if type(obj) == dict:

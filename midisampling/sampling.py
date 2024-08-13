@@ -25,8 +25,8 @@ from appconfig.midi import load as load_midi_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def get_output_file_prefix(config: SamplingConfig, channel: int, note: int, velocity: int):
-    return f"{config.sampling_file_name_base}_{note}_{velocity}"
+def get_output_file_prefix(prefix: str, channel: int, note: int, velocity: int):
+    return f"{prefix}_{note}_{velocity}"
 
 def dump_as_json(obj: object) -> str:
     return json.dumps(obj.__dict__, ensure_ascii=False, indent=2)
@@ -47,15 +47,15 @@ def main(args):
     print(utility.as_json_structure(sampling_config))
     print(utility.as_json_structure(midi_config))
 
-    sampling_midi_notes                 = midi_config.sampling_midi_notes
-    sampling_midi_velocities            = midi_config.sampling_midi_velocities
-    sampling_midi_note_duration         = midi_config.sampling_midi_note_duration
-    sampling_midi_pre_duration          = midi_config.sampling_midi_pre_wait_duration
-    sampling_midi_channel               = midi_config.sampling_midi_channel
-    sampling_midi_release_duration      = midi_config.sampling_midi_release_duration
+    sampling_midi_notes                 = midi_config.midi_notes
+    sampling_midi_velocities            = midi_config.midi_velocities
+    sampling_midi_note_duration         = midi_config.midi_note_duration
+    sampling_midi_pre_duration          = midi_config.midi_pre_wait_duration
+    sampling_midi_channel               = midi_config.midi_channel
+    sampling_midi_release_duration      = midi_config.midi_release_duration
     sampling_target_peak                = sampling_config.sampling_target_peak
-    sampling_output_dir                 = midi_config.sampling_output_dir
-    sampling_processed_output_dir       = midi_config.sampling_processed_output_dir
+    sampling_output_dir                 = midi_config.output_dir
+    sampling_processed_output_dir       = midi_config.processed_output_dir
     sampling_trim_threshold             = sampling_config.sampling_trim_threshold
     sampling_trim_min_silence_duration  = sampling_config.sampling_trim_min_silence_duration
 
@@ -98,7 +98,7 @@ def main(args):
         #---------------------------------------------------------------------------
         # Sampling
         #---------------------------------------------------------------------------
-        total_sampling_count = len(midi_config.sampling_midi_notes) * len(midi_config.sampling_midi_velocities)
+        total_sampling_count = len(midi_config.midi_notes) * len(midi_config.midi_velocities)
 
         os.makedirs(sampling_output_dir, exist_ok=True)
 
@@ -123,7 +123,7 @@ def main(args):
                 audio_device.stop_recording()
 
                 # Save Audio
-                output_path = os.path.join(sampling_output_dir, get_output_file_prefix(midi_config, sampling_midi_channel, note, velocity) + ".wav")
+                output_path = os.path.join(sampling_output_dir, get_output_file_prefix(midi_config.output_prefix, sampling_midi_channel, note, velocity) + ".wav")
                 audio_device.export_audio(output_path)
 
                 process_count += 1

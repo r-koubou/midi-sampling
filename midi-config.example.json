@@ -1,15 +1,15 @@
 {
-    "sampling_output_dir": "_recorded",
-    "sampling_processed_output_dir": "_recorded/_processed",
-    "sampling_file_name_base": "piano",
-    "sampling_midi_channel": 1,
-    "sampling_midi_notes": [
+    "output_dir": "_recorded",
+    "processed_output_dir": "_recorded/_processed",
+    "output_prefix": "piano",
+    "midi_channel": 0,
+    "midi_notes": [
         40
     ],
-    "sampling_midi_velocities": [
+    "midi_velocities": [
         127
     ],
-    "sampling_midi_pre_wait_duration": 0.6,
-    "sampling_midi_note_duration": 2,
-    "sampling_midi_release_duration": 1.5
+    "midi_pre_wait_duration": 0.6,
+    "midi_note_duration": 2,
+    "midi_release_duration": 1.5
 }
