@@ -53,11 +53,11 @@ def main(args):
     sampling_midi_pre_duration          = midi_config.midi_pre_wait_duration
     sampling_midi_channel               = midi_config.midi_channel
     sampling_midi_release_duration      = midi_config.midi_release_duration
-    sampling_target_peak                = sampling_config.sampling_target_peak
+    sampling_target_peak                = sampling_config.target_peak
     sampling_output_dir                 = midi_config.output_dir
     sampling_processed_output_dir       = midi_config.processed_output_dir
-    sampling_trim_threshold             = sampling_config.sampling_trim_threshold
-    sampling_trim_min_silence_duration  = sampling_config.sampling_trim_min_silence_duration
+    sampling_trim_threshold             = sampling_config.trim_threshold
+    sampling_trim_min_silence_duration  = sampling_config.trim_min_silence_duration
 
     #---------------------------------------------------------------------------
     # MIDI

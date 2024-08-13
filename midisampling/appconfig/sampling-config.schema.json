@@ -1,58 +1,58 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "audio_channels": {
-      "type": "integer"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "audio_channels": {
+            "type": "integer"
+        },
+        "audio_sample_rate": {
+            "type": "integer"
+        },
+        "audio_sample_bits": {
+            "type": "integer",
+            "enum": [8, 16, 24, 32, 64]
+        },
+        "audio_sample_bits_format": {
+            "type": "string",
+            "enum": ["int", "float"]
+        },
+        "audio_in_device": {
+            "type": "string"
+        },
+        "use_asio": {
+            "type": "boolean",
+            "default": false
+        },
+        "asio_audio_ins": {
+            "type": "array",
+            "items": {
+                "type": "integer"
+            },
+            "default": []
+        },
+        "midi_out_device": {
+            "type": "string"
+        },
+        "target_peak": {
+            "type": "number"
+        },
+        "trim_threshold": {
+            "type": "number",
+            "default": -54
+        },
+        "trim_min_silence_duration": {
+            "type": "integer",
+            "default": 250
+        }
     },
-    "audio_sample_rate": {
-      "type": "integer"
-    },
-    "audio_sample_bits": {
-      "type": "integer",
-      "enum": [8, 16, 24, 32, 64]
-    },
-    "audio_sample_bits_format": {
-      "type": "string",
-      "enum": ["int", "float"]
-    },
-    "audio_in_device": {
-      "type": "string"
-    },
-    "use_asio": {
-      "type": "boolean",
-        "default": false
-    },
-    "asio_audio_ins": {
-      "type": "array",
-      "items": {
-        "type": "integer"
-      },
-      "default": []
-    },
-    "midi_out_device": {
-      "type": "string"
-    },
-    "sampling_target_peak": {
-      "type": "number"
-    },
-    "sampling_trim_threshold": {
-      "type": "number",
-      "default": -54
-    },
-    "sampling_trim_min_silence_duration": {
-      "type": "integer",
-      "default": 250
-    }
-  },
-  "required": [
-    "audio_channels",
-    "audio_sample_rate",
-    "audio_sample_bits",
-    "audio_sample_bits_format",
-    "audio_in_device",
-    "midi_out_device",
-    "sampling_target_peak"
-  ]
+    "required": [
+        "audio_channels",
+        "audio_sample_rate",
+        "audio_sample_bits",
+        "audio_sample_bits_format",
+        "audio_in_device",
+        "midi_out_device",
+        "target_peak"
+    ]
 }
