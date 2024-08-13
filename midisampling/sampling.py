@@ -33,10 +33,6 @@ def dump_as_json(obj: object) -> str:
 
 def main(args):
 
-    config_common_path = args[0]
-    config_path = args[1]
-    common_config: SamplingConfig = load_samplingconfig(config_common_path)
-    config: MidiConfig = load_midi_config(config_path)
     #---------------------------------------------------------------------------
     # Load config values
     #---------------------------------------------------------------------------
@@ -66,22 +62,22 @@ def main(args):
     #---------------------------------------------------------------------------
     # MIDI
     #---------------------------------------------------------------------------
-    midi_device: IMidiDevice = RtmidiMidiDevice(common_config.midi_out_device)
+    midi_device: IMidiDevice = RtmidiMidiDevice(sampling_config.midi_out_device)
 
     #---------------------------------------------------------------------------
     # Audio
     #---------------------------------------------------------------------------
     audio_data_format: AudioDataFormat = AudioDataFormat.parse(
-        f"{common_config.audio_sample_bits_format}{common_config.audio_sample_bits}"
+        f"{sampling_config.audio_sample_bits_format}{sampling_config.audio_sample_bits}"
     )
 
     audio_option: AudioDeviceOption = AudioDeviceOption(
-        device_name=common_config.audio_in_device,
-        sample_rate=common_config.audio_sample_rate,
-        channels=common_config.audio_channels,
+        device_name=sampling_config.audio_in_device,
+        sample_rate=sampling_config.audio_sample_rate,
+        channels=sampling_config.audio_channels,
         data_format=audio_data_format,
-        input_ports=common_config.asio_audio_ins,
-        use_asio=common_config.use_asio
+        input_ports=sampling_config.asio_audio_ins,
+        use_asio=sampling_config.use_asio
     )
     audio_device: IAudioDevice = SdAudioDevice(audio_option)
 
@@ -102,7 +98,7 @@ def main(args):
         #---------------------------------------------------------------------------
         # Sampling
         #---------------------------------------------------------------------------
-        total_sampling_count = len(config.sampling_midi_notes) * len(config.sampling_midi_velocities)
+        total_sampling_count = len(midi_config.sampling_midi_notes) * len(midi_config.sampling_midi_velocities)
 
         os.makedirs(sampling_output_dir, exist_ok=True)
 
@@ -127,7 +123,7 @@ def main(args):
                 audio_device.stop_recording()
 
                 # Save Audio
-                output_path = os.path.join(sampling_output_dir, get_output_file_prefix(config, sampling_midi_channel, note, velocity) + ".wav")
+                output_path = os.path.join(sampling_output_dir, get_output_file_prefix(midi_config, sampling_midi_channel, note, velocity) + ".wav")
                 audio_device.export_audio(output_path)
 
                 process_count += 1
