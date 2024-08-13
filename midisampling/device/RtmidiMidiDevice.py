@@ -1,6 +1,8 @@
 from typing import override
 
 import time
+import re
+
 import rtmidi
 
 from .mididevice import (
@@ -24,8 +26,12 @@ class RtmidiMidiDevice(IMidiDevice):
         self.midiout = rtmidi.MidiOut()
 
         self.midi_devices: list[MidiDeviceInfo] = []
-        for index, name in enumerate(self.midiout.get_ports()):
-            self.midi_devices.append(MidiDeviceInfo(index, name))
+
+        regex_trim = re.compile(r'\s[0-9]+$')
+
+        for index, name in enumerate(sorted(self.midiout.get_ports(), key=lambda x: x.lower())):
+            trimed_name = regex_trim.sub('', name)
+            self.midi_devices.append(MidiDeviceInfo(index, trimed_name))
 
     @override
     def initialize(self) -> None:
