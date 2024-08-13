@@ -20,13 +20,8 @@ class MidiConfig:
         self.midi_note_duration: int           = config["midi_note_duration"]
         self.midi_release_duration: float      = config["midi_release_duration"]
 
-def __midi_config_hook(obj: any) -> any:
-    if type(obj) == dict:
-        jsonschema.validate(obj, config_json_schema)
-        return MidiConfig(obj)
-    else:
-        return obj
-
 def load(config_path: str) -> MidiConfig:
     with open(config_path, "r") as f:
-        return json.load(f, object_hook=__midi_config_hook)
+        json_body = json.load(f)
+        jsonschema.validate(json_body, config_json_schema)
+        return MidiConfig(json_body)
