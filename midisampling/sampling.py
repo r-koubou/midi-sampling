@@ -47,37 +47,47 @@ def main(args):
     print(utility.as_json_structure(sampling_config))
     print(utility.as_json_structure(midi_config))
 
-    sampling_midi_notes                 = midi_config.midi_notes
-    sampling_midi_velocities            = midi_config.midi_velocities
-    sampling_midi_note_duration         = midi_config.midi_note_duration
-    sampling_midi_pre_duration          = midi_config.midi_pre_wait_duration
-    sampling_midi_channel               = midi_config.midi_channel
-    sampling_midi_release_duration      = midi_config.midi_release_duration
-    sampling_target_peak                = sampling_config.target_peak
-    sampling_output_dir                 = midi_config.output_dir
-    sampling_processed_output_dir       = midi_config.processed_output_dir
-    sampling_trim_threshold             = sampling_config.trim_threshold
-    sampling_trim_min_silence_duration  = sampling_config.trim_min_silence_duration
+
+    audio_device_name           = sampling_config.audio_in_device
+    audio_sample_rate           = sampling_config.audio_sample_rate
+    audio_channels              = sampling_config.audio_channels
+    audio_data_format           = AudioDataFormat.parse(
+                                    f"{sampling_config.audio_sample_bits_format}{sampling_config.audio_sample_bits}"
+                                )
+    audio_input_ports           = sampling_config.asio_audio_ins
+    use_asio                    = sampling_config.use_asio
+
+    midi_out_device_name        = sampling_config.midi_out_device
+
+    midi_notes                  = midi_config.midi_notes
+    midi_velocities             = midi_config.midi_velocities
+    midi_note_duration          = midi_config.midi_note_duration
+    midi_pre_duration           = midi_config.midi_pre_wait_duration
+    midi_channel                = midi_config.midi_channel
+    midi_release_duration       = midi_config.midi_release_duration
+    target_peak                 = sampling_config.target_peak
+    output_dir                  = midi_config.output_dir
+    output_prefix               = midi_config.output_prefix
+    processed_output_dir        = midi_config.processed_output_dir
+
+    trim_threshold              = sampling_config.trim_threshold
+    trim_min_silence_duration   = sampling_config.trim_min_silence_duration
 
     #---------------------------------------------------------------------------
     # MIDI
     #---------------------------------------------------------------------------
-    midi_device: IMidiDevice = RtmidiMidiDevice(sampling_config.midi_out_device)
+    midi_device: IMidiDevice = RtmidiMidiDevice(midi_out_device_name)
 
     #---------------------------------------------------------------------------
     # Audio
     #---------------------------------------------------------------------------
-    audio_data_format: AudioDataFormat = AudioDataFormat.parse(
-        f"{sampling_config.audio_sample_bits_format}{sampling_config.audio_sample_bits}"
-    )
-
     audio_option: AudioDeviceOption = AudioDeviceOption(
-        device_name=sampling_config.audio_in_device,
-        sample_rate=sampling_config.audio_sample_rate,
-        channels=sampling_config.audio_channels,
+        device_name=audio_device_name,
+        sample_rate=audio_sample_rate,
+        channels=audio_channels,
         data_format=audio_data_format,
-        input_ports=sampling_config.asio_audio_ins,
-        use_asio=sampling_config.use_asio
+        input_ports=audio_input_ports,
+        use_asio=use_asio
     )
     audio_device: IAudioDevice = SdAudioDevice(audio_option)
 
@@ -98,32 +108,32 @@ def main(args):
         #---------------------------------------------------------------------------
         # Sampling
         #---------------------------------------------------------------------------
-        total_sampling_count = len(midi_config.midi_notes) * len(midi_config.midi_velocities)
+        total_sampling_count = len(midi_notes) * len(midi_velocities)
 
-        os.makedirs(sampling_output_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
         print("Sampling...")
 
         process_count = 1
 
-        for note in sampling_midi_notes:
-            for velocity in sampling_midi_velocities:
+        for note in midi_notes:
+            for velocity in midi_velocities:
                 # Record Audio
-                record_duration = math.floor(sampling_midi_pre_duration + sampling_midi_note_duration + sampling_midi_release_duration)
+                record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
 
                 audio_device.start_recording(record_duration)
-                time.sleep(sampling_midi_pre_duration)
+                time.sleep(midi_pre_duration)
 
                 # Play MIDI
-                print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {sampling_midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
-                midi_device.play_note(sampling_midi_channel, note, velocity, sampling_midi_note_duration)
+                print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
+                midi_device.play_note(midi_channel, note, velocity, midi_note_duration)
 
-                time.sleep(sampling_midi_release_duration)
+                time.sleep(midi_release_duration)
 
                 audio_device.stop_recording()
 
                 # Save Audio
-                output_path = os.path.join(sampling_output_dir, get_output_file_prefix(midi_config.output_prefix, sampling_midi_channel, note, velocity) + ".wav")
+                output_path = os.path.join(output_dir, get_output_file_prefix(output_prefix, midi_channel, note, velocity) + ".wav")
                 audio_device.export_audio(output_path)
 
                 process_count += 1
@@ -134,16 +144,16 @@ def main(args):
         # Normalize, Trim
         #---------------------------------------------------------------------------
         normalize.normalize_across_mitiple(
-            input_directory=sampling_output_dir,
-            output_directory=sampling_processed_output_dir,
-            target_peak_dBFS=sampling_target_peak
+            input_directory=output_dir,
+            output_directory=processed_output_dir,
+            target_peak_dBFS=target_peak
         )
 
         trim.batch_trim(
-            input_directory=sampling_processed_output_dir,
-            output_directory=sampling_processed_output_dir,
-            threshold_dBFS=sampling_trim_threshold,
-            min_silence_ms=sampling_trim_min_silence_duration
+            input_directory=processed_output_dir,
+            output_directory=processed_output_dir,
+            threshold_dBFS=trim_threshold,
+            min_silence_ms=trim_min_silence_duration
         )
         #endregion ~Waveform Processing
 
