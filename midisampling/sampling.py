@@ -15,10 +15,12 @@ from device.RtmidiMidiDevice import RtmidiMidiDevice
 from device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
 from device.SdAudioDevice import SdAudioDevice
 
-import appconfig.config as cfg
 
 from appconfig.sampling import SamplingConfig
 from appconfig.sampling import load as load_samplingconfig
+
+from appconfig.midi import MidiConfig
+from appconfig.midi import load as load_midi_config
 
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +36,7 @@ def main(args):
     config_common_path = args[0]
     config_path = args[1]
     common_config: SamplingConfig = load_samplingconfig(config_common_path)
-    config: cfg.MidiConfig = cfg.load_midi_config(config_path)
+    config: MidiConfig = load_midi_config(config_path)
 
     #---------------------------------------------------------------------------
     # MIDI
@@ -75,7 +77,7 @@ def main(args):
         # Get config values
         #---------------------------------------------------------------------------
         print(utility.as_json_structure(common_config))
-        config.dump()
+        print(utility.as_json_structure(config))
 
         sampling_midi_notes                 = config.sampling_midi_notes
         sampling_midi_velocities            = config.sampling_midi_velocities
