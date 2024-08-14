@@ -1,38 +1,57 @@
 {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MIDI Sampling Configuration",
+    "description": "Configuration for MIDI sampling.",
+    "additionalProperties": false,
     "type": "object",
     "properties": {
         "output_dir": {
-            "type": "string"
+            "type": "string",
+            "description": "Directory for the output of the sampled audio files."
         },
         "processed_output_dir": {
-            "type": "string"
+            "type": "string",
+            "description": "Directory for the output of processed sampled audio files."
         },
         "output_prefix": {
-            "type": "string"
+            "type": "string",
+            "description": "Prefix for the filenames of the sampled audio files."
         },
         "midi_channel": {
-            "type": "integer"
+            "type": "integer",
+            "description": "MIDI channel number for sampling.",
+            "minimum": 0,
+            "maximum": 15
         },
         "midi_notes": {
             "type": "array",
+            "description": "List of MIDI note numbers to be sampled.",
             "items": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 127
             }
         },
         "midi_velocities": {
             "type": "array",
+            "description": "List of MIDI velocities to be sampled.",
             "items": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 127
             }
         },
         "midi_pre_wait_duration": {
-            "type": "number"
+            "type": "number",
+            "description": "Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended."
         },
         "midi_note_duration": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Length of the MIDI note to be sampled (in seconds). Only integer values can be specified."
         },
         "midi_release_duration": {
-            "type": "number"
+            "type": "number",
+            "description": "Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified."
         }
     },
     "required": [
@@ -45,5 +64,22 @@
         "midi_pre_wait_duration",
         "midi_note_duration",
         "midi_release_duration"
+    ],
+    "examples": [
+        {
+            "output_dir": "_recorded",
+            "processed_output_dir": "_recorded/_processed",
+            "output_prefix": "piano",
+            "midi_channel": 0,
+            "midi_notes": [
+                40
+            ],
+            "midi_velocities": [
+                127
+            ],
+            "midi_pre_wait_duration": 0.6,
+            "midi_note_duration": 2,
+            "midi_release_duration": 1.5
+        }
     ]
 }
