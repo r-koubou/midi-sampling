@@ -64,7 +64,6 @@ class RtmidiMidiDevice(IMidiDevice):
     def play_note(self, channel: int, note: int, velocity: int, duration: float) -> None:
         MIDI_ON  = 0x90
         MIDI_OFF = 0x80
-        print(self.midiout)
         self.midiout.send_message([MIDI_ON + channel, note, velocity])
         time.sleep(duration)
         self.midiout.send_message([MIDI_OFF + channel, note, 0])
