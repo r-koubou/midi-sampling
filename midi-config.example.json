@@ -1,0 +1,15 @@
+{
+    "output_dir": "_recorded",
+    "processed_output_dir": "_recorded/_processed",
+    "output_prefix": "piano",
+    "midi_channel": 0,
+    "midi_notes": [
+        40
+    ],
+    "midi_velocities": [
+        127
+    ],
+    "midi_pre_wait_duration": 0.6,
+    "midi_note_duration": 2,
+    "midi_release_duration": 1.5
+}
