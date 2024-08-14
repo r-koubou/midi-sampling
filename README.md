@@ -139,9 +139,9 @@ This is written in JSON format.
   - `name`
     - Name of the input device for the sampled audio file.
   - `platform`
-    - Platform of the input device for the sampled audio file (e.g., `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI`, etc.).
+    - Platform of the input device for the sampled audio file (e.g., `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI`, `Core Audio` etc.).
   - Run the `List Devices` command to specify the device name and platform to use.
-- `asio_audio_ins`
+- `asio_audio_ins` (when using ASIO device)
   - List of ASIO input channel numbers.
   - Specify the input channel numbers of your device. The format starts from 0 (e.g., to use inputs 1 and 2, specify `[0, 1]`).
 - `midi_out_device`

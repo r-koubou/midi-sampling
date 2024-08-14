@@ -143,9 +143,9 @@ json形式で記述します。
   - `name`
     - サンプリングする音声ファイルの入力デバイス名
   - `platform`
-    - サンプリングする音声ファイルの入力デバイスのプラットフォーム (例： `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI` など)
+    - サンプリングする音声ファイルの入力デバイスのプラットフォーム (例： `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI`, `Core Audio` など)
   - `デバイスの一覧出力`のコマンドを実行して、使用するデバイス名、プラットフォームを指定してください
-- `asio_audio_ins`
+- `asio_audio_ins` (ASIOデバイス使用時)
   - ASIOの入力チャンネル番号のリスト
   - お使いのデバイスの入力チャンネル番号を指定してください。0から始まる形式です。(例えば入力1と入力2を使用する場合、`[0, 1]` と指定)
 - `midi_out_device`
