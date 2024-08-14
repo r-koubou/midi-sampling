@@ -58,7 +58,7 @@ pipenv shell
 以下のコマンドを実行します。
 
 ```bash
-python python midisampling/sampling.py <サンプリング設定ファイル.json> <MIDI設定ファイル.json>
+python midisampling/sampling.py <サンプリング設定ファイル.json> <MIDI設定ファイル.json>
 ```
 
 ### デバイス一覧の出力
@@ -71,7 +71,7 @@ python python midisampling/devicelist.py
 
 #### 出力例
 
-```bash
+```
 +------------------------------------------------------+
 |                    Audio Devices                     |
 +--------------------------------+---------------------+
