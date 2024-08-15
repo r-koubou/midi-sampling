@@ -17,6 +17,15 @@
             "type": "string",
             "description": "Prefix for the filenames of the sampled audio files."
         },
+        "pre_send_smf_path_list" : {
+            "type":"array",
+            "description": "These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc.",
+            "items": {
+                "type": "string",
+                "description": "Path to the SMF(*.mid/*.midi) file(s)"
+            },
+            "default": []
+        },
         "midi_channel": {
             "type": "integer",
             "description": "MIDI channel number for sampling.",
@@ -70,6 +79,10 @@
             "output_dir": "_recorded",
             "processed_output_dir": "_recorded/_processed",
             "output_prefix": "piano",
+            "pre_send_smf_path_list": [
+                "path/to/GM_Reset.mid",
+                "path/to/CC_Init.mid"
+            ],
             "midi_channel": 0,
             "midi_notes": [
                 40

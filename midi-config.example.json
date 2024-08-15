@@ -2,6 +2,10 @@
     "output_dir": "_recorded",
     "processed_output_dir": "_recorded/_processed",
     "output_prefix": "piano",
+    "pre_send_smf_path_list": [
+        "GS_Reset.mid",
+        "Reverb_Chorus_Delay_Set_0.mid"
+    ],
     "midi_channel": 0,
     "midi_notes": [
         40
