@@ -53,7 +53,7 @@ class RtmidiMidiDevice(IMidiDevice):
     def dispose(self) -> None:
         try:
             del self.midiout
-        finally:
+        except:
             pass
 
     @override
@@ -70,4 +70,8 @@ class RtmidiMidiDevice(IMidiDevice):
 
     @override
     def send_message_from_file(self, midi_file_path: str) -> None:
+        pass
+
+    @override
+    def stop(self) -> None:
         pass
