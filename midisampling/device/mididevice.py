@@ -64,6 +64,23 @@ class IMidiDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def send_progam_change(self, channel: int, msb: int, lsb: int, program: int) -> None:
+        """
+        Send to MIDI program change message.
+        Parameters
+        ----------
+            channel:
+                MIDI channel (0-15)
+            msb:
+                MSB value of the program change message.
+            lsb:
+                LSB value of the program change message.
+            program:
+                Program value of the program change message.
+        """
+        pass
+
+    @abc.abstractmethod
     def send_message_from_file(self, midi_file_path: str) -> None:
         """
         Send to MIDI messages via given file.

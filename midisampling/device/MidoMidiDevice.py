@@ -87,6 +87,16 @@ class MidoMidiDevice(IMidiDevice):
         self.midiout.send(note_off)
 
     @override
+    def send_progam_change(self, channel: int, msb: int, lsb: int, program: int) -> None:
+        msb_message = mido.Message('control_change', channel=channel, control=0, value=msb)
+        lsb_message = mido.Message('control_change', channel=channel, control=32, value=lsb)
+        program_change_message = mido.Message('program_change', channel=channel, program=program)
+
+        self.midiout.send(msb_message)
+        self.midiout.send(lsb_message)
+        self.midiout.send(program_change_message)
+
+    @override
     def send_message_from_file(self, midi_file_path: str) -> None:
         midi = mido.MidiFile(midi_file_path)
         for msg in midi.play():

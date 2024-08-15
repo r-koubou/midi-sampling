@@ -157,10 +157,15 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
 - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
-- **`output_prefix`** *(string, required)*: Prefix for the filenames of the sampled audio files.
+- **`output_prefix`** *(string)*: Prefix for the filenames of the sampled audio files. Default: `""`.
 - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
   - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
 - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
+- **`midi_program_change_list`** *(array, required)*: List of MIDI program change (MSB, LSB, Program No) for sampling.
+  - **Items** *(object)*
+    - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
+    - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
+    - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
 - **`midi_notes`** *(array, required)*: List of MIDI note numbers to be sampled.
   - **Items** *(integer)*: Minimum: `0`. Maximum: `127`.
 - **`midi_velocities`** *(array, required)*: List of MIDI velocities to be sampled.
@@ -174,12 +179,29 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   {
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
-      "output_prefix": "piano",
+      "output_prefix": "output",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
       ],
       "midi_channel": 0,
+      "midi_program_change_list": [
+          {
+              "msb": 0,
+              "lsb": 0,
+              "program": 0
+          },
+          {
+              "msb": 0,
+              "lsb": 0,
+              "program": 1
+          },
+          {
+              "msb": 0,
+              "lsb": 0,
+              "program": 2
+          }
+      ],
       "midi_notes": [
           40
       ],
