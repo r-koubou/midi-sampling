@@ -27,9 +27,11 @@ class MidoMidiDevice(IMidiDevice):
 
         self.midiout = None
 
-        # Separate the device name and the port index number.
-        # In mido windows mido.get_output_names() implementation e.g. "Roland SC-8850 PART A 1". (" 1" is port index number.)
-        # The port index number is included in the device name.
+        # Separate the device name and the port index number to enable description in a library-independent format in the configuration file.
+        # In mido mido.get_output_names() implementation, the device name includes a internal port index number e.g. "Roland SC-8850 PART A 1". (" 1" is internal index number.)
+        #
+        # see also: https://mido.readthedocs.io/en/stable/backends/rtmidi.html
+        #
         regex_trim  = re.compile(r'\s[0-9]+$')
         regex_index = re.compile(r'.*?\s([0-9]+$)')
 
