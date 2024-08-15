@@ -10,7 +10,7 @@ import waveprocess.trim as trim
 import utility
 
 from device.mididevice import IMidiDevice
-from device.RtmidiMidiDevice import RtmidiMidiDevice
+from device.MidoMidiDevice import MidoMidiDevice
 
 from device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
 from device.SdAudioDevice import SdAudioDevice
@@ -55,6 +55,7 @@ def main(args):
     audio_input_ports           = sampling_config.asio_audio_ins
 
     midi_out_device_name        = sampling_config.midi_out_device
+    pre_send_smf_path_list      = midi_config.pre_send_smf_path_list
 
     midi_notes                  = midi_config.midi_notes
     midi_velocities             = midi_config.midi_velocities
@@ -73,7 +74,7 @@ def main(args):
     #---------------------------------------------------------------------------
     # MIDI
     #---------------------------------------------------------------------------
-    midi_device: IMidiDevice = RtmidiMidiDevice(midi_out_device_name)
+    midi_device: IMidiDevice = MidoMidiDevice(midi_out_device_name)
 
     #---------------------------------------------------------------------------
     # Audio
@@ -105,6 +106,14 @@ def main(args):
         #---------------------------------------------------------------------------
         # Sampling
         #---------------------------------------------------------------------------
+
+        # Send MIDI from file to device before sampling
+        if len(pre_send_smf_path_list) > 0:
+            for file in pre_send_smf_path_list:
+                print(f"Send MIDI from file: {file}")
+                midi_device.send_message_from_file(file)
+
+        # Calculate total sampling count
         total_sampling_count = len(midi_notes) * len(midi_velocities)
 
         os.makedirs(output_dir, exist_ok=True)

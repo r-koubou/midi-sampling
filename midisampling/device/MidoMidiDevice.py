@@ -59,11 +59,11 @@ class MidoMidiDevice(IMidiDevice):
         try:
             # MidiDeviceInfo.name is indepent format of mido.get_output_names() implementation.
             self.midiout = mido.open_output(f"{use_device.name} {use_device.index}" )
-            print(f"Opened MIDI port: {self.midi_out_device_name}")
         except:
             # Trying to open the port without the port index number.
             self.midiout = mido.open_output(self.midi_out_device_name )
-            print(f"Opened MIDI port: {self.midi_out_device_name}")
+
+        print(f"Opened MIDI port: {self.midi_out_device_name}")
 
     @override
     def dispose(self) -> None:
