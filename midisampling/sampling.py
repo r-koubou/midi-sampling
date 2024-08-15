@@ -130,7 +130,7 @@ def main(args):
             for note in midi_notes:
                 for velocity in midi_velocities:
                     # Send program change
-                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change: {program.msb}, {program.lsb}, {program.program}")
+                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
                     midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
                     time.sleep(0.5)
 
@@ -141,7 +141,7 @@ def main(args):
                     time.sleep(midi_pre_duration)
 
                     # Play MIDI
-                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
+                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
                     midi_device.play_note(midi_channel, note, velocity, midi_note_duration)
 
                     time.sleep(midi_release_duration)
