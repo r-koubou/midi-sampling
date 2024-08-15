@@ -15,7 +15,8 @@
         },
         "output_prefix": {
             "type": "string",
-            "description": "Prefix for the filenames of the sampled audio files."
+            "description": "Prefix for the filenames of the sampled audio files.",
+            "default": ""
         },
         "pre_send_smf_path_list" : {
             "type":"array",
@@ -31,6 +32,33 @@
             "description": "MIDI channel number for sampling.",
             "minimum": 0,
             "maximum": 15
+        },
+        "midi_program_change_list" : {
+            "type":"array",
+            "description": "List of MIDI program change (MSB, LSB, Program No) for sampling.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "msb": {
+                        "type": "integer",
+                        "description": "MSB value for the MIDI program change.",
+                        "minimum": 0,
+                        "maximum": 127
+                    },
+                    "lsb": {
+                        "type": "integer",
+                        "description": "LSB value for the MIDI program change.",
+                        "minimum": 0,
+                        "maximum": 127
+                    },
+                    "program": {
+                        "type": "integer",
+                        "description": "Program number for the MIDI program change.",
+                        "minimum": 0,
+                        "maximum": 127
+                    }
+                }
+            }
         },
         "midi_notes": {
             "type": "array",
@@ -66,8 +94,8 @@
     "required": [
         "output_dir",
         "processed_output_dir",
-        "output_prefix",
         "midi_channel",
+        "midi_program_change_list",
         "midi_notes",
         "midi_velocities",
         "midi_pre_wait_duration",
@@ -78,12 +106,17 @@
         {
             "output_dir": "_recorded",
             "processed_output_dir": "_recorded/_processed",
-            "output_prefix": "piano",
+            "output_prefix": "output",
             "pre_send_smf_path_list": [
                 "path/to/GM_Reset.mid",
                 "path/to/CC_Init.mid"
             ],
             "midi_channel": 0,
+            "midi_program_change_list": [
+                { "msb": 0, "lsb": 0, "program": 0},
+                { "msb": 0, "lsb": 0, "program": 1},
+                { "msb": 0, "lsb": 0, "program": 2}
+            ],
             "midi_notes": [
                 40
             ],

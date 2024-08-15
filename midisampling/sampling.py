@@ -25,8 +25,11 @@ from appconfig.midi import load as load_midi_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def get_output_file_prefix(prefix: str, channel: int, note: int, velocity: int):
-    return f"{prefix}_{note}_{velocity}"
+def get_output_file_prefix(prefix: str, pc_msb:int, pc_lsb:int, pc_value, channel: int, note: int, velocity: int):
+    if prefix == "":
+        return f"{pc_msb}_{pc_lsb}_{pc_value}_{note}_{velocity}"
+    else:
+        return f"{prefix}_{pc_msb}_{pc_lsb}_{pc_value}_{note}_{velocity}"
 
 def dump_as_json(obj: object) -> str:
     return json.dumps(obj.__dict__, ensure_ascii=False, indent=2)
@@ -57,11 +60,12 @@ def main(args):
     midi_out_device_name        = sampling_config.midi_out_device
     pre_send_smf_path_list      = midi_config.pre_send_smf_path_list
 
+    program_change_list         = midi_config.program_change_list
+    midi_channel                = midi_config.midi_channel
     midi_notes                  = midi_config.midi_notes
     midi_velocities             = midi_config.midi_velocities
     midi_note_duration          = midi_config.midi_note_duration
     midi_pre_duration           = midi_config.midi_pre_wait_duration
-    midi_channel                = midi_config.midi_channel
     midi_release_duration       = midi_config.midi_release_duration
     target_peak                 = sampling_config.target_peak
     output_dir                  = midi_config.output_dir
@@ -114,7 +118,7 @@ def main(args):
                 midi_device.send_message_from_file(file)
 
         # Calculate total sampling count
-        total_sampling_count = len(midi_notes) * len(midi_velocities)
+        total_sampling_count = len(program_change_list) * len(midi_notes) * len(midi_velocities)
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -122,27 +126,34 @@ def main(args):
 
         process_count = 1
 
-        for note in midi_notes:
-            for velocity in midi_velocities:
-                # Record Audio
-                record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
+        for program in program_change_list:
+            for note in midi_notes:
+                for velocity in midi_velocities:
+                    # Send program change
+                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change: {program.msb}, {program.lsb}, {program.program}")
+                    midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
+                    time.sleep(0.5)
 
-                audio_device.start_recording(record_duration)
-                time.sleep(midi_pre_duration)
+                    # Record Audio
+                    record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
 
-                # Play MIDI
-                print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
-                midi_device.play_note(midi_channel, note, velocity, midi_note_duration)
+                    audio_device.start_recording(record_duration)
+                    time.sleep(midi_pre_duration)
 
-                time.sleep(midi_release_duration)
+                    # Play MIDI
+                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
+                    midi_device.play_note(midi_channel, note, velocity, midi_note_duration)
 
-                audio_device.stop_recording()
+                    time.sleep(midi_release_duration)
 
-                # Save Audio
-                output_path = os.path.join(output_dir, get_output_file_prefix(output_prefix, midi_channel, note, velocity) + ".wav")
-                audio_device.export_audio(output_path)
+                    audio_device.stop_recording()
 
-                process_count += 1
+                    # Save Audio
+                    output_file_name = get_output_file_prefix(output_prefix, program.msb, program.lsb, program.program, midi_channel, note, velocity)
+                    output_path = os.path.join(output_dir, output_file_name + ".wav")
+                    audio_device.export_audio(output_path)
+
+                    process_count += 1
         #endregion ~Sampling
 
         #region Waveform Processing
