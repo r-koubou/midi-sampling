@@ -73,3 +73,10 @@ class IMidiDevice(metaclass=abc.ABCMeta):
                 A midi file path. (*.mid)
         """
         pass
+
+    @abc.abstractmethod
+    def stop(self) -> None:
+        """
+        Stop all notes, playback etc.
+        """
+        pass

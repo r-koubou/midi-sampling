@@ -1,10 +1,10 @@
-from device.RtmidiMidiDevice import RtmidiMidiDevice
+from device.MidoMidiDevice import MidoMidiDevice
 from device.SdAudioDevice import SdAudioDevice
 
 from prettytable import PrettyTable
 
 audio_device = SdAudioDevice(None)
-midi_device  = RtmidiMidiDevice(None)
+midi_device  = MidoMidiDevice(None)
 
 table = PrettyTable()
 table.align = "l"
