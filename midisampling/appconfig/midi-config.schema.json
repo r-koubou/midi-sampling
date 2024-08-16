@@ -1,13 +1,12 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "MIDI Sampling Configuration",
-    "description": "Configuration for MIDI sampling.",
+    "description": "Structure of the MIDI sampling configuration.",
     "additionalProperties": false,
-    "type": "object",
-    "$ref": "#/definitions/midi-config",
     "definitions": {
-        "midi-config": {
+        "def_midi_config": {
             "type": "object",
+            "description": "The main configuration body",
             "properties": {
                 "output_dir": {
                     "type": "string",
@@ -67,12 +66,12 @@
                 "midi_notes": {
                     "type": "object",
                     "description": "List of MIDI note numbers to be sampled.",
-                    "$ref": "#/definitions/midi-byte-range"
+                    "$ref": "#/definitions/def_midi_byte_range"
                 },
                 "midi_velocities": {
                     "type": "array",
                     "description": "List of MIDI velocities to be sampled.",
-                    "$ref": "#/definitions/midi-byte-range"
+                    "$ref": "#/definitions/def_midi_byte_range"
                 },
                 "midi_pre_wait_duration": {
                     "type": "number",
@@ -86,9 +85,47 @@
                     "type": "number",
                     "description": "Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified."
                 }
-            }
+            },
+            "required": [
+                "output_dir",
+                "processed_output_dir",
+                "midi_channel",
+                "midi_program_change_list",
+                "midi_notes",
+                "midi_velocities",
+                "midi_pre_wait_duration",
+                "midi_note_duration",
+                "midi_release_duration"
+            ],
+            "examples": [
+                {
+                    "output_dir": "_recorded",
+                    "processed_output_dir": "_recorded/_processed",
+                    "output_prefix": "output",
+                    "pre_send_smf_path_list": [
+                        "path/to/GM_Reset.mid",
+                        "path/to/CC_Init.mid"
+                    ],
+                    "midi_channel": 0,
+                    "midi_program_change_list": [
+                        { "msb": 0, "lsb": 0, "program": 0},
+                        { "msb": 0, "lsb": 0, "program": 1},
+                        { "msb": 0, "lsb": 0, "program": 2}
+                    ],
+                    "midi_notes": [
+                        { "from": 40, "to": 41 },
+                        80
+                    ],
+                    "midi_velocities": [
+                        127
+                    ],
+                    "midi_pre_wait_duration": 0.6,
+                    "midi_note_duration": 2,
+                    "midi_release_duration": 1.5
+                }
+            ]
         },
-        "midi-byte-range": {
+        "def_midi_byte_range": {
             "type": "array",
             "description": "In addition to an array of individually contiguous MIDI message byte values, it supports the representation of a specified range.",
             "properties": {
@@ -117,49 +154,22 @@
                                     "minimum": 0,
                                     "maximum": 127
                                 }
-                            }
+                            },
+                            "required": [
+                                "from",
+                                "to"
+                            ]
                         }
                     ]
                 }
-            }
+            },
+            "examples": [
+                [40, 41],
+                [{ "from": 10, "to": 100 }],
+                [40, 41, { "from": 10, "to": 100 }]
+            ]
         }
     },
-    "required": [
-        "output_dir",
-        "processed_output_dir",
-        "midi_channel",
-        "midi_program_change_list",
-        "midi_notes",
-        "midi_velocities",
-        "midi_pre_wait_duration",
-        "midi_note_duration",
-        "midi_release_duration"
-    ],
-    "examples": [
-        {
-            "output_dir": "_recorded",
-            "processed_output_dir": "_recorded/_processed",
-            "output_prefix": "output",
-            "pre_send_smf_path_list": [
-                "path/to/GM_Reset.mid",
-                "path/to/CC_Init.mid"
-            ],
-            "midi_channel": 0,
-            "midi_program_change_list": [
-                { "msb": 0, "lsb": 0, "program": 0},
-                { "msb": 0, "lsb": 0, "program": 1},
-                { "msb": 0, "lsb": 0, "program": 2}
-            ],
-            "midi_notes": [
-                { "from": 40, "to": 41 },
-                80
-            ],
-            "midi_velocities": [
-                127
-            ],
-            "midi_pre_wait_duration": 0.6,
-            "midi_note_duration": 2,
-            "midi_release_duration": 1.5
-        }
-    ]
+    "type": "object",
+    "$ref": "#/definitions/def_midi_config"
 }
