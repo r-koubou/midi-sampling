@@ -151,30 +151,29 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 ### MIDI Sampling Configuration
 
-*Configuration for MIDI sampling.*
+*Structure of the MIDI sampling configuration.*
 
-#### Properties
+#### Definitions
 
-- **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
-- **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
-- **`output_prefix`** *(string)*: Prefix for the filenames of the sampled audio files. Default: `""`.
-- **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
-  - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
-- **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
-- **`midi_program_change_list`** *(array, required)*: List of MIDI program change (MSB, LSB, Program No) for sampling.
-  - **Items** *(object)*
-    - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
-    - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
-    - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
-- **`midi_notes`** *(array, required)*: List of MIDI note numbers to be sampled.
-  - **Items** *(integer)*: Minimum: `0`. Maximum: `127`.
-- **`midi_velocities`** *(array, required)*: List of MIDI velocities to be sampled.
-  - **Items** *(integer)*: Minimum: `0`. Maximum: `127`.
-- **`midi_pre_wait_duration`** *(number, required)*: Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended.
-- **`midi_note_duration`** *(integer, required)*: Length of the MIDI note to be sampled (in seconds). Only integer values can be specified.
-- **`midi_release_duration`** *(number, required)*: Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified.
-#### Examples
+- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: The main configuration body.
+  - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
+  - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
+  - **`output_prefix`** *(string)*: Prefix for the filenames of the sampled audio files. Default: `""`.
+  - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
+    - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
+  - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
+  - **`midi_program_change_list`** *(array, required)*: List of MIDI program change (MSB, LSB, Program No) for sampling.
+    - **Items** *(object)*
+      - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
+      - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
+      - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
+  - **`midi_notes`** *(object, required)*: List of MIDI note numbers to be sampled. Refer to *[#/definitions/def_midi_byte_range](#definitions/def_midi_byte_range)*.
+  - **`midi_velocities`** *(array, required)*: List of MIDI velocities to be sampled. Refer to *[#/definitions/def_midi_byte_range](#definitions/def_midi_byte_range)*.
+  - **`midi_pre_wait_duration`** *(number, required)*: Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended.
+  - **`midi_note_duration`** *(integer, required)*: Length of the MIDI note to be sampled (in seconds). Only integer values can be specified.
+  - **`midi_release_duration`** *(number, required)*: Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified.
 
+  Examples:
   ```json
   {
       "output_dir": "_recorded",
@@ -203,7 +202,11 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
           }
       ],
       "midi_notes": [
-          40
+          {
+              "from": 40,
+              "to": 41
+          },
+          80
       ],
       "midi_velocities": [
           127
@@ -212,6 +215,42 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       "midi_note_duration": 2,
       "midi_release_duration": 1.5
   }
+  ```
+
+- <a id="definitions/def_midi_byte_range"></a>**`def_midi_byte_range`** *(array)*: In addition to an array of individually contiguous MIDI message byte values, it supports the representation of a specified range.
+  - **`data`**
+    - **Any of**
+      - *integer*: Byte value. Minimum: `0`. Maximum: `127`.
+      - *object*: Range of byte values.
+        - **`from`** *(integer, required)*: From byte value. Minimum: `0`. Maximum: `127`.
+        - **`to`** *(integer, required)*: To byte value. Minimum: `0`. Maximum: `127`.
+
+  Examples:
+  ```json
+  [
+      40,
+      41
+  ]
+  ```
+
+  ```json
+  [
+      {
+          "from": 10,
+          "to": 100
+      }
+  ]
+  ```
+
+  ```json
+  [
+      40,
+      41,
+      {
+          "from": 10,
+          "to": 100
+      }
+  ]
   ```
 
 <!-- [END] Generated by documenttool/jsonschema_to_md.py -->
