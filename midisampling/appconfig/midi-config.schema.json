@@ -4,91 +4,124 @@
     "description": "Configuration for MIDI sampling.",
     "additionalProperties": false,
     "type": "object",
-    "properties": {
-        "output_dir": {
-            "type": "string",
-            "description": "Directory for the output of the sampled audio files."
-        },
-        "processed_output_dir": {
-            "type": "string",
-            "description": "Directory for the output of processed sampled audio files."
-        },
-        "output_prefix": {
-            "type": "string",
-            "description": "Prefix for the filenames of the sampled audio files.",
-            "default": ""
-        },
-        "pre_send_smf_path_list" : {
-            "type":"array",
-            "description": "These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc.",
-            "items": {
-                "type": "string",
-                "description": "Path to the SMF(*.mid/*.midi) file(s)"
-            },
-            "default": []
-        },
-        "midi_channel": {
-            "type": "integer",
-            "description": "MIDI channel number for sampling.",
-            "minimum": 0,
-            "maximum": 15
-        },
-        "midi_program_change_list" : {
-            "type":"array",
-            "description": "List of MIDI program change (MSB, LSB, Program No) for sampling.",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "msb": {
-                        "type": "integer",
-                        "description": "MSB value for the MIDI program change.",
-                        "minimum": 0,
-                        "maximum": 127
+    "$ref": "#/definitions/midi-config",
+    "definitions": {
+        "midi-config": {
+            "type": "object",
+            "properties": {
+                "output_dir": {
+                    "type": "string",
+                    "description": "Directory for the output of the sampled audio files."
+                },
+                "processed_output_dir": {
+                    "type": "string",
+                    "description": "Directory for the output of processed sampled audio files."
+                },
+                "output_prefix": {
+                    "type": "string",
+                    "description": "Prefix for the filenames of the sampled audio files.",
+                    "default": ""
+                },
+                "pre_send_smf_path_list" : {
+                    "type":"array",
+                    "description": "These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc.",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to the SMF(*.mid/*.midi) file(s)"
                     },
-                    "lsb": {
-                        "type": "integer",
-                        "description": "LSB value for the MIDI program change.",
-                        "minimum": 0,
-                        "maximum": 127
-                    },
-                    "program": {
-                        "type": "integer",
-                        "description": "Program number for the MIDI program change.",
-                        "minimum": 0,
-                        "maximum": 127
+                    "default": []
+                },
+                "midi_channel": {
+                    "type": "integer",
+                    "description": "MIDI channel number for sampling.",
+                    "minimum": 0,
+                    "maximum": 15
+                },
+                "midi_program_change_list" : {
+                    "type":"array",
+                    "description": "List of MIDI program change (MSB, LSB, Program No) for sampling.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "msb": {
+                                "type": "integer",
+                                "description": "MSB value for the MIDI program change.",
+                                "minimum": 0,
+                                "maximum": 127
+                            },
+                            "lsb": {
+                                "type": "integer",
+                                "description": "LSB value for the MIDI program change.",
+                                "minimum": 0,
+                                "maximum": 127
+                            },
+                            "program": {
+                                "type": "integer",
+                                "description": "Program number for the MIDI program change.",
+                                "minimum": 0,
+                                "maximum": 127
+                            }
+                        }
                     }
+                },
+                "midi_notes": {
+                    "type": "object",
+                    "description": "List of MIDI note numbers to be sampled.",
+                    "$ref": "#/definitions/midi-byte-range"
+                },
+                "midi_velocities": {
+                    "type": "array",
+                    "description": "List of MIDI velocities to be sampled.",
+                    "$ref": "#/definitions/midi-byte-range"
+                },
+                "midi_pre_wait_duration": {
+                    "type": "number",
+                    "description": "Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended."
+                },
+                "midi_note_duration": {
+                    "type": "integer",
+                    "description": "Length of the MIDI note to be sampled (in seconds). Only integer values can be specified."
+                },
+                "midi_release_duration": {
+                    "type": "number",
+                    "description": "Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified."
                 }
             }
         },
-        "midi_notes": {
+        "midi-byte-range": {
             "type": "array",
-            "description": "List of MIDI note numbers to be sampled.",
-            "items": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 127
+            "description": "In addition to an array of individually contiguous MIDI message byte values, it supports the representation of a specified range.",
+            "properties": {
+                "data": {
+                    "uniqueItems": false,
+                    "anyOf": [
+                        {
+                            "type": "integer",
+                            "description": "Byte value.",
+                            "minimum": 0,
+                            "maximum": 127
+                        },
+                        {
+                            "type": "object",
+                            "description": "Range of byte values",
+                            "properties": {
+                                "from": {
+                                    "type": "integer",
+                                    "description": "From byte value.",
+                                    "minimum": 0,
+                                    "maximum": 127
+                                },
+                                "to": {
+                                    "type": "integer",
+                                    "description": "To byte value.",
+                                    "minimum": 0,
+                                    "maximum": 127
+                                }
+                            }
+                        }
+                    ]
+                }
             }
-        },
-        "midi_velocities": {
-            "type": "array",
-            "description": "List of MIDI velocities to be sampled.",
-            "items": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 127
-            }
-        },
-        "midi_pre_wait_duration": {
-            "type": "number",
-            "description": "Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended."
-        },
-        "midi_note_duration": {
-            "type": "integer",
-            "description": "Length of the MIDI note to be sampled (in seconds). Only integer values can be specified."
-        },
-        "midi_release_duration": {
-            "type": "number",
-            "description": "Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified."
         }
     },
     "required": [
@@ -118,7 +151,8 @@
                 { "msb": 0, "lsb": 0, "program": 2}
             ],
             "midi_notes": [
-                40
+                { "from": 40, "to": 41 },
+                80
             ],
             "midi_velocities": [
                 127
