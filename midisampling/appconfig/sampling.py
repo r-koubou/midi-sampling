@@ -9,7 +9,14 @@ with open(os.path.join(THIS_SCRIPT_DIR, "sampling-config.schema.json"), "r") as 
     common_config_json_schema = json.load(f)
 
 class SamplingConfig:
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config_path: str) -> None:
+
+        with open(config_path, "r") as f:
+            config = json.load(f)
+            jsonschema.validate(config, common_config_json_schema)
+
+        self.config_path: str               = config_path
+        self.config_dir: str                = os.path.abspath(os.path.dirname(config_path))
         self.audio_channels: int            = config["audio_channels"]
         self.audio_sample_rate: int         = config["audio_sample_rate"]
         self.audio_sample_bits: int         = config["audio_sample_bits"]
@@ -23,7 +30,4 @@ class SamplingConfig:
         self.trim_min_silence_duration: int = config["trim_min_silence_duration"]
 
 def load(config_path: str) -> SamplingConfig:
-    with open(config_path, "r") as f:
-        json_body = json.load(f)
-        jsonschema.validate(json_body, common_config_json_schema)
-        return SamplingConfig(json_body)
+    return SamplingConfig(config_path)

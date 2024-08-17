@@ -8,6 +8,53 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(THIS_SCRIPT_DIR, "midi-config.schema.json"), "r") as f:
     config_json_schema = json.load(f)
 
+def _to_abs_filepath(base_dir: str, file_path: str) -> str:
+    """
+    Returns the absolute path of file_path starting from base_dir
+
+    Parameters
+    ----------
+    base_dir : str
+        Starting Directory
+    file_path : str
+        File path
+
+    Returns
+    -------
+    Absolute path of file_path starting from base_dir. If file_path is already an absolute path, it will be returned as is.
+    """
+
+    base_dir  = os.path.abspath(base_dir)
+    file_path = os.path.normpath(file_path)
+
+    if not os.path.isabs(file_path):
+        return os.path.join(base_dir, file_path)
+
+    return file_path
+
+def _to_abs_filepath_list(base_dir: str, file_path_list: List[str]) -> str:
+    """
+    Returns the absolute path of file_path starting from base_dir
+
+    Parameters
+    ----------
+    base_dir : str
+        Starting Directory
+    file_path_list : List[str]
+        List of file paths
+
+    Returns
+    -------
+    List of absolute paths of file_path starting from base_dir. If file_path is already an absolute path, it will be returned as is.
+    """
+
+    result = []
+    for file_path in file_path_list:
+        result.append(_to_abs_filepath(base_dir, file_path))
+
+    return result
+
+
 def _parse_midi_byte_range(json_body: dict) -> List[int]:
     """
     Parse MIDI byte range from JSON body to list of int
@@ -44,7 +91,13 @@ class MidiConfig:
             self.lsb: int     = progarm_change["lsb"]
             self.program: int = progarm_change["program"]
 
-    def __init__(self, config_json: dict) -> None:
+    def __init__(self, config_path: str) -> None:
+        with open(config_path, "r") as f:
+            config_json = json.load(f)
+            jsonschema.validate(config_json, config_json_schema)
+
+        self.config_path: str                                       = config_path
+        self.config_dir: str                                        = os.path.abspath(os.path.dirname(config_path))
         self.output_dir: str                                        = config_json["output_dir"]
         self.processed_output_dir: str                              = config_json["processed_output_dir"]
         self.output_prefix: str                                     = config_json["output_prefix"]
@@ -60,10 +113,10 @@ class MidiConfig:
         for pc in config_json["midi_program_change_list"]:
             self.program_change_list.append(MidiConfig.ProgramChange(pc))
 
-
+        # Convert to a path starting from the directory where the config file is located
+        self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
+        self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
+        self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
 
 def load(config_path: str) -> MidiConfig:
-    with open(config_path, "r") as f:
-        json_body = json.load(f)
-        jsonschema.validate(json_body, config_json_schema)
-        return MidiConfig(json_body)
+    return MidiConfig(config_path)

@@ -58,7 +58,7 @@ If the prompt on the left side appears as `(midi-sampling)`, you are inside the 
 Run the following command:
 
 ```bash
-python midisampling/sampling.py <sampling-config-file.json> <MIDI-config-file.json>
+python -m midisampling <sampling-config-file.json> <MIDI-config-file.json>
 ```
 
 ### Listing Devices
@@ -66,7 +66,7 @@ python midisampling/sampling.py <sampling-config-file.json> <MIDI-config-file.js
 Run the following command:
 
 ```bash
-python midisampling/devicelist.py
+python -m midisampling.device
 ```
 
 #### Output example
