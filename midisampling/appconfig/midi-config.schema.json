@@ -16,10 +16,10 @@
                     "type": "string",
                     "description": "Directory for the output of processed sampled audio files."
                 },
-                "output_prefix": {
+                "output_prefix_format": {
                     "type": "string",
-                    "description": "Prefix for the filenames of the sampled audio files.",
-                    "default": ""
+                    "description": "Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity}.",
+                    "default": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"
                 },
                 "pre_send_smf_path_list" : {
                     "type":"array",
@@ -101,7 +101,7 @@
                 {
                     "output_dir": "_recorded",
                     "processed_output_dir": "_recorded/_processed",
-                    "output_prefix": "output",
+                    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
                     "pre_send_smf_path_list": [
                         "path/to/GM_Reset.mid",
                         "path/to/CC_Init.mid"

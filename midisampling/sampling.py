@@ -20,17 +20,34 @@ from midisampling.appconfig.sampling import load as load_samplingconfig
 from midisampling.appconfig.midi import MidiConfig
 from midisampling.appconfig.midi import load as load_midi_config
 
+import midisampling.dynamic_format as dynamic_format
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def get_output_file_prefix(prefix: str, pc_msb:int, pc_lsb:int, pc_value, channel: int, note: int, velocity: int):
-    if prefix == "":
-        return f"{pc_msb}_{pc_lsb}_{pc_value}_{note}_{velocity}"
-    else:
-        return f"{prefix}_{pc_msb}_{pc_lsb}_{pc_value}_{note}_{velocity}"
+def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, note: int, velocity: int):
+    """
+    Get output file prefix from dynamic format string
 
-def dump_as_json(obj: object) -> str:
-    return json.dumps(obj.__dict__, ensure_ascii=False, indent=2)
+    Args:
+        format_string (str): string.format compatible format string. available placeholders are {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity} and Python format specifiers are also available.
+        pc_msb (int): Program Change MSB
+        pc_lsb (int): Program Change LSB
+        pc_value: Program Change Value
+        note (int): MIDI Note
+        velocity (int): MIDI Velocity
+
+    Returns:
+        str: formatted string
+    """
+    format_value = {
+        "pc_msb": pc_msb,
+        "pc_lsb": pc_lsb,
+        "pc": pc_value,
+        "note": note,
+        "velocity": velocity
+    }
+
+    return dynamic_format.format(format_string=format_string, data=format_value)
 
 def main(args):
 
@@ -67,7 +84,7 @@ def main(args):
     midi_release_duration       = midi_config.midi_release_duration
     target_peak                 = sampling_config.target_peak
     output_dir                  = midi_config.output_dir
-    output_prefix               = midi_config.output_prefix
+    output_prefix_format        = midi_config.output_prefix_format
     processed_output_dir        = midi_config.processed_output_dir
 
     trim_threshold              = sampling_config.trim_threshold
@@ -147,7 +164,7 @@ def main(args):
                     audio_device.stop_recording()
 
                     # Save Audio
-                    output_file_name = get_output_file_prefix(output_prefix, program.msb, program.lsb, program.program, midi_channel, note, velocity)
+                    output_file_name = get_output_file_prefix(format_string=output_prefix_format, pc_msb=program.msb, pc_lsb=program.lsb, pc_value=program.program, note=note, velocity=velocity)
                     output_path = os.path.join(output_dir, output_file_name + ".wav")
                     audio_device.export_audio(output_path)
 

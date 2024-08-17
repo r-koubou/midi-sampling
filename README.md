@@ -158,7 +158,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 - <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: The main configuration body.
   - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
   - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
-  - **`output_prefix`** *(string)*: Prefix for the filenames of the sampled audio files. Default: `""`.
+  - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"`.
   - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
     - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
   - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
@@ -178,7 +178,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   {
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
-      "output_prefix": "output",
+      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
