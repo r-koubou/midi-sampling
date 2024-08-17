@@ -163,7 +163,7 @@ python -m midisampling.device
 - <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: 主な設定構成。
   - **`output_dir`** *(string, required)*: サンプリングされた音声ファイルの出力ディレクトリ。
   - **`processed_output_dir`** *(string, required)*: 処理済みのサンプリング音声ファイルの出力ディレクトリ。
-  - **`output_prefix`** *(string)*: サンプリングされた音声ファイルのファイル名のプレフィックス。デフォルト: `""`。
+  - **`output_prefix_format`** *(文字列)*: サンプリングした音声ファイルのファイル名の接頭辞。このプレースホルダが使用可能: {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"`.
   - **`pre_send_smf_path_list`** *(array)*: サンプリングの前にMIDIデバイスに送信されるファイル（例: GMリセット、CCリセットなど）。デフォルト: `[]`。
     - **Items** *(string)*: SMF(*.mid/*.midi)ファイルのパス。
   - **`midi_channel`** *(integer, required)*: サンプリング用のMIDIチャンネル番号。最小: `0`。最大: `15`。
@@ -183,7 +183,7 @@ python -m midisampling.device
   {
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
-      "output_prefix": "output",
+      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
