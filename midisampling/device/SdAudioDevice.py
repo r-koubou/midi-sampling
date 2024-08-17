@@ -3,7 +3,7 @@ import numpy as np
 import sounddevice as sd
 import wave
 
-from device.audiodevice import (
+from .audiodevice import (
     IAudioDevice,
     AudioDeviceOption,
     AudioDataFormat,

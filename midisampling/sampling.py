@@ -4,23 +4,21 @@ import os
 import sys
 import time
 
-import waveprocess.normalize as normalize
-import waveprocess.trim as trim
+import midisampling.waveprocess.normalize as normalize
+import midisampling.waveprocess.trim as trim
 
-import utility
+from midisampling.device.mididevice import IMidiDevice
+from midisampling.device.MidoMidiDevice import MidoMidiDevice
 
-from device.mididevice import IMidiDevice
-from device.MidoMidiDevice import MidoMidiDevice
-
-from device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
-from device.SdAudioDevice import SdAudioDevice
+from midisampling.device.audiodevice import IAudioDevice, AudioDeviceOption, AudioDataFormat
+from midisampling.device.SdAudioDevice import SdAudioDevice
 
 
-from appconfig.sampling import SamplingConfig
-from appconfig.sampling import load as load_samplingconfig
+from midisampling.appconfig.sampling import SamplingConfig
+from midisampling.appconfig.sampling import load as load_samplingconfig
 
-from appconfig.midi import MidiConfig
-from appconfig.midi import load as load_midi_config
+from midisampling.appconfig.midi import MidiConfig
+from midisampling.appconfig.midi import load as load_midi_config
 
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -177,11 +175,3 @@ def main(args):
     finally:
         audio_device.dispose() if audio_device else None
         midi_device.dispose() if midi_device else None
-
-if __name__ == "__main__":
-
-    if len(sys.argv) < 3:
-        print(f"Usage: python {os.path.basename(__file__)} <path/to/sampling-config.json> <path/to/midi-config.json>")
-        sys.exit(1)
-
-    main(sys.argv[1:])

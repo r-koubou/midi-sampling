@@ -1,5 +1,5 @@
-from device.MidoMidiDevice import MidoMidiDevice
-from device.SdAudioDevice import SdAudioDevice
+from .MidoMidiDevice import MidoMidiDevice
+from .SdAudioDevice import SdAudioDevice
 
 from prettytable import PrettyTable
 
