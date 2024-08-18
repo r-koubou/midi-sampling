@@ -1,7 +1,7 @@
 {
     "output_dir": "_recorded",
     "processed_output_dir": "_recorded/_processed",
-    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
+    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{min_velocity}_{max_velocity}_{velocity}",
     "pre_send_smf_path_list": [
         "GS_Reset.mid",
         "Reverb_Chorus_Delay_Set_0.mid"
@@ -10,12 +10,20 @@
     "midi_program_change_list": [
         { "msb": 0, "lsb": 0, "program": 48}
     ],
-    "midi_notes": [
-        { "from": 40, "to": 43 },
-        90
+    "midi_velocity_layers": [
+        {
+            "min": 0,
+            "max": 63,
+            "send": 63
+        },
+        {
+            "min": 64,
+            "max": 127,
+            "send": 127
+        }
     ],
-    "midi_velocities": [
-        127
+    "midi_notes": [
+        { "from": 40, "to": 41 }, 90
     ],
     "midi_pre_wait_duration": 0.6,
     "midi_note_duration": 2,

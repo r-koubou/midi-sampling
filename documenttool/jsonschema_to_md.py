@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Copy a converted markdown to clipboard.")
-        print(f"Usage: python {THIS_FILENAME} <schema_file_path> ...")
+        print(f"Usage: python -m {__spec__.name} <schema_file_path> ...")
         sys.exit(1)
 
     args = sys.argv[1:]

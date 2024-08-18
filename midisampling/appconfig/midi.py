@@ -91,6 +91,12 @@ class MidiConfig:
             self.lsb: int     = progarm_change["lsb"]
             self.program: int = progarm_change["program"]
 
+    class VelocityLayer:
+        def __init__(self, velocity_layer: dict) -> None:
+            self.min_velocity: int  = velocity_layer["min"]
+            self.max_velocity: int  = velocity_layer["max"]
+            self.send_velocity: int = velocity_layer["send"]
+
     def __init__(self, config_path: str) -> None:
         with open(config_path, "r") as f:
             config_json = json.load(f)
@@ -105,7 +111,7 @@ class MidiConfig:
         self.midi_channel: int                                      = config_json["midi_channel"]
         self.program_change_list: List[MidiConfig.ProgramChange]    = []
         self.midi_notes: List[int]                                  = _parse_midi_byte_range(config_json["midi_notes"])
-        self.midi_velocities: List[int]                             = _parse_midi_byte_range(config_json["midi_velocities"])
+        self.midi_velocity_layers: List[MidiConfig.VelocityLayer]   = []
         self.midi_pre_wait_duration: float                          = config_json["midi_pre_wait_duration"]
         self.midi_note_duration: int                                = config_json["midi_note_duration"]
         self.midi_release_duration: float                           = config_json["midi_release_duration"]
@@ -113,10 +119,19 @@ class MidiConfig:
         for pc in config_json["midi_program_change_list"]:
             self.program_change_list.append(MidiConfig.ProgramChange(pc))
 
+        for x in config_json["midi_velocity_layers"]:
+            self.midi_velocity_layers.append(MidiConfig.VelocityLayer(x))
+
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
         self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
         self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
+
+    def to_send_velocity_values(self) -> List[int]:
+        """
+        Returns the list of send velocity values to be used in the MIDI note on message
+        """
+        return [x.send_velocity for x in self.velocity_layers]
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)
