@@ -1,4 +1,6 @@
 from typing import List, override
+from logging import getLogger
+
 import numpy as np
 import sounddevice as sd
 import wave
@@ -10,6 +12,8 @@ from .audiodevice import (
     AudioDeviceInfo,
     NotFoundAudioDeviceError
 )
+
+logger = getLogger(__name__)
 
 class SdAudioDevice(IAudioDevice):
     """
@@ -25,7 +29,10 @@ class SdAudioDevice(IAudioDevice):
         self.option = option
         self.audio_devices: List[AudioDeviceInfo] = []
 
-        for sd_device in sd.query_devices():
+        sd_device_list = sorted(sd.query_devices(), key=lambda x: x["name"])
+
+        for sd_device in sd_device_list:
+            logger.debug(f"Found audio device: {sd_device}")
             if sd_device["max_input_channels"] > 0:
                 hostapi_info = sd.query_hostapis(sd_device["hostapi"])
                 self.audio_devices.append(
@@ -60,7 +67,9 @@ class SdAudioDevice(IAudioDevice):
         if sd_type_table.get(self.option.data_format) is None:
             raise ValueError(f"Not supported data format. (={self.option.data_format})")
 
-        print(self.option)
+        logger.debug(f"Initialize audio device: {self.option.device_name}")
+        logger.debug(self.option)
+
         sd.default.device       = [audio_in_device_index, None] # input, output. (Use input only)
         sd.default.dtype        = sd_type_table[self.option.data_format]
         sd.default.samplerate   = self.option.sample_rate
@@ -69,6 +78,7 @@ class SdAudioDevice(IAudioDevice):
         if self.option.device_platform.lower() == "asio":
             asio_in = sd.AsioSettings(channel_selectors=self.option.input_ports)
             sd.default.extra_settings = asio_in
+            logger.debug(f"ASIO input ports: {self.option.input_ports}")
 
     @override
     def dispose(self) -> None:

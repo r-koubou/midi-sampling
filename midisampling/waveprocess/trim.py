@@ -1,8 +1,11 @@
 import os
 import sys
+from logging import getLogger
 
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
+
+logger = getLogger(__name__)
 
 def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence_ms:int=250):
     """
@@ -30,9 +33,9 @@ def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence
         start, end = nonsilent_ranges[0][0], nonsilent_ranges[-1][1]
         trimmed_audio = audio[start:end]
         trimmed_audio.export(output_path, format="wav")
-        print(f"Trimmed audio saved to {output_path}")
+        logger.info(f"Trimmed audio saved to {output_path}")
     else:
-        print("No non-silent segments detected.")
+        logger.info("No non-silent segments detected.")
 
 
 def batch_trim(input_directory: str, output_directory: str, threshold_dBFS:float=-50, min_silence_ms:int=250):
