@@ -24,6 +24,8 @@ def normalize_across_mitiple(input_directory: str, output_directory: str, target
 
     os.makedirs(output_directory, exist_ok=True)
 
+    logger.info(f"Normalize Begin: input={input_directory}, output={output_directory}, target={target_peak_dBFS} dBFS")
+
     # 全てのファイルの最大ピークレベルを探す
     for filename in os.listdir(input_directory):
         if filename.endswith('.wav'):
@@ -43,8 +45,9 @@ def normalize_across_mitiple(input_directory: str, output_directory: str, target
     for audio, output_filepath in audio_segments:
         normalized_audio = audio.apply_gain(change_in_dBFS)
         normalized_audio.export(output_filepath, format="wav")
-        logger.info(f"Normalized: input={input_filepath}, output={output_filepath} target={target_peak_dBFS} dBFS(gain={change_in_dBFS:.3f} dBFS)")
+        logger.info(f"Normalized: file={os.path.basename(output_filepath)}")
 
+    logger.info(f"Normalize End (gain={change_in_dBFS:.3f} dBFS)")
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:

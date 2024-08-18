@@ -36,11 +36,9 @@ def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence
         start, end = nonsilent_ranges[0][0], nonsilent_ranges[-1][1]
         trimmed_audio = audio[start:end]
         trimmed_audio.export(output_path, format="wav")
-        logger.info(f"Trimmed: {result_message}")
     else:
         if input_path != output_path:
             shutil.copy(input_path, output_path)
-        logger.info(f"Not trimmed(No silent segments found): {result_message}")
 
 
 def batch_trim(input_directory: str, output_directory: str, threshold_dBFS:float=-50, min_silence_ms:int=250):
@@ -63,12 +61,17 @@ def batch_trim(input_directory: str, output_directory: str, threshold_dBFS:float
     """
 
     os.makedirs(output_directory, exist_ok=True)
+
+    logger.info(f"Trim Begin: input={input_directory}, output={output_directory}, threshold_dBFS={threshold_dBFS}, min_silence_ms={min_silence_ms}")
+
     for filename in os.listdir(input_directory):
         if filename.endswith('.wav'):
             input_path = os.path.join(input_directory, filename)
             output_path = os.path.join(output_directory, filename)
             trim(input_path, output_path, threshold_dBFS, min_silence_ms)
+            logger.info(f"Trimmed: {filename}")
 
+    logger.info(f"Trim End")
 
 if __name__ == '__main__':
     if len(sys.argv) < 5:
