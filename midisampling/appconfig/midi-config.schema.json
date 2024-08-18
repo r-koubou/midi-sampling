@@ -18,7 +18,7 @@
                 },
                 "output_prefix_format": {
                     "type": "string",
-                    "description": "Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity_min} {velocity_max} {velocity}.",
+                    "description": "Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {min_velocity} {max_velocity} {velocity}.",
                     "default": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"
                 },
                 "pre_send_smf_path_list" : {
@@ -207,6 +207,13 @@
                 "min",
                 "max",
                 "send"
+            ],
+            "examples": [
+                {
+                    "min": 0,
+                    "max": 127,
+                    "send": 127
+                }
             ]
         }
     },
