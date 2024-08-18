@@ -144,13 +144,13 @@ def main(args):
         process_count = 1
 
         for program in program_change_list:
+            # Send program change
+            logger.info(f"Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
+            midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
+            time.sleep(0.5)
+
             for note in midi_notes:
                 for velocity in midi_velocities:
-                    # Send program change
-                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
-                    midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
-                    time.sleep(0.5)
-
                     # Record Audio
                     record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
 
