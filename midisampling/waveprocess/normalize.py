@@ -1,6 +1,9 @@
 import os
 import sys
+from logging import getLogger
 from pydub import AudioSegment
+
+logger = getLogger(__name__)
 
 def normalize_across_mitiple(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0):
     """
@@ -40,7 +43,7 @@ def normalize_across_mitiple(input_directory: str, output_directory: str, target
     for audio, output_filepath in audio_segments:
         normalized_audio = audio.apply_gain(change_in_dBFS)
         normalized_audio.export(output_filepath, format="wav")
-        print(f'Normalized {output_filepath} -> {target_peak_dBFS} dBFS (gain={change_in_dBFS:.3f} dB)')
+        logger.info(f'Normalized {output_filepath} -> {target_peak_dBFS} dBFS (gain={change_in_dBFS:.3f} dB)')
 
 
 if __name__ == '__main__':

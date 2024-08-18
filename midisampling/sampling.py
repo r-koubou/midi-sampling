@@ -3,6 +3,7 @@ import math
 import os
 import sys
 import time
+from logging import getLogger
 
 import midisampling.waveprocess.normalize as normalize
 import midisampling.waveprocess.trim as trim
@@ -23,6 +24,7 @@ from midisampling.appconfig.midi import load as load_midi_config
 import midisampling.dynamic_format as dynamic_format
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+logger = getLogger(__name__)
 
 def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, note: int, velocity: int):
     """
@@ -112,13 +114,13 @@ def main(args):
         #---------------------------------------------------------------------------
         # Setup MIDI
         #---------------------------------------------------------------------------
-        print("Initialize MIDI")
+        logger.debug("Initialize MIDI")
         midi_device.initialize()
 
         #---------------------------------------------------------------------------
         # Setup Audio
         #---------------------------------------------------------------------------
-        print("Initialize audio")
+        logger.debug("Initialize audio")
         audio_device.initialize()
 
         #region Sampling
@@ -129,7 +131,7 @@ def main(args):
         # Send MIDI from file to device before sampling
         if len(pre_send_smf_path_list) > 0:
             for file in pre_send_smf_path_list:
-                print(f"Send MIDI from file: {file}")
+                logger.info(f"Send MIDI from file: {file}")
                 midi_device.send_message_from_file(file)
 
         # Calculate total sampling count
@@ -137,7 +139,7 @@ def main(args):
 
         os.makedirs(output_dir, exist_ok=True)
 
-        print("Sampling...")
+        logger.info("Sampling...")
 
         process_count = 1
 
@@ -145,7 +147,7 @@ def main(args):
             for note in midi_notes:
                 for velocity in midi_velocities:
                     # Send program change
-                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
+                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
                     midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
                     time.sleep(0.5)
 
@@ -156,7 +158,7 @@ def main(args):
                     time.sleep(midi_pre_duration)
 
                     # Play MIDI
-                    print(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
+                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity:3d}")
                     midi_device.play_note(midi_channel, note, velocity, midi_note_duration)
 
                     time.sleep(midi_release_duration)

@@ -2,6 +2,7 @@ from typing import override
 
 import time
 import re
+from logging import getLogger
 
 import mido
 
@@ -10,6 +11,8 @@ from .mididevice import (
     MidiDeviceInfo,
     NotFoundMidiDeviceError
 )
+
+logger = getLogger(__name__)
 
 class MidoMidiDevice(IMidiDevice):
     """
@@ -36,6 +39,7 @@ class MidoMidiDevice(IMidiDevice):
         regex_index = re.compile(r'.*?\s([0-9]+$)')
 
         for name in mido.get_output_names():
+            logger.debug(f"Found MIDI device: {name}")
             device_inedx = -1
             m = regex_index.match(name)
             if m:
@@ -63,7 +67,7 @@ class MidoMidiDevice(IMidiDevice):
             # Trying to open the port without the port index number.
             self.midiout = mido.open_output(self.midi_out_device_name )
 
-        print(f"Opened MIDI port: {self.midi_out_device_name}")
+        logger.info(f"Opened MIDI port: {self.midi_out_device_name}")
 
     @override
     def dispose(self) -> None:
