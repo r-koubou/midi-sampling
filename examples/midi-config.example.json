@@ -25,6 +25,32 @@
     "midi_notes": [
         { "from": 40, "to": 41 }, 90
     ],
+    "midi_keymap_simple": [
+        {
+            "key_root": {"from": 40, "to": 41},
+            "velocity_layers": [
+                {
+                    "min": 0,
+                    "max": 63,
+                    "send": 63
+                }
+            ]
+        }
+    ],
+    "midi_keymap_complex": [
+        {
+            "key_low": 0,
+            "key_high": 0,
+            "key_root": 40,
+            "velocity_layers": [
+                {
+                    "min": 0,
+                    "max": 63,
+                    "send": 63
+                }
+            ]
+        }
+    ],
     "midi_pre_wait_duration": 0.6,
     "midi_note_duration": 2,
     "midi_release_duration": 1.5
