@@ -64,9 +64,20 @@
                     }
                 },
                 "midi_notes": {
-                    "type": "object",
+                    "type": "array",
                     "description": "List of MIDI note numbers to be sampled.",
-                    "$ref": "#/definitions/def_midi_byte_range"
+                    "items": {
+                        "anyOf": [
+                            {
+                                "description": "MIDI note number.",
+                                "$ref": "#/definitions/def_midi_message_byte"
+                            },
+                            {
+                                "description": "MIDI note range.",
+                                "$ref": "#/definitions/def_midi_message_byte_range"
+                            }
+                        ]
+                    }
                 },
                 "midi_velocity_layers": {
                     "type": "array",
@@ -136,48 +147,40 @@
                 }
             ]
         },
-        "def_midi_byte_range": {
-            "type": "array",
-            "description": "In addition to an array of individually contiguous MIDI message byte values, it supports the representation of a specified range.",
+        "def_midi_message_byte": {
+            "type": "integer",
+            "description": "Represents the value of the MIDI message byte (0-127)",
+            "minimum": 0,
+            "maximum": 127
+        },
+        "def_integer_range": {
+            "type": "object",
+            "description": "Represents an integer value range",
             "properties": {
-                "data": {
-                    "uniqueItems": false,
-                    "anyOf": [
-                        {
-                            "type": "integer",
-                            "description": "Byte value.",
-                            "minimum": 0,
-                            "maximum": 127
-                        },
-                        {
-                            "type": "object",
-                            "description": "Range of byte values",
-                            "properties": {
-                                "from": {
-                                    "type": "integer",
-                                    "description": "From byte value.",
-                                    "minimum": 0,
-                                    "maximum": 127
-                                },
-                                "to": {
-                                    "type": "integer",
-                                    "description": "To byte value.",
-                                    "minimum": 0,
-                                    "maximum": 127
-                                }
-                            },
-                            "required": [
-                                "from",
-                                "to"
-                            ]
-                        }
-                    ]
+                "from": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "integer"
                 }
             },
             "examples": [
-                [40, 41],
-                [{ "from": 10, "to": 100 }],
-                [40, 41, { "from": 10, "to": 100 }]
+                { "from": 10, "to": 100 }
+            ]
+        },
+        "def_midi_message_byte_range": {
+            "type": "object",
+            "description": "Represents the value range (0-127) of the MIDI message byte",
+            "properties": {
+                "from": {
+                    "$ref": "#/definitions/def_midi_message_byte"
+                },
+                "to": {
+                    "$ref": "#/definitions/def_midi_message_byte"
+                }
+            },
+            "examples": [
+                { "from": 10, "to": 100 }
             ]
         },
         "def_midivelocity_layer": {
