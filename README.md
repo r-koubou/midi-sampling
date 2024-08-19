@@ -167,7 +167,11 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
-  - **`midi_notes`** *(object, required)*: List of MIDI note numbers to be sampled. Refer to *[#/definitions/def_midi_byte_range](#definitions/def_midi_byte_range)*.
+  - **`midi_notes`** *(array, required)*: List of MIDI note numbers to be sampled.
+    - **Items**
+      - **Any of**
+        - : MIDI note number. Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
+        - : MIDI note range. Refer to *[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*.
   - **`midi_velocity_layers`** *(array, required)*: List of velocity layers to be sampled.
     - **Items**: Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
   - **`midi_pre_wait_duration`** *(number, required)*: Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended.
@@ -227,40 +231,29 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   }
   ```
 
-- <a id="definitions/def_midi_byte_range"></a>**`def_midi_byte_range`** *(array)*: In addition to an array of individually contiguous MIDI message byte values, it supports the representation of a specified range.
-  - **`data`**
-    - **Any of**
-      - *integer*: Byte value. Minimum: `0`. Maximum: `127`.
-      - *object*: Range of byte values.
-        - **`from`** *(integer, required)*: From byte value. Minimum: `0`. Maximum: `127`.
-        - **`to`** *(integer, required)*: To byte value. Minimum: `0`. Maximum: `127`.
+- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(integer)*: Represents the value of the MIDI message byte (0-127). Minimum: `0`. Maximum: `127`.
+- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(object)*: Represents an integer value range.
+  - **`from`** *(integer)*
+  - **`to`** *(integer)*
 
   Examples:
   ```json
-  [
-      40,
-      41
-  ]
+  {
+      "from": 10,
+      "to": 100
+  }
   ```
 
-  ```json
-  [
-      {
-          "from": 10,
-          "to": 100
-      }
-  ]
-  ```
+- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(object)*: Represents the value range (0-127) of the MIDI message byte.
+  - **`from`**: Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
+  - **`to`**: Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
 
+  Examples:
   ```json
-  [
-      40,
-      41,
-      {
-          "from": 10,
-          "to": 100
-      }
-  ]
+  {
+      "from": 10,
+      "to": 100
+  }
   ```
 
 - <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(object)*: Velocity layer configuration.
