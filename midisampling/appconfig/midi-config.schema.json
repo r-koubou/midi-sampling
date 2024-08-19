@@ -88,6 +88,20 @@
                         "$ref": "#/definitions/def_midivelocity_layer"
                     }
                 },
+                "midi_keymap_complex" :{
+                    "type":"array",
+                    "description": "List of keymaps for the sampled MIDI notes.",
+                    "items": {
+                        "$ref": "#/definitions/def_keymap_complex"
+                    }
+                },
+                "midi_keymap_simple" :{
+                    "type":"array",
+                    "description": "List of keymaps for the sampled MIDI notes.",
+                    "items": {
+                        "$ref": "#/definitions/def_midi_keymap_simple"
+                    }
+                },
                 "midi_pre_wait_duration": {
                     "type": "number",
                     "description": "Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended."
@@ -228,6 +242,91 @@
                     "min": 0,
                     "max": 127,
                     "send": 127
+                }
+            ]
+        },
+        "def_keymap_complex": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Keymap complex configuration. The key range, root key, must be specified explicitly.",
+            "properties": {
+                "key_low": {
+                    "type": "integer",
+                    "description": "Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
+                    "minimum": 0,
+                    "maximum": 127
+                },
+                "key_high": {
+                    "type": "integer",
+                    "description": "Highest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
+                    "minimum": 0,
+                    "maximum": 127
+                },
+                "key_root": {
+                    "type": "integer",
+                    "description": "Root key number (note number) in the keymap. This value is intended to be used as information for mapping note-on messages sent to MIDI devices and third-party sampler software when sampling.",
+                    "minimum": 0,
+                    "maximum": 127
+                },
+                "velocity_layers": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "$ref": "#/definitions/def_midivelocity_layer"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "key_low",
+                "key_high",
+                "key_root",
+                "velocity_layers"
+            ],
+            "examples": [
+                {
+                    "key_low": 0,
+                    "key_high": 32,
+                    "key_root": 16
+                }
+            ]
+        },
+        "def_midi_keymap_simple": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Keymap simple configuration. Unlike the complex version, only the root key can be specified, where `key range` = `root key`.",
+            "properties": {
+                "key_root": {
+                    "description": "Root key number (note number) in the keymap.",
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/def_midi_message_byte"
+                        },
+                        {
+                            "$ref": "#/definitions/def_midi_message_byte_range"
+                        }
+                    ],
+                    "examples": [
+                        16,
+                        { "from": 10, "to": 100 }
+                    ]
+                },
+                "velocity_layers": {
+                    "type": "array",
+                    "items":[
+                        {
+                            "$ref": "#/definitions/def_midivelocity_layer"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "key_root",
+                "velocity_layers"
+            ],
+            "examples": [
+                {
+                    "key_roots": [16]
                 }
             ]
         }
