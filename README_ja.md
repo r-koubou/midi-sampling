@@ -172,7 +172,11 @@ python -m midisampling.device
       - **`msb`** *(integer)*: MIDIプログラムチェンジのMSB値。最小: `0`。最大: `127`。
       - **`lsb`** *(integer)*: MIDIプログラムチェンジのLSB値。最小: `0`。最大: `127`。
       - **`program`** *(integer)*: MIDIプログラムチェンジのプログラム番号。最小: `0`。最大: `127`。
-  - **`midi_notes`** *(object, required)*: サンプリングするMIDIノート番号のリスト。*[#/definitions/def_midi_byte_range](#definitions/def_midi_byte_range)*を参照。
+  - **`midi_notes`** *(array, required)*: サンプリングするMIDIノート番号のリスト。
+    - **項目**
+      - **以下のいずれか**
+        - : MIDIノート番号。*[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
+        - : MIDIノート範囲。*[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*を参照。
   - **`midi_velocity_layers`** *(配列, 必須)*: サンプリングするベロシティレイヤーのリスト。
     - **アイテム**: *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)* を参照。
   - **`midi_pre_wait_duration`** *(number, required)*: サンプリング前の待機時間（秒単位）。`0.6`秒以上が推奨される。
@@ -232,40 +236,29 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midi_byte_range"></a>**`def_midi_byte_range`** *(array)*: 個別の連続するMIDIメッセージバイト値の配列に加え、指定された範囲の表現をサポートします。
-  - **`data`**
-    - **いずれか**
-      - *integer*: バイト値。最小: `0`。最大: `127`。
-      - *object*: バイト値の範囲。
-        - **`from`** *(integer, required)*: 開始バイト値。最小: `0`。最大: `127`。
-        - **`to`** *(integer, required)*: 終了バイト値。最小: `0`。最大: `127`。
+- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(integer)*: MIDIメッセージバイトの値を表す（0-127）。最小値: `0`。最大値: `127`。
+- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(object)*: 整数値の範囲を表す。
+  - **`from`** *(integer)*
+  - **`to`** *(integer)*
 
   例:
   ```json
-  [
-      40,
-      41
-  ]
+  {
+      "from": 10,
+      "to": 100
+  }
   ```
 
-  ```json
-  [
-      {
-          "from": 10,
-          "to": 100
-      }
-  ]
-  ```
+- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(object)*: MIDIメッセージバイトの値の範囲（0-127）を表す。
+  - **`from`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
+  - **`to`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
 
+  例:
   ```json
-  [
-      40,
-      41,
-      {
-          "from": 10,
-          "to": 100
-      }
-  ]
+  {
+      "from": 10,
+      "to": 100
+  }
   ```
 
 - <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(オブジェクト)*: ベロシティレイヤー設定。
