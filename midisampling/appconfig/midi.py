@@ -1,4 +1,5 @@
 from typing import List
+import abc
 import os
 import sys
 import json
@@ -83,6 +84,39 @@ def _parse_midi_byte_range(json_body: dict) -> List[int]:
             raise ValueError(f"Invalid data format (={json_body})")
 
     return result
+
+class KeyMapUnit:
+    """
+    Represents the smallest unit of keymap data
+    """
+    def __init__(self, key_root: int, key_low: int, key_high: int, velocity: int, low_velocity: int, high_velocity: int) -> None:
+        self.key_root: int      = key_root
+        self.key_low: int       = key_low
+        self.key_high: int      = key_high
+        self.velocity: int      = velocity
+        self.low_velocity: int  = low_velocity
+        self.high_velocity: int = high_velocity
+
+    @classmethod
+    def __from_keymap_complex(keymap_complex: dict) -> List['KeyMapUnit']:
+        """
+        Create KeyMapUnit list from json data (keymap_complex)
+        """
+        pass
+
+    @classmethod
+    def __from_keymap_simple(keymap_simple: dict) -> List['KeyMapUnit']:
+        """
+        Create KeyMapUnit list from json data (keymap_simple)
+        """
+        pass
+
+    @classmethod
+    def from_keymap(keymap_json: dict) -> List['KeyMapUnit']:
+        """
+        Create KeyMapUnit list from json data
+        """
+        pass
 
 class MidiConfig:
 
