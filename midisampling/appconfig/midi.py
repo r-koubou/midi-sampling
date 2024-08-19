@@ -1,5 +1,6 @@
 from typing import List
 import os
+import sys
 import json
 import jsonschema
 
@@ -135,3 +136,20 @@ class MidiConfig:
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(f"Validation tool for MIDI config file")
+        print(f"Usage: python -m {__spec__.name} <config_file>")
+        sys.exit(1)
+
+    config_path = sys.argv[1]
+
+    try:
+        with open(config_path, "r") as f:
+            config_json = json.load(f)
+            jsonschema.validate(config_json, config_json_schema)
+        print("Validation OK")
+    except Exception as e:
+        print(f"Validation failed: {e}")
