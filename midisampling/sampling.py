@@ -18,7 +18,7 @@ from midisampling.device.SdAudioDevice import SdAudioDevice
 from midisampling.appconfig.sampling import SamplingConfig
 from midisampling.appconfig.sampling import load as load_samplingconfig
 
-from midisampling.appconfig.midi import MidiConfig
+from midisampling.appconfig.midi import MidiConfig, SampleZone
 from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
@@ -143,9 +143,7 @@ def main(args):
         #---------------------------------------------------------------------------
 
         # Calculate total sampling count
-        total_sampling_count = len(program_change_list) * len(sample_zone)
-        for k in sample_zone:
-            total_sampling_count *= len(k.velocity_layers)
+        total_sampling_count = len(program_change_list) * SampleZone.get_total_sample_count(sample_zone)
 
         if total_sampling_count == 0:
             logger.warning("No sampling target (Sample zone is empty)")
