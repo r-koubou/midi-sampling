@@ -18,7 +18,7 @@ from midisampling.device.SdAudioDevice import SdAudioDevice
 from midisampling.appconfig.sampling import SamplingConfig
 from midisampling.appconfig.sampling import load as load_samplingconfig
 
-from midisampling.appconfig.midi import MidiConfig, VelocityLayer, KeyMapUnit
+from midisampling.appconfig.midi import MidiConfig
 from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
@@ -31,29 +31,37 @@ def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, 
     Get output file prefix from dynamic format string
 
     Args:
-        format_string (str): string.format compatible format string. available placeholders are {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity} and Python format specifiers are also available.
+        format_string (str): string.format compatible format string. available placeholders are
+            {pc_msb}, {pc_lsb}, {pc},
+            {key_root}, {key_low}, {key_high},
+            {velocity}, {min_velocity}, {max_velocity}
+            and Python format specifiers are also available.
         pc_msb (int): Program Change MSB
         pc_lsb (int): Program Change LSB
         pc_value: Program Change Value
-        note (int): MIDI Note
+        key_root (int): Keymap: Root key (Send as MIDI note number to device)
+        key_low (int): Keymap: Low key
+        key_high (int): Keymap: High key
         min_velocity (int): Velocity Layer: Minimum definition
         max_velocity (int): Velocity Layer: Maximum definition
-        velocity (int): MIDI Velocity
+        velocity (int): Send as MIDI velocity to device
 
     Returns:
         str: formatted string
     """
+
+    logger.debug(f"{get_output_file_prefix.__name__}: {locals()}")
+
     format_value = {
         "pc_msb": pc_msb,
         "pc_lsb": pc_lsb,
         "pc": pc_value,
-        "note": key_root, # deprecated
         "key_root": key_root,
         "key_low": key_low,
         "key_high": key_high,
+        "velocity": velocity,
         "min_velocity": min_velocity,
         "max_velocity": max_velocity,
-        "velocity": velocity # deprecated
     }
 
     return dynamic_format.format(format_string=format_string, data=format_value)
@@ -87,8 +95,6 @@ def main(args):
     program_change_list         = midi_config.program_change_list
     midi_channel                = midi_config.midi_channel
     midi_keymaps                = midi_config.keymaps
-    midi_notes                  = midi_config.midi_notes
-    midi_velocities             = midi_config.midi_velocity_layers
     midi_note_duration          = midi_config.midi_note_duration
     midi_pre_duration           = midi_config.midi_pre_wait_duration
     midi_release_duration       = midi_config.midi_release_duration

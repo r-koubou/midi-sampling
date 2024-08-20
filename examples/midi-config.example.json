@@ -10,21 +10,6 @@
     "midi_program_change_list": [
         { "msb": 0, "lsb": 0, "program": 48}
     ],
-    "midi_velocity_layers": [
-        {
-            "min": 0,
-            "max": 63,
-            "send": 63
-        },
-        {
-            "min": 64,
-            "max": 127,
-            "send": 127
-        }
-    ],
-    "midi_notes": [
-        { "from": 40, "to": 41 }, 90
-    ],
     "midi_keymaps": [
         {
             "key_root": {"from": 40, "to": 41},

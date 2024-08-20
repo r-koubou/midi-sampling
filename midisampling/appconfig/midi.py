@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import jsonschema
+
 import traceback
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -84,26 +85,11 @@ def _parse_midi_byte_range(json_body: any) -> List[int]:
 
     return result
 
-
-def _parse_midi_byte_range_array(json_body: dict) -> List[int]:
-    """
-    Parse MIDI byte range from JSON body to list of int
-    Parameters
-    ----------
-    json_body : dict
-        JSON body to parse (schema:midi-byte-range.schema.json)
-
-    Returns
-    -------
-    List[int]
-        List of int values of MIDI byte range
-    """
-    result: List[int] = []
-
-    for data in json_body:
-        result += _parse_midi_byte_range(data)
-
-    return result
+class ProgramChange:
+    def __init__(self, progarm_change: dict) -> None:
+        self.msb: int     = progarm_change["msb"]
+        self.lsb: int     = progarm_change["lsb"]
+        self.program: int = progarm_change["program"]
 
 class VelocityLayer:
     def __init__(self, velocity_layer: dict) -> None:
@@ -188,45 +174,25 @@ class KeyMapUnit:
         return result
 
 class MidiConfig:
-
-    # deprecated
-    class ProgramChange:
-        def __init__(self, progarm_change: dict) -> None:
-            self.msb: int     = progarm_change["msb"]
-            self.lsb: int     = progarm_change["lsb"]
-            self.program: int = progarm_change["program"]
-
-    # deprecated
-    class VelocityLayer:
-        def __init__(self, velocity_layer: dict) -> None:
-            self.min_velocity: int  = velocity_layer["min"]
-            self.max_velocity: int  = velocity_layer["max"]
-            self.send_velocity: int = velocity_layer["send"]
-
     def __init__(self, config_path: str) -> None:
         with open(config_path, "r") as f:
             config_json = json.load(f)
             jsonschema.validate(config_json, config_json_schema)
 
-        self.config_path: str                                       = config_path
-        self.config_dir: str                                        = os.path.abspath(os.path.dirname(config_path))
-        self.output_dir: str                                        = config_json["output_dir"]
-        self.processed_output_dir: str                              = config_json["processed_output_dir"]
-        self.output_prefix_format: str                              = config_json["output_prefix_format"]
-        self.pre_send_smf_path_list: List[str]                      = config_json["pre_send_smf_path_list"]
-        self.midi_channel: int                                      = config_json["midi_channel"]
-        self.program_change_list: List[MidiConfig.ProgramChange]    = []
-        self.midi_notes: List[int]                                  = _parse_midi_byte_range_array(config_json["midi_notes"])
-        self.midi_velocity_layers: List[MidiConfig.VelocityLayer]   = []
-        self.midi_pre_wait_duration: float                          = config_json["midi_pre_wait_duration"]
-        self.midi_note_duration: int                                = config_json["midi_note_duration"]
-        self.midi_release_duration: float                           = config_json["midi_release_duration"]
+        self.config_path: str                           = config_path
+        self.config_dir: str                            = os.path.abspath(os.path.dirname(config_path))
+        self.output_dir: str                            = config_json["output_dir"]
+        self.processed_output_dir: str                  = config_json["processed_output_dir"]
+        self.output_prefix_format: str                  = config_json["output_prefix_format"]
+        self.pre_send_smf_path_list: List[str]          = config_json["pre_send_smf_path_list"]
+        self.midi_channel: int                          = config_json["midi_channel"]
+        self.program_change_list: List[ProgramChange]   = []
+        self.midi_pre_wait_duration: float              = config_json["midi_pre_wait_duration"]
+        self.midi_note_duration: int                    = config_json["midi_note_duration"]
+        self.midi_release_duration: float               = config_json["midi_release_duration"]
 
         for pc in config_json["midi_program_change_list"]:
-            self.program_change_list.append(MidiConfig.ProgramChange(pc))
-
-        for x in config_json["midi_velocity_layers"]:
-            self.midi_velocity_layers.append(MidiConfig.VelocityLayer(x))
+            self.program_change_list.append(ProgramChange(pc))
 
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
@@ -235,12 +201,6 @@ class MidiConfig:
 
         # Keymap
         self.keymaps = KeyMapUnit.from_keymap(config_json)
-
-    def to_send_velocity_values(self) -> List[int]:
-        """
-        Returns the list of send velocity values to be used in the MIDI note on message
-        """
-        return [x.send_velocity for x in self.velocity_layers]
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)

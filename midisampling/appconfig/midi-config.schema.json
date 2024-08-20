@@ -18,8 +18,8 @@
                 },
                 "output_prefix_format": {
                     "type": "string",
-                    "description": "Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {min_velocity} {max_velocity} {velocity}.",
-                    "default": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"
+                    "description": "Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {min_velocity} {max_velocity} {velocity}.",
+                    "default": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"
                 },
                 "pre_send_smf_path_list" : {
                     "type":"array",
@@ -64,30 +64,6 @@
                         }
                     }
                 },
-                "midi_notes": {
-                    "type": "array",
-                    "description": "List of MIDI note numbers to be sampled.",
-                    "items": {
-                        "anyOf": [
-                            {
-                                "description": "MIDI note number.",
-                                "$ref": "#/definitions/def_midi_message_byte"
-                            },
-                            {
-                                "description": "MIDI note range.",
-                                "$ref": "#/definitions/def_midi_message_byte_range"
-                            }
-                        ]
-                    }
-                },
-                "midi_velocity_layers": {
-                    "type": "array",
-                    "description": "List of velocity layers to be sampled.",
-
-                    "items": {
-                        "$ref": "#/definitions/def_midivelocity_layer"
-                    }
-                },
                 "midi_keymaps_complex" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
@@ -120,8 +96,6 @@
                 "processed_output_dir",
                 "midi_channel",
                 "midi_program_change_list",
-                "midi_velocity_layers",
-                "midi_notes",
                 "midi_pre_wait_duration",
                 "midi_note_duration",
                 "midi_release_duration"
@@ -130,7 +104,7 @@
                 {
                     "output_dir": "_recorded",
                     "processed_output_dir": "_recorded/_processed",
-                    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
+                    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
                     "pre_send_smf_path_list": [
                         "path/to/GM_Reset.mid",
                         "path/to/CC_Init.mid"
@@ -141,20 +115,31 @@
                         { "msb": 0, "lsb": 0, "program": 1},
                         { "msb": 0, "lsb": 0, "program": 2}
                     ],
-                    "midi_velocity_layers": [
+                    "midi_keymaps": [
                         {
-                            "min": 0,
-                            "max": 63,
-                            "send": 63
-                        },
-                        {
-                            "min": 64,
-                            "max": 127,
-                            "send": 127
+                            "key_root": {"from": 40, "to": 41},
+                            "velocity_layers": [
+                                {
+                                    "min": 0,
+                                    "max": 63,
+                                    "send": 63
+                                }
+                            ]
                         }
                     ],
-                    "midi_notes" : [
-                        { "from": 40, "to": 43 }, 80
+                    "midi_keymaps_complex": [
+                        {
+                            "key_low": 0,
+                            "key_high": 0,
+                            "key_root": 40,
+                            "velocity_layers": [
+                                {
+                                    "min": 0,
+                                    "max": 63,
+                                    "send": 63
+                                }
+                            ]
+                        }
                     ],
                     "midi_pre_wait_duration": 0.6,
                     "midi_note_duration": 2,
