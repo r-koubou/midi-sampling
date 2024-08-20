@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import jsonschema
+import traceback
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -56,8 +57,35 @@ def _to_abs_filepath_list(base_dir: str, file_path_list: List[str]) -> str:
 
     return result
 
+def _parse_midi_byte_range(json_body: any) -> List[int]:
+    """
+    Parse MIDI byte range from JSON body to list of int
+    Parameters
+    ----------
+    json_body : dict
+        JSON body to parse (schema:midi-byte-range.schema.json)
 
-def _parse_midi_byte_range(json_body: dict) -> List[int]:
+    Returns
+    -------
+    List[int]
+        List of int values of MIDI byte range
+    """
+    result: List[int] = []
+
+    # from - to value
+    if type(json_body) == dict:
+        for i in range(json_body["from"], json_body["to"]+1):
+            result.append(i)
+    # single integer
+    elif type(json_body) == int:
+        result.append(json_body)
+    else:
+        raise ValueError(f"Invalid data format type={type(json_body)}, (={json_body})")
+
+    return result
+
+
+def _parse_midi_byte_range_array(json_body: dict) -> List[int]:
     """
     Parse MIDI byte range from JSON body to list of int
     Parameters
@@ -73,50 +101,72 @@ def _parse_midi_byte_range(json_body: dict) -> List[int]:
     result: List[int] = []
 
     for data in json_body:
-        # from - to value
-        if type(data) == dict:
-            for i in range(data["from"], data["to"]+1):
-                result.append(i)
-        # single integer
-        elif type(data) == int:
-            result.append(data)
-        else:
-            raise ValueError(f"Invalid data format (={json_body})")
+        result += _parse_midi_byte_range(data)
 
     return result
+
+class VelocityLayer:
+    def __init__(self, velocity_layer: dict) -> None:
+        self.min_velocity: int  = velocity_layer["min"]
+        self.max_velocity: int  = velocity_layer["max"]
+        self.send_velocity: int = velocity_layer["send"]
 
 class KeyMapUnit:
     """
     Represents the smallest unit of keymap data
     """
-    def __init__(self, key_root: int, key_low: int, key_high: int, velocity: int, low_velocity: int, high_velocity: int) -> None:
-        self.key_root: int      = key_root
-        self.key_low: int       = key_low
-        self.key_high: int      = key_high
-        self.velocity: int      = velocity
-        self.low_velocity: int  = low_velocity
-        self.high_velocity: int = high_velocity
+    def __init__(self, key_root: int, key_low: int, key_high: int, velocity_layers: List[VelocityLayer]) -> None:
+        self.key_root: int  = key_root
+        self.key_low: int   = key_low
+        self.key_high: int  = key_high
+        self.velocity_layers: List[VelocityLayer] = velocity_layers
+
+    def __str__(self) -> str:
+        return f"{self.__dict__}"
 
     @classmethod
-    def __from_keymap_complex(keymap_complex: dict) -> List['KeyMapUnit']:
+    def __from_keymap_complex(cls, keymap_complex: dict) -> List['KeyMapUnit']:
         """
         Create KeyMapUnit list from json data (keymap_complex)
         """
-        pass
+        return []
 
     @classmethod
-    def __from_keymap_simple(keymap_simple: dict) -> List['KeyMapUnit']:
+    def __from_keymap_simple(cls, keymap_simple: dict) -> List['KeyMapUnit']:
         """
         Create KeyMapUnit list from json data (keymap_simple)
         """
-        pass
+        result: List['KeyMapUnit'] = []
+
+        for key in keymap_simple:
+            notes = _parse_midi_byte_range(key["key_root"])
+            velocity_layers: List[VelocityLayer] = []
+
+            for x in key["velocity_layers"]:
+                velocity_layers.append(VelocityLayer(x))
+
+            for note in notes:
+                result.append(
+                    KeyMapUnit(
+                        key_root=note, key_low=note, key_high=note,
+                        velocity_layers=velocity_layers
+                    )
+                )
+
+        return result
 
     @classmethod
-    def from_keymap(keymap_json: dict) -> List['KeyMapUnit']:
+    def from_keymap(cls, config_json: dict) -> List['KeyMapUnit']:
         """
         Create KeyMapUnit list from json data
         """
-        pass
+        result: List['KeyMapUnit'] = []
+        if "midi_keymap_complex" in config_json:
+            result.extend(KeyMapUnit.__from_keymap_complex(config_json["midi_keymap_complex"]))
+        if "midi_keymap_simple" in config_json:
+            result.extend(KeyMapUnit.__from_keymap_simple(config_json["midi_keymap_simple"]))
+
+        return result
 
 class MidiConfig:
 
@@ -145,7 +195,7 @@ class MidiConfig:
         self.pre_send_smf_path_list: List[str]                      = config_json["pre_send_smf_path_list"]
         self.midi_channel: int                                      = config_json["midi_channel"]
         self.program_change_list: List[MidiConfig.ProgramChange]    = []
-        self.midi_notes: List[int]                                  = _parse_midi_byte_range(config_json["midi_notes"])
+        self.midi_notes: List[int]                                  = _parse_midi_byte_range_array(config_json["midi_notes"])
         self.midi_velocity_layers: List[MidiConfig.VelocityLayer]   = []
         self.midi_pre_wait_duration: float                          = config_json["midi_pre_wait_duration"]
         self.midi_note_duration: int                                = config_json["midi_note_duration"]
@@ -161,6 +211,9 @@ class MidiConfig:
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
         self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
         self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
+
+        # Keymap
+        self.keymaps = KeyMapUnit.from_keymap(config_json)
 
     def to_send_velocity_values(self) -> List[int]:
         """
@@ -185,5 +238,7 @@ if __name__ == "__main__":
             config_json = json.load(f)
             jsonschema.validate(config_json, config_json_schema)
         print("Validation OK")
+        MidiConfig(config_path)
     except Exception as e:
         print(f"Validation failed: {e}")
+        traceback.print_exc()
