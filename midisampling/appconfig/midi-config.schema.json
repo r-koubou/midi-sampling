@@ -64,18 +64,18 @@
                         }
                     }
                 },
-                "midi_keymaps_complex" :{
+                "sample_zone_complex" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {
-                        "$ref": "#/definitions/def_keymap_complex"
+                        "$ref": "#/definitions/def_sample_zone_complex"
                     }
                 },
-                "midi_keymaps" :{
+                "sample_zone" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {
-                        "$ref": "#/definitions/def_midi_keymap_simple"
+                        "$ref": "#/definitions/def_sample_zone"
                     }
                 },
                 "midi_pre_wait_duration": {
@@ -115,7 +115,7 @@
                         { "msb": 0, "lsb": 0, "program": 1},
                         { "msb": 0, "lsb": 0, "program": 2}
                     ],
-                    "midi_keymaps": [
+                    "sample_zone": [
                         {
                             "key_root": {"from": 40, "to": 41},
                             "velocity_layers": [
@@ -127,7 +127,7 @@
                             ]
                         }
                     ],
-                    "midi_keymaps_complex": [
+                    "sample_zone_complex": [
                         {
                             "key_low": 0,
                             "key_high": 0,
@@ -230,10 +230,10 @@
                 }
             ]
         },
-        "def_keymap_complex": {
+        "def_sample_zone_complex": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Keymap complex configuration. The key range, root key, must be specified explicitly.",
+            "description": "Sample zone complex configuration. The key range, root key, must be specified explicitly.",
             "properties": {
                 "key_low": {
                     "type": "integer",
@@ -282,10 +282,10 @@
                 }
             ]
         },
-        "def_midi_keymap_simple": {
+        "def_sample_zone": {
             "type": "object",
             "additionalProperties": false,
-            "description": "A simple configuration of the keymap. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`.",
+            "description": "A simple configuration of sample zone. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`.",
             "properties": {
                 "keys": {
                     "description": "Root key number (note number) in the keymap.",

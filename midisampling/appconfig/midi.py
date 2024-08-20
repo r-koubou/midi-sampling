@@ -97,9 +97,9 @@ class VelocityLayer:
         self.max_velocity: int  = velocity_layer["max"]
         self.send_velocity: int = velocity_layer["send"]
 
-class KeyMapUnit:
+class SampleZone:
     """
-    Represents the smallest unit of keymap data
+    Represents the smallest unit of sample zone data
     """
     def __init__(self, key_root: int, key_low: int, key_high: int, velocity_layers: List[VelocityLayer]) -> None:
         self.key_root: int  = key_root
@@ -111,13 +111,13 @@ class KeyMapUnit:
         return f"{self.__dict__}"
 
     @classmethod
-    def __from_keymap_complex(cls, keymap_complex: dict) -> List['KeyMapUnit']:
+    def __from_zone_complex_json(cls, zone_complex: dict) -> List['SampleZone']:
         """
-        Create KeyMapUnit list from json data (keymap_complex)
+        Create SampleZone list from json data (sample_zone_complex)
         """
-        result: List['KeyMapUnit'] = []
+        result: List['SampleZone'] = []
 
-        for key in keymap_complex:
+        for key in zone_complex:
             key_root = key["key_root"]
             key_low  = key["key_low"]
             key_high = key["key_high"]
@@ -128,7 +128,7 @@ class KeyMapUnit:
                 velocity_layers.append(VelocityLayer(x))
 
             result.append(
-                KeyMapUnit(
+                SampleZone(
                     key_root=key_root, key_low=key_low, key_high=key_high,
                     velocity_layers=velocity_layers
                 )
@@ -137,13 +137,13 @@ class KeyMapUnit:
         return result
 
     @classmethod
-    def __from_keymap_simple(cls, keymap_simple: dict) -> List['KeyMapUnit']:
+    def __from_sample_simple_json(cls, zone_simple: dict) -> List['SampleZone']:
         """
-        Create KeyMapUnit list from json data (keymap_simple)
+        Create SampleZone list from json data (sample_zone)
         """
-        result: List['KeyMapUnit'] = []
+        result: List['SampleZone'] = []
 
-        for key in keymap_simple:
+        for key in zone_simple:
             notes = _parse_midi_byte_range(key["keys"])
             velocity_layers: List[VelocityLayer] = []
 
@@ -152,7 +152,7 @@ class KeyMapUnit:
 
             for note in notes:
                 result.append(
-                    KeyMapUnit(
+                    SampleZone(
                         key_root=note, key_low=note, key_high=note,
                         velocity_layers=velocity_layers
                     )
@@ -161,15 +161,15 @@ class KeyMapUnit:
         return result
 
     @classmethod
-    def from_keymap(cls, config_json: dict) -> List['KeyMapUnit']:
+    def from_json(cls, config_json: dict) -> List['SampleZone']:
         """
-        Create KeyMapUnit list from json data
+        Create SampleZone list from json data
         """
-        result: List['KeyMapUnit'] = []
-        if "midi_keymaps_complex" in config_json:
-            result.extend(KeyMapUnit.__from_keymap_complex(config_json["midi_keymaps_complex"]))
-        if "midi_keymaps" in config_json:
-            result.extend(KeyMapUnit.__from_keymap_simple(config_json["midi_keymaps"]))
+        result: List['SampleZone'] = []
+        if "sample_zone_complex" in config_json:
+            result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"]))
+        if "sample_zone" in config_json:
+            result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"]))
 
         return result
 
@@ -191,6 +191,7 @@ class MidiConfig:
         self.midi_note_duration: int                    = config_json["midi_note_duration"]
         self.midi_release_duration: float               = config_json["midi_release_duration"]
 
+        # Program Change
         for pc in config_json["midi_program_change_list"]:
             self.program_change_list.append(ProgramChange(pc))
 
@@ -199,8 +200,9 @@ class MidiConfig:
         self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
         self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
 
-        # Keymap
-        self.keymaps = KeyMapUnit.from_keymap(config_json)
+        # Zone
+        self.sample_zone = SampleZone.from_json(config_json)
+
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)
@@ -220,6 +222,7 @@ if __name__ == "__main__":
             jsonschema.validate(config_json, config_json_schema)
         print("Validation OK")
         MidiConfig(config_path)
+        print("Deserialization OK")
     except Exception as e:
         print(f"Validation failed: {e}")
         traceback.print_exc()
