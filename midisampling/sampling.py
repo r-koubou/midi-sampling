@@ -136,14 +136,21 @@ def main(args):
         # Sampling
         #---------------------------------------------------------------------------
 
+        # Calculate total sampling count
+        total_sampling_count = len(program_change_list) * len(midi_keymaps)
+        for k in midi_keymaps:
+            total_sampling_count *= len(k.velocity_layers)
+
+        if total_sampling_count == 0:
+            logger.warning("No sampling target (Notes or Velocity Layer in Keymap is empty)")
+            return
+
         # Send MIDI from file to device before sampling
         if len(pre_send_smf_path_list) > 0:
             for file in pre_send_smf_path_list:
                 logger.info(f"Send MIDI from file: {file}")
                 midi_device.send_message_from_file(file)
 
-        # Calculate total sampling count
-        total_sampling_count = len(program_change_list) * len(midi_notes) * len(midi_velocities)
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -166,7 +173,7 @@ def main(args):
                     time.sleep(midi_pre_duration)
 
                     # Play MIDI
-                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {keymap.key_root:3d}, Velocity: {velocity.send_velocity:3d}")
+                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {keymap.key_root:3d}, Velocity: {velocity.send_velocity:3d} (Key Low:{keymap.key_low:3d}, Key High:{keymap.key_high:3d}, Min Velocity:{velocity.min_velocity:3d}, Max Velocity:{velocity.max_velocity:3d})")
                     midi_device.play_note(midi_channel, keymap.key_root, velocity.send_velocity, midi_note_duration)
 
                     time.sleep(midi_release_duration)

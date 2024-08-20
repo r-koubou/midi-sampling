@@ -88,14 +88,14 @@
                         "$ref": "#/definitions/def_midivelocity_layer"
                     }
                 },
-                "midi_keymap_complex" :{
+                "midi_keymaps_complex" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {
                         "$ref": "#/definitions/def_keymap_complex"
                     }
                 },
-                "midi_keymap_simple" :{
+                "midi_keymaps" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {

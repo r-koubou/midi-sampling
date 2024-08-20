@@ -129,7 +129,26 @@ class KeyMapUnit:
         """
         Create KeyMapUnit list from json data (keymap_complex)
         """
-        return []
+        result: List['KeyMapUnit'] = []
+
+        for key in keymap_complex:
+            key_root = key["key_root"]
+            key_low  = key["key_low"]
+            key_high = key["key_high"]
+
+            velocity_layers: List[VelocityLayer] = []
+
+            for x in key["velocity_layers"]:
+                velocity_layers.append(VelocityLayer(x))
+
+            result.append(
+                KeyMapUnit(
+                    key_root=key_root, key_low=key_low, key_high=key_high,
+                    velocity_layers=velocity_layers
+                )
+            )
+
+        return result
 
     @classmethod
     def __from_keymap_simple(cls, keymap_simple: dict) -> List['KeyMapUnit']:
@@ -161,21 +180,23 @@ class KeyMapUnit:
         Create KeyMapUnit list from json data
         """
         result: List['KeyMapUnit'] = []
-        if "midi_keymap_complex" in config_json:
-            result.extend(KeyMapUnit.__from_keymap_complex(config_json["midi_keymap_complex"]))
-        if "midi_keymap_simple" in config_json:
-            result.extend(KeyMapUnit.__from_keymap_simple(config_json["midi_keymap_simple"]))
+        if "midi_keymaps_complex" in config_json:
+            result.extend(KeyMapUnit.__from_keymap_complex(config_json["midi_keymaps_complex"]))
+        if "midi_keymaps" in config_json:
+            result.extend(KeyMapUnit.__from_keymap_simple(config_json["midi_keymaps"]))
 
         return result
 
 class MidiConfig:
 
+    # deprecated
     class ProgramChange:
         def __init__(self, progarm_change: dict) -> None:
             self.msb: int     = progarm_change["msb"]
             self.lsb: int     = progarm_change["lsb"]
             self.program: int = progarm_change["program"]
 
+    # deprecated
     class VelocityLayer:
         def __init__(self, velocity_layer: dict) -> None:
             self.min_velocity: int  = velocity_layer["min"]
