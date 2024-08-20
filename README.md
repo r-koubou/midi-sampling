@@ -115,7 +115,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 - **`audio_channels`** *(integer, required)*: Number of channels in the sampled audio file.
 - **`audio_sample_rate`** *(integer, required)*: Sampling rate of the audio file.
-- **`audio_sample_bits`** *(integer, required)*: Bit depth of the sampled audio file. Must be one of: `[8, 16, 32]`.
+- **`audio_sample_bits`** *(integer, required)*: Bit depth of the sampled audio file. Must be one of: `[16, 32]`.
 - **`audio_sample_bits_format`** *(string, required)*: Format of the bit depth of the sampled audio file. Must be one of: `["int", "float"]`.
 - **`audio_in_device`** *(object, required)*
   - **`name`** *(string, required)*: Name of the input device for the sampled audio file.
