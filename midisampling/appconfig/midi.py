@@ -144,7 +144,7 @@ class KeyMapUnit:
         result: List['KeyMapUnit'] = []
 
         for key in keymap_simple:
-            notes = _parse_midi_byte_range(key["key_root"])
+            notes = _parse_midi_byte_range(key["keys"])
             velocity_layers: List[VelocityLayer] = []
 
             for x in key["velocity_layers"]:
