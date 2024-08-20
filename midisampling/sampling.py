@@ -26,31 +26,42 @@ import midisampling.dynamic_format as dynamic_format
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
-def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, note: int, min_velocity:int, max_velocity:int, velocity: int):
+def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int):
     """
     Get output file prefix from dynamic format string
 
     Args:
-        format_string (str): string.format compatible format string. available placeholders are {pc_msb}, {pc_lsb}, {pc}, {note}, {velocity} and Python format specifiers are also available.
+        format_string (str): string.format compatible format string. available placeholders are
+            {pc_msb}, {pc_lsb}, {pc},
+            {key_root}, {key_low}, {key_high},
+            {velocity}, {min_velocity}, {max_velocity}
+            and Python format specifiers are also available.
         pc_msb (int): Program Change MSB
         pc_lsb (int): Program Change LSB
         pc_value: Program Change Value
-        note (int): MIDI Note
+        key_root (int): Zone: Root key (Send as MIDI note number to device)
+        key_low (int): Zone: Low key
+        key_high (int): Zone: High key
         min_velocity (int): Velocity Layer: Minimum definition
         max_velocity (int): Velocity Layer: Maximum definition
-        velocity (int): MIDI Velocity
+        velocity (int): Send as MIDI velocity to device
 
     Returns:
         str: formatted string
     """
+
+    logger.debug(f"{get_output_file_prefix.__name__}: {locals()}")
+
     format_value = {
         "pc_msb": pc_msb,
         "pc_lsb": pc_lsb,
         "pc": pc_value,
-        "note": note,
+        "key_root": key_root,
+        "key_low": key_low,
+        "key_high": key_high,
+        "velocity": velocity,
         "min_velocity": min_velocity,
         "max_velocity": max_velocity,
-        "velocity": velocity
     }
 
     return dynamic_format.format(format_string=format_string, data=format_value)
@@ -83,8 +94,7 @@ def main(args):
 
     program_change_list         = midi_config.program_change_list
     midi_channel                = midi_config.midi_channel
-    midi_notes                  = midi_config.midi_notes
-    midi_velocities             = midi_config.midi_velocity_layers
+    sample_zone                 = midi_config.sample_zone
     midi_note_duration          = midi_config.midi_note_duration
     midi_pre_duration           = midi_config.midi_pre_wait_duration
     midi_release_duration       = midi_config.midi_release_duration
@@ -132,14 +142,21 @@ def main(args):
         # Sampling
         #---------------------------------------------------------------------------
 
+        # Calculate total sampling count
+        total_sampling_count = len(program_change_list) * len(sample_zone)
+        for k in sample_zone:
+            total_sampling_count *= len(k.velocity_layers)
+
+        if total_sampling_count == 0:
+            logger.warning("No sampling target (Sample zone is empty)")
+            return
+
         # Send MIDI from file to device before sampling
         if len(pre_send_smf_path_list) > 0:
             for file in pre_send_smf_path_list:
                 logger.info(f"Send MIDI from file: {file}")
                 midi_device.send_message_from_file(file)
 
-        # Calculate total sampling count
-        total_sampling_count = len(program_change_list) * len(midi_notes) * len(midi_velocities)
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -153,8 +170,8 @@ def main(args):
             midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
             time.sleep(0.5)
 
-            for note in midi_notes:
-                for velocity in midi_velocities:
+            for zone in sample_zone:
+                for velocity in zone.velocity_layers:
                     # Record Audio
                     record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
 
@@ -162,8 +179,8 @@ def main(args):
                     time.sleep(midi_pre_duration)
 
                     # Play MIDI
-                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {note:3d}, Velocity: {velocity.send_velocity:3d}")
-                    midi_device.play_note(midi_channel, note, velocity.send_velocity, midi_note_duration)
+                    logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {zone.key_root:3d}, Velocity: {velocity.send_velocity:3d} (Key Low:{zone.key_low:3d}, Key High:{zone.key_high:3d}, Min Velocity:{velocity.min_velocity:3d}, Max Velocity:{velocity.max_velocity:3d})")
+                    midi_device.play_note(midi_channel, zone.key_root, velocity.send_velocity, midi_note_duration)
 
                     time.sleep(midi_release_duration)
 
@@ -175,7 +192,9 @@ def main(args):
                         pc_msb=program.msb,
                         pc_lsb=program.lsb,
                         pc_value=program.program,
-                        note=note,
+                        key_root=zone.key_root,
+                        key_low=zone.key_low,
+                        key_high=zone.key_high,
                         min_velocity=velocity.min_velocity,
                         max_velocity=velocity.max_velocity,
                         velocity=velocity.send_velocity

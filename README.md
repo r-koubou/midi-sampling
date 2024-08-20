@@ -155,25 +155,22 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 #### Definitions
 
-- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: The main configuration body.
+- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: The main configuration body. Cannot contain additional properties.
   - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
   - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
-  - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {note}, {min_velocity} {max_velocity} {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"`.
+  - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {min_velocity} {max_velocity} {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`.
   - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
     - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
   - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
   - **`midi_program_change_list`** *(array, required)*: List of MIDI program change (MSB, LSB, Program No) for sampling.
-    - **Items** *(object)*
+    - **Items** *(object)*: Cannot contain additional properties.
       - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
-  - **`midi_notes`** *(array, required)*: List of MIDI note numbers to be sampled.
-    - **Items**
-      - **Any of**
-        - : MIDI note number. Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
-        - : MIDI note range. Refer to *[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*.
-  - **`midi_velocity_layers`** *(array, required)*: List of velocity layers to be sampled.
-    - **Items**: Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+  - **`sample_zone_complex`** *(array)*: List of keymaps for the sampled MIDI notes.
+    - **Items**: Refer to *[#/definitions/def_sample_zone_complex](#definitions/def_sample_zone_complex)*.
+  - **`sample_zone`** *(array)*: List of keymaps for the sampled MIDI notes.
+    - **Items**: Refer to *[#/definitions/def_sample_zone](#definitions/def_sample_zone)*.
   - **`midi_pre_wait_duration`** *(number, required)*: Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended.
   - **`midi_note_duration`** *(integer, required)*: Length of the MIDI note to be sampled (in seconds). Only integer values can be specified.
   - **`midi_release_duration`** *(number, required)*: Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified.
@@ -183,7 +180,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   {
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
-      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
+      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
@@ -206,24 +203,34 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
               "program": 2
           }
       ],
-      "midi_velocity_layers": [
+      "sample_zone": [
           {
-              "min": 0,
-              "max": 63,
-              "send": 63
-          },
-          {
-              "min": 64,
-              "max": 127,
-              "send": 127
+              "key_root": {
+                  "from": 40,
+                  "to": 41
+              },
+              "velocity_layers": [
+                  {
+                      "min": 0,
+                      "max": 63,
+                      "send": 63
+                  }
+              ]
           }
       ],
-      "midi_notes": [
+      "sample_zone_complex": [
           {
-              "from": 40,
-              "to": 43
-          },
-          80
+              "key_low": 0,
+              "key_high": 0,
+              "key_root": 40,
+              "velocity_layers": [
+                  {
+                      "min": 0,
+                      "max": 63,
+                      "send": 63
+                  }
+              ]
+          }
       ],
       "midi_pre_wait_duration": 0.6,
       "midi_note_duration": 2,
@@ -232,9 +239,9 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   ```
 
 - <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(integer)*: Represents the value of the MIDI message byte (0-127). Minimum: `0`. Maximum: `127`.
-- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(object)*: Represents an integer value range.
-  - **`from`** *(integer)*
-  - **`to`** *(integer)*
+- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(object)*: Represents an integer value range. Cannot contain additional properties.
+  - **`from`** *(integer, required)*
+  - **`to`** *(integer, required)*
 
   Examples:
   ```json
@@ -244,7 +251,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   }
   ```
 
-- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(object)*: Represents the value range (0-127) of the MIDI message byte.
+- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(object)*: Represents the value range (0-127) of the MIDI message byte. Cannot contain additional properties.
   - **`from`**: Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
   - **`to`**: Refer to *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*.
 
@@ -256,7 +263,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   }
   ```
 
-- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(object)*: Velocity layer configuration.
+- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(object)*: Velocity layer configuration. Cannot contain additional properties.
   - **`min`** *(integer, required)*: Minimum velocity value. Minimum: `0`. Maximum: `127`.
   - **`max`** *(integer, required)*: Maximum velocity value. Minimum: `0`. Maximum: `127`.
   - **`send`** *(integer, required)*: Velocity value actually sent to the MIDI device when sampling. Minimum: `0`. Maximum: `127`.
@@ -267,6 +274,83 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       "min": 0,
       "max": 127,
       "send": 127
+  }
+  ```
+
+- <a id="definitions/def_sample_zone_complex"></a>**`def_sample_zone_complex`** *(object)*: Sample zone complex configuration. The key range, root key, must be specified explicitly. Cannot contain additional properties.
+  - **`key_low`** *(integer, required)*: Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software. Minimum: `0`. Maximum: `127`.
+  - **`key_high`** *(integer, required)*: Highest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software. Minimum: `0`. Maximum: `127`.
+  - **`key_root`** *(integer, required)*: Root key number (note number) in the keymap. This value is intended to be used as information for mapping note-on messages sent to MIDI devices and third-party sampler software when sampling. Minimum: `0`. Maximum: `127`.
+  - **`velocity_layers`** *(array, required)*
+    - **Items**:
+        - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+
+  Examples:
+  ```json
+  {
+      "key_low": 0,
+      "key_high": 32,
+      "key_root": 16,
+      "velocity_layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
+  }
+  ```
+
+- <a id="definitions/def_sample_zone"></a>**`def_sample_zone`** *(object)*: A simple configuration of sample zone. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`. Cannot contain additional properties.
+  - **`keys`**: Root key number (note number) in the keymap. Refer to *[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*.
+  - **`velocity_layers`** *(array, required)*
+    - **Items**:
+        - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+
+  Examples:
+  ```json
+  {
+      "keys": {
+          "from": 10,
+          "to": 100
+      },
+      "velocity_layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
   }
   ```
 

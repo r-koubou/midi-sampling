@@ -1,7 +1,11 @@
 from typing import List
+import abc
 import os
+import sys
 import json
 import jsonschema
+
+import traceback
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -54,8 +58,7 @@ def _to_abs_filepath_list(base_dir: str, file_path_list: List[str]) -> str:
 
     return result
 
-
-def _parse_midi_byte_range(json_body: dict) -> List[int]:
+def _parse_midi_byte_range(json_body: any) -> List[int]:
     """
     Parse MIDI byte range from JSON body to list of int
     Parameters
@@ -70,68 +73,156 @@ def _parse_midi_byte_range(json_body: dict) -> List[int]:
     """
     result: List[int] = []
 
-    for data in json_body:
-        # from - to value
-        if type(data) == dict:
-            for i in range(data["from"], data["to"]+1):
-                result.append(i)
-        # single integer
-        elif type(data) == int:
-            result.append(data)
-        else:
-            raise ValueError(f"Invalid data format (={json_body})")
+    # from - to value
+    if type(json_body) == dict:
+        for i in range(json_body["from"], json_body["to"]+1):
+            result.append(i)
+    # single integer
+    elif type(json_body) == int:
+        result.append(json_body)
+    else:
+        raise ValueError(f"Invalid data format type={type(json_body)}, (={json_body})")
 
     return result
 
+class ProgramChange:
+    def __init__(self, progarm_change: dict) -> None:
+        self.msb: int     = progarm_change["msb"]
+        self.lsb: int     = progarm_change["lsb"]
+        self.program: int = progarm_change["program"]
+
+class VelocityLayer:
+    def __init__(self, velocity_layer: dict) -> None:
+        self.min_velocity: int  = velocity_layer["min"]
+        self.max_velocity: int  = velocity_layer["max"]
+        self.send_velocity: int = velocity_layer["send"]
+
+class SampleZone:
+    """
+    Represents the smallest unit of sample zone data
+    """
+    def __init__(self, key_root: int, key_low: int, key_high: int, velocity_layers: List[VelocityLayer]) -> None:
+        self.key_root: int  = key_root
+        self.key_low: int   = key_low
+        self.key_high: int  = key_high
+        self.velocity_layers: List[VelocityLayer] = velocity_layers
+
+    def __str__(self) -> str:
+        return f"{self.__dict__}"
+
+    @classmethod
+    def __from_zone_complex_json(cls, zone_complex: dict) -> List['SampleZone']:
+        """
+        Create SampleZone list from json data (sample_zone_complex)
+        """
+        result: List['SampleZone'] = []
+
+        for key in zone_complex:
+            key_root = key["key_root"]
+            key_low  = key["key_low"]
+            key_high = key["key_high"]
+
+            velocity_layers: List[VelocityLayer] = []
+
+            for x in key["velocity_layers"]:
+                velocity_layers.append(VelocityLayer(x))
+
+            result.append(
+                SampleZone(
+                    key_root=key_root, key_low=key_low, key_high=key_high,
+                    velocity_layers=velocity_layers
+                )
+            )
+
+        return result
+
+    @classmethod
+    def __from_sample_simple_json(cls, zone_simple: dict) -> List['SampleZone']:
+        """
+        Create SampleZone list from json data (sample_zone)
+        """
+        result: List['SampleZone'] = []
+
+        for key in zone_simple:
+            notes = _parse_midi_byte_range(key["keys"])
+            velocity_layers: List[VelocityLayer] = []
+
+            for x in key["velocity_layers"]:
+                velocity_layers.append(VelocityLayer(x))
+
+            for note in notes:
+                result.append(
+                    SampleZone(
+                        key_root=note, key_low=note, key_high=note,
+                        velocity_layers=velocity_layers
+                    )
+                )
+
+        return result
+
+    @classmethod
+    def from_json(cls, config_json: dict) -> List['SampleZone']:
+        """
+        Create SampleZone list from json data
+        """
+        result: List['SampleZone'] = []
+        if "sample_zone_complex" in config_json:
+            result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"]))
+        if "sample_zone" in config_json:
+            result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"]))
+
+        return result
+
 class MidiConfig:
-
-    class ProgramChange:
-        def __init__(self, progarm_change: dict) -> None:
-            self.msb: int     = progarm_change["msb"]
-            self.lsb: int     = progarm_change["lsb"]
-            self.program: int = progarm_change["program"]
-
-    class VelocityLayer:
-        def __init__(self, velocity_layer: dict) -> None:
-            self.min_velocity: int  = velocity_layer["min"]
-            self.max_velocity: int  = velocity_layer["max"]
-            self.send_velocity: int = velocity_layer["send"]
-
     def __init__(self, config_path: str) -> None:
         with open(config_path, "r") as f:
             config_json = json.load(f)
             jsonschema.validate(config_json, config_json_schema)
 
-        self.config_path: str                                       = config_path
-        self.config_dir: str                                        = os.path.abspath(os.path.dirname(config_path))
-        self.output_dir: str                                        = config_json["output_dir"]
-        self.processed_output_dir: str                              = config_json["processed_output_dir"]
-        self.output_prefix_format: str                              = config_json["output_prefix_format"]
-        self.pre_send_smf_path_list: List[str]                      = config_json["pre_send_smf_path_list"]
-        self.midi_channel: int                                      = config_json["midi_channel"]
-        self.program_change_list: List[MidiConfig.ProgramChange]    = []
-        self.midi_notes: List[int]                                  = _parse_midi_byte_range(config_json["midi_notes"])
-        self.midi_velocity_layers: List[MidiConfig.VelocityLayer]   = []
-        self.midi_pre_wait_duration: float                          = config_json["midi_pre_wait_duration"]
-        self.midi_note_duration: int                                = config_json["midi_note_duration"]
-        self.midi_release_duration: float                           = config_json["midi_release_duration"]
+        self.config_path: str                           = config_path
+        self.config_dir: str                            = os.path.abspath(os.path.dirname(config_path))
+        self.output_dir: str                            = config_json["output_dir"]
+        self.processed_output_dir: str                  = config_json["processed_output_dir"]
+        self.output_prefix_format: str                  = config_json["output_prefix_format"]
+        self.pre_send_smf_path_list: List[str]          = config_json["pre_send_smf_path_list"]
+        self.midi_channel: int                          = config_json["midi_channel"]
+        self.program_change_list: List[ProgramChange]   = []
+        self.midi_pre_wait_duration: float              = config_json["midi_pre_wait_duration"]
+        self.midi_note_duration: int                    = config_json["midi_note_duration"]
+        self.midi_release_duration: float               = config_json["midi_release_duration"]
 
+        # Program Change
         for pc in config_json["midi_program_change_list"]:
-            self.program_change_list.append(MidiConfig.ProgramChange(pc))
-
-        for x in config_json["midi_velocity_layers"]:
-            self.midi_velocity_layers.append(MidiConfig.VelocityLayer(x))
+            self.program_change_list.append(ProgramChange(pc))
 
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
         self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
         self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
 
-    def to_send_velocity_values(self) -> List[int]:
-        """
-        Returns the list of send velocity values to be used in the MIDI note on message
-        """
-        return [x.send_velocity for x in self.velocity_layers]
+        # Zone
+        self.sample_zone = SampleZone.from_json(config_json)
+
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(f"Validation tool for MIDI config file")
+        print(f"Usage: python -m {__spec__.name} <config_file>")
+        sys.exit(1)
+
+    config_path = sys.argv[1]
+
+    try:
+        with open(config_path, "r") as f:
+            config_json = json.load(f)
+            jsonschema.validate(config_json, config_json_schema)
+        print("Validation OK")
+        MidiConfig(config_path)
+        print("Deserialization OK")
+    except Exception as e:
+        print(f"Validation failed: {e}")
+        traceback.print_exc()

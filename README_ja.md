@@ -154,41 +154,38 @@ python -m midisampling.device
   }
   ```
 
-### MIDIサンプリング設定
+### MIDIサンプリング構成
 
-*MIDIサンプリング設定の構成。*
+*MIDIサンプリング構成の構造。*
 
 #### 定義
 
-- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: 主な設定構成。
-  - **`output_dir`** *(string, required)*: サンプリングされた音声ファイルの出力ディレクトリ。
-  - **`processed_output_dir`** *(string, required)*: 処理済みのサンプリング音声ファイルの出力ディレクトリ。
-  - **`output_prefix_format`** *(文字列)*: サンプリングした音声ファイルのファイル名の接頭辞。このプレースホルダが使用可能: {pc_msb}, {pc_lsb}, {pc}, {note}, {min_velocity} {max_velocity} {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}"`。
-  - **`pre_send_smf_path_list`** *(array)*: サンプリングの前にMIDIデバイスに送信されるファイル（例: GMリセット、CCリセットなど）。デフォルト: `[]`。
-    - **Items** *(string)*: SMF(*.mid/*.midi)ファイルのパス。
-  - **`midi_channel`** *(integer, required)*: サンプリング用のMIDIチャンネル番号。最小: `0`。最大: `15`。
-  - **`midi_program_change_list`** *(array, required)*: サンプリング用のMIDIプログラムチェンジ（MSB、LSB、プログラム番号）のリスト。
-    - **Items** *(object)*
-      - **`msb`** *(integer)*: MIDIプログラムチェンジのMSB値。最小: `0`。最大: `127`。
-      - **`lsb`** *(integer)*: MIDIプログラムチェンジのLSB値。最小: `0`。最大: `127`。
-      - **`program`** *(integer)*: MIDIプログラムチェンジのプログラム番号。最小: `0`。最大: `127`。
-  - **`midi_notes`** *(array, required)*: サンプリングするMIDIノート番号のリスト。
-    - **項目**
-      - **以下のいずれか**
-        - : MIDIノート番号。*[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
-        - : MIDIノート範囲。*[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*を参照。
-  - **`midi_velocity_layers`** *(配列, 必須)*: サンプリングするベロシティレイヤーのリスト。
-    - **アイテム**: *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)* を参照。
-  - **`midi_pre_wait_duration`** *(number, required)*: サンプリング前の待機時間（秒単位）。`0.6`秒以上が推奨される。
-  - **`midi_note_duration`** *(integer, required)*: サンプリングするMIDIノートの長さ（秒単位）。整数値のみ指定可能。
-  - **`midi_release_duration`** *(number, required)*: サンプリングされたMIDIノートのリリース後の待機時間（秒単位）。整数値のみ指定可能。
+- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(オブジェクト)*: メイン構成本体。追加のプロパティは含めることができません。
+  - **`output_dir`** *(文字列, 必須)*: サンプリングされたオーディオファイルの出力先ディレクトリ。
+  - **`processed_output_dir`** *(文字列, 必須)*: 処理されたサンプリングオーディオファイルの出力先ディレクトリ。
+  - **`output_prefix_format`** *(文字列)*: サンプリングされたオーディオファイルのファイル名の接頭辞。このプレースホルダーが使用できます: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {min_velocity} {max_velocity} {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`。
+  - **`pre_send_smf_path_list`** *(配列)*: サンプリングの前にMIDIデバイスに送信されるファイル（例：GMリセット、CCリセットなど）。デフォルト: `[]`。
+    - **アイテム** *(文字列)*: SMF(*.mid/*.midi)ファイルへのパス。
+  - **`midi_channel`** *(整数, 必須)*: サンプリング用のMIDIチャンネル番号。最小: `0`。最大: `15`。
+  - **`midi_program_change_list`** *(配列, 必須)*: サンプリング用のMIDIプログラムチェンジ(MSB, LSB, Program No)のリスト。
+    - **アイテム** *(オブジェクト)*: 追加のプロパティは含めることができません。
+      - **`msb`** *(整数)*: MIDIプログラムチェンジのMSB値。最小: `0`。最大: `127`。
+      - **`lsb`** *(整数)*: MIDIプログラムチェンジのLSB値。最小: `0`。最大: `127`。
+      - **`program`** *(整数)*: MIDIプログラムチェンジのプログラム番号。最小: `0`。最大: `127`。
+  - **`sample_zone_complex`** *(配列)*: サンプリングされたMIDIノートのキー・マッピングのリスト。
+    - **アイテム**: *[#/definitions/def_sample_zone_complex](#definitions/def_sample_zone_complex)*を参照。
+  - **`sample_zone`** *(配列)*: サンプリングされたMIDIノートのキー・マッピングのリスト。
+    - **アイテム**: *[#/definitions/def_sample_zone](#definitions/def_sample_zone)*を参照。
+  - **`midi_pre_wait_duration`** *(数値, 必須)*: サンプリング前の待機時間（秒単位）。`0.6`秒以上が推奨されます。
+  - **`midi_note_duration`** *(整数, 必須)*: サンプリングされるMIDIノートの長さ（秒単位）。整数値のみ指定可能です。
+  - **`midi_release_duration`** *(数値, 必須)*: サンプリングされたMIDIノートのリリース後の待機時間（秒単位）。整数値のみ指定可能です。
 
   例:
   ```json
   {
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
-      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{note}_{velocity}",
+      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
@@ -211,24 +208,34 @@ python -m midisampling.device
               "program": 2
           }
       ],
-      "midi_velocity_layers": [
+      "sample_zone": [
           {
-              "min": 0,
-              "max": 63,
-              "send": 63
-          },
-          {
-              "min": 64,
-              "max": 127,
-              "send": 127
+              "key_root": {
+                  "from": 40,
+                  "to": 41
+              },
+              "velocity_layers": [
+                  {
+                      "min": 0,
+                      "max": 63,
+                      "send": 63
+                  }
+              ]
           }
       ],
-      "midi_notes": [
+      "sample_zone_complex": [
           {
-              "from": 40,
-              "to": 43
-          },
-          80
+              "key_low": 0,
+              "key_high": 0,
+              "key_root": 40,
+              "velocity_layers": [
+                  {
+                      "min": 0,
+                      "max": 63,
+                      "send": 63
+                  }
+              ]
+          }
       ],
       "midi_pre_wait_duration": 0.6,
       "midi_note_duration": 2,
@@ -236,10 +243,10 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(integer)*: MIDIメッセージバイトの値を表す（0-127）。最小値: `0`。最大値: `127`。
-- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(object)*: 整数値の範囲を表す。
-  - **`from`** *(integer)*
-  - **`to`** *(integer)*
+- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(整数)*: MIDIメッセージバイトの値(0-127)を表します。最小: `0`。最大: `127`。
+- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(オブジェクト)*: 整数値の範囲を表します。追加のプロパティは含めることができません。
+  - **`from`** *(整数, 必須)*
+  - **`to`** *(整数, 必須)*
 
   例:
   ```json
@@ -249,7 +256,7 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(object)*: MIDIメッセージバイトの値の範囲（0-127）を表す。
+- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(オブジェクト)*: MIDIメッセージバイトの値範囲(0-127)を表します。追加のプロパティは含めることができません。
   - **`from`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
   - **`to`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
 
@@ -261,10 +268,10 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(オブジェクト)*: ベロシティレイヤー設定。
-  - **`min`** *(整数, 必須)*: 最小ベロシティ値。最小値: `0`。最大値: `127`。
-  - **`max`** *(整数, 必須)*: 最大ベロシティ値。最小値: `0`。最大値: `127`。
-  - **`send`** *(整数, 必須)*: サンプリング時にMIDIデバイスに送信されるベロシティ値。最小値: `0`。最大値: `127`。
+- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(オブジェクト)*: ベロシティレイヤーの設定。追加のプロパティは含めることができません。
+  - **`min`** *(整数, 必須)*: 最小ベロシティ値。最小: `0`。最大: `127`。
+  - **`max`** *(整数, 必須)*: 最大ベロシティ値。最小: `0`。最大: `127`。
+  - **`send`** *(整数, 必須)*: サンプリング時にMIDIデバイスに送信されるベロシティ値。最小: `0`。最大: `127`。
 
   例:
   ```json
@@ -272,6 +279,85 @@ python -m midisampling.device
       "min": 0,
       "max": 127,
       "send": 127
+  }
+  ```
+
+- <a id="definitions/def_sample_zone_complex"></a>**`def_sample_zone_complex`** *(オブジェクト)*: 複雑なサンプルゾーン設定。キー範囲とルートキーを明示的に指定する必要があります。追加のプロパティは含めることができません。
+  - **`key_low`** *(整数, 必須)*: キーマップ内の最低キー番号（ノート番号）。この値は、サードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`key_high`** *(整数, 必須)*: キーマップ内の最高キー番号（ノート番号）。この値は、サードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`key_root`** *(整数, 必須)*: キーマップのルートキー番号（ノート番号）。この値は、サンプリング時にMIDIデバイスやサードパーティのサンプラーソフトウェアに送信されるノートオンメッセージの情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`velocity_layers`** *(配列, 必
+
+須)*
+    - **アイテム**:
+        - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
+
+  例:
+  ```json
+  {
+      "key_low": 0,
+      "key_high": 32,
+      "key_root": 16,
+      "velocity_layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
+  }
+  ```
+
+- <a id="definitions/def_sample_zone"></a>**`def_sample_zone`** *(オブジェクト)*: シンプルなサンプルゾーン設定。複雑なバージョンとは異なり、`ルートキー`だけを指定でき、個々の`key_range`の値が`ルートキー`、`最低キー`、`最高キー`として適用されます。追加のプロパティは含めることができません。
+  - **`keys`**: キーマップのルートキー番号（ノート番号）。*[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*を参照。
+  - **`velocity_layers`** *(配列, 必須)*
+    - **アイテム**:
+        - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
+
+  例:
+  ```json
+  {
+      "keys": {
+          "from": 10,
+          "to": 100
+      },
+      "velocity_layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
   }
   ```
 
