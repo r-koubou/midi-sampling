@@ -59,9 +59,7 @@ class SdAudioDevice(IAudioDevice):
         sd_type_table = {
             AudioDataFormat.INT16: np.int16,
             AudioDataFormat.INT32: np.int32,
-            AudioDataFormat.INT64: np.int64,
             AudioDataFormat.FLOAT32: np.float32,
-            AudioDataFormat.FLOAT64: np.float64
         }
 
         if sd_type_table.get(self.option.data_format) is None:
