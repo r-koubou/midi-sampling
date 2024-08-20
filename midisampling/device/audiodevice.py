@@ -25,17 +25,13 @@ class AudioDataFormat(Enum):
     UNKNOWN = 0
     INT16   = 1
     INT32   = 2
-    INT64   = 3
-    FLOAT32 = 4
-    FLOAT64 = 5
+    FLOAT32 = 3
 
     def bit_depth(self):
         data_table = {
             AudioDataFormat.INT16: 16,
             AudioDataFormat.INT32: 32,
-            AudioDataFormat.INT64: 64,
             AudioDataFormat.FLOAT32: 32,
-            AudioDataFormat.FLOAT64: 64
         }
         return data_table[self]
 
@@ -44,9 +40,7 @@ class AudioDataFormat(Enum):
         data_table = {
             "int16": AudioDataFormat.INT16,
             "int32": AudioDataFormat.INT32,
-            "int64": AudioDataFormat.INT64,
             "float32": AudioDataFormat.FLOAT32,
-            "float64": AudioDataFormat.FLOAT64
         }
         return data_table.get(data_format.lower(), AudioDataFormat.UNKNOWN)
 

@@ -91,11 +91,35 @@ class ProgramChange:
         self.lsb: int     = progarm_change["lsb"]
         self.program: int = progarm_change["program"]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ProgramChange):
+            return False
+        return (
+            self.msb == other.msb
+            and self.lsb == other.lsb
+            and self.program == other.program
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.msb, self.lsb, self.program))
+
 class VelocityLayer:
     def __init__(self, velocity_layer: dict) -> None:
         self.min_velocity: int  = velocity_layer["min"]
         self.max_velocity: int  = velocity_layer["max"]
         self.send_velocity: int = velocity_layer["send"]
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, VelocityLayer):
+            return False
+        return (
+            self.min_velocity == other.min_velocity
+            and self.max_velocity == other.max_velocity
+            and self.send_velocity == other.send_velocity
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.min_velocity, self.max_velocity, self.send_velocity))
 
 class SampleZone:
     """
@@ -106,6 +130,19 @@ class SampleZone:
         self.key_low: int   = key_low
         self.key_high: int  = key_high
         self.velocity_layers: List[VelocityLayer] = velocity_layers
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SampleZone):
+            return False
+        return (
+            self.key_root == other.key_root
+            and self.key_low == other.key_low
+            and self.key_high == other.key_high
+            and self.velocity_layers == other.velocity_layers
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.key_root, self.key_low, self.key_high, self.velocity_layers))
 
     def __str__(self) -> str:
         return f"{self.__dict__}"
@@ -172,6 +209,26 @@ class SampleZone:
             result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"]))
 
         return result
+
+    @classmethod
+    def get_total_sample_count(cls, sample_zones: List['SampleZone']) -> int:
+        """
+        Get total sample count from SampleZone list
+        """
+
+        if sample_zones is None or len(sample_zones) == 0:
+            return 0
+
+        root_key_count = len(sample_zones) # Root key count
+        unique_velocity_layers = sample_zones[0].velocity_layers
+
+        if len(sample_zones) == 1:
+            return len(root_key_count * unique_velocity_layers)
+
+        for zone in sample_zones[1:]:
+            unique_velocity_layers = set(unique_velocity_layers + zone.velocity_layers)
+
+        return root_key_count * len(unique_velocity_layers)
 
 class MidiConfig:
     def __init__(self, config_path: str) -> None:

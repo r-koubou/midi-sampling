@@ -16,7 +16,7 @@
         "audio_sample_bits": {
             "type": "integer",
             "description": "Bit depth of the sampled audio file.",
-            "enum": [8, 16, 24, 32, 64]
+            "enum": [16, 32]
         },
         "audio_sample_bits_format": {
             "type": "string",
