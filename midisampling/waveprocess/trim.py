@@ -62,7 +62,8 @@ def batch_trim(input_directory: str, output_directory: str, threshold_dBFS:float
 
     os.makedirs(output_directory, exist_ok=True)
 
-    logger.info(f"Trim Begin: input={input_directory}, output={output_directory}, threshold_dBFS={threshold_dBFS}, min_silence_ms={min_silence_ms}")
+    logger.info("Trim Begin")
+    logger.debug(f"Trim Begin: {locals()}")
 
     for filename in os.listdir(input_directory):
         if filename.endswith('.wav'):

@@ -24,7 +24,8 @@ def normalize_across_mitiple(input_directory: str, output_directory: str, target
 
     os.makedirs(output_directory, exist_ok=True)
 
-    logger.info(f"Normalize Begin: input={input_directory}, output={output_directory}, target={target_peak_dBFS} dBFS")
+    logger.info("Normalize Begin")
+    logger.debug(f"Normalize Begin: {locals()}")
 
     # 全てのファイルの最大ピークレベルを探す
     for filename in os.listdir(input_directory):
