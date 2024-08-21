@@ -18,6 +18,10 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
     logconfig_file_path : str, optional
         Path to the logging configuration file (default: None).
 
+    logfile_path : str, optional
+        Overrides the log file path in the configuration file.
+        Note: Override `filename` in the all handlers in the configuration file.
+
     verbose : bool, optional
         Enable verbose logging (default: False).
     """
@@ -35,6 +39,11 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
     if verbose:
         for handler in config_json["handlers"].values():
             handler["level"] = "DEBUG"
+
+    if logfile_path:
+        for handler in config_json["handlers"].values():
+            if "filename" in handler:
+                handler["filename"] = logfile_path
 
     logging_config.dictConfig(config_json)
     __initialized = True
