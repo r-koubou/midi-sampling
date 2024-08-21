@@ -66,13 +66,11 @@ def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, 
 
     return dynamic_format.format(format_string=format_string, data=format_value)
 
-def main(args):
+def main(sampling_config_path: str, midi_config_path: str) -> None:
 
     #---------------------------------------------------------------------------
     # Load config values
     #---------------------------------------------------------------------------
-    sampling_config_path = args[0]
-    midi_config_path = args[1]
     sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
     midi_config: MidiConfig = load_midi_config(midi_config_path)
 
