@@ -3,7 +3,7 @@ import sys
 import json
 import argparse
 from logging import getLogger
-from midisampling.logging import init_logging_from_config
+from midisampling.logging_management import init_logging_from_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)

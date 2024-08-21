@@ -5,7 +5,7 @@ import argparse
 from midisampling.waveprocess import normalize
 from midisampling.waveprocess import trim
 
-from midisampling.logging import init_logging_as_stdout
+from midisampling.logging_management import init_logging_as_stdout
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
