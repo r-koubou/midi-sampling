@@ -72,20 +72,3 @@ def batch_trim(input_directory: str, output_directory: str, threshold_dBFS:float
             logger.info(f"Trimmed: {filename}")
 
     logger.info(f"Trim End")
-
-if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print(f"Usage: python -m {__spec__.name} <directory> <output_directory> <threshold in dBFS> <min silence in ms>")
-        sys.exit(1)
-
-    import logging
-    logger.setLevel("INFO")
-    logger.addHandler(logging.StreamHandler())
-
-    args = sys.argv[1:]
-
-    directory           = args[0]
-    output_directory    = args[1]
-    threshold           = float(args[2])
-    min_silence         = int(args[3])
-    batch_trim(directory, output_directory, threshold, min_silence)

@@ -1,11 +1,7 @@
 from typing import List
-import abc
 import os
-import sys
 import json
 import jsonschema
-
-import traceback
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -232,9 +228,7 @@ class SampleZone:
 
 class MidiConfig:
     def __init__(self, config_path: str) -> None:
-        with open(config_path, "r") as f:
-            config_json = json.load(f)
-            jsonschema.validate(config_json, config_json_schema)
+        config_json = validate(config_path)
 
         self.config_path: str                           = config_path
         self.config_dir: str                            = os.path.abspath(os.path.dirname(config_path))
@@ -260,26 +254,11 @@ class MidiConfig:
         # Zone
         self.sample_zone = SampleZone.from_json(config_json)
 
+def validate(config_path: str) -> dict:
+    with open(config_path, "r") as f:
+        config_json = json.load(f)
+        jsonschema.validate(config_json, config_json_schema)
+    return config_json
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Validation tool for MIDI config file")
-        print(f"Usage: python -m {__spec__.name} <config_file>")
-        sys.exit(1)
-
-    config_path = sys.argv[1]
-
-    try:
-        with open(config_path, "r") as f:
-            config_json = json.load(f)
-            jsonschema.validate(config_json, config_json_schema)
-        print("Validation OK")
-        MidiConfig(config_path)
-        print("Deserialization OK")
-    except Exception as e:
-        print(f"Validation failed: {e}")
-        traceback.print_exc()
