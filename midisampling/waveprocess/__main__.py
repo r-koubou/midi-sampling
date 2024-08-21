@@ -5,6 +5,7 @@ import argparse
 from midisampling.waveprocess import normalize
 from midisampling.waveprocess import trim
 
+from midisampling.logging_management import init_logging_as_stdout
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
@@ -29,8 +30,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Process
     try:
+        init_logging_as_stdout(verbose=args.verbose)
+
+        # Process
+
         if args.command == "normalize":
             normalize.normalize_across_mitiple(
                 input_directory=args.input_directory,

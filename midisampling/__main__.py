@@ -2,36 +2,17 @@ import os.path
 import sys
 import json
 import argparse
-from logging import getLogger, config as logging_config
+from logging import getLogger
+from midisampling.logging_management import init_logging_from_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)
-
-def _setup_logging_config(logfile_path: str = None, verbose: bool = False):
-
-    config_filepath = os.path.join(THIS_SCRIPT_DIR, "logging_config.json")
-    if not os.path.exists(config_filepath):
-        raise FileNotFoundError(f"Logging configuration file not found: {config_filepath}")
-
-    with open(config_filepath, "r") as f:
-        config_json = json.load(f)
-
-    if logfile_path:
-        for handler in config_json["handlers"].values():
-            if handler.get("filename"):
-                handler["filename"] = logfile_path
-                break
-    if verbose:
-        for handler in config_json["handlers"].values():
-            handler["level"] = "DEBUG"
-
-    logging_config.dictConfig(config_json)
-
 
 def _log_system_info():
     logger.debug(f"{"-"*120}")
     logger.debug(f"Operating system: {sys.platform}")
     logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Args: {" ".join(sys.argv)}")
     logger.debug(f"{"-"*120}")
 
 def main():
@@ -44,7 +25,7 @@ def main():
 
     args = parser.parse_args()
 
-    _setup_logging_config(args.log_file, args.verbose)
+    init_logging_from_config(logfile_path=args.log_file, verbose=args.verbose)
     _log_system_info()
 
     from midisampling.sampling import main as sampling_main
