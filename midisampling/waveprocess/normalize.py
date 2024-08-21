@@ -48,19 +48,3 @@ def normalize_across_mitiple(input_directory: str, output_directory: str, target
         logger.info(f"Normalized: file={os.path.basename(output_filepath)}")
 
     logger.info(f"Normalize End (gain={change_in_dBFS:.3f} dBFS)")
-
-if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print(f"Usage: python -m {__spec__.name} <directory> <output_directory> <target peak db>")
-        sys.exit(1)
-
-    import logging
-    logger.setLevel("INFO")
-    logger.addHandler(logging.StreamHandler())
-
-    args = sys.argv[1:]
-    input_directory  = args[0]
-    output_directory = args[1]
-    target_peak_dBFS = float(args[2])
-
-    normalize_across_mitiple(input_directory, output_directory, target_peak_dBFS)
