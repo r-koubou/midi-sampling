@@ -10,7 +10,7 @@
     "asio_audio_ins": [
         2, 3
     ],
-    "midi_out_device": "Roland SC-8850 PART A",
+    "midi_out_device": "Roland SC-8850 PART B",
     "target_peak": -8,
     "trim_threshold": -60,
     "trim_min_silence_duration": 250
