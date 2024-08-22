@@ -1,6 +1,6 @@
 {
     "output_dir": "_recorded",
-    "processed_output_dir": "_recorded/_processed",
+    "processed_output_dir": "_processed",
     "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{key_low}_{key_high}_{velocity}_{min_velocity}_{max_velocity}",
     "pre_send_smf_path_list": [
         "GS_Reset.mid",
