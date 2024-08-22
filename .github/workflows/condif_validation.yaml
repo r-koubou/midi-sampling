@@ -1,0 +1,35 @@
+name: config-validation
+on:
+  push:
+    paths:
+      - 'midisampling/appconfig/**'
+      - 'sampling-config.json'
+      - 'examples/midi-config.example.json'
+jobs:
+  config-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: upgrade pip
+        run:  python -m pip install --upgrade pip
+
+      - name: install pipenv
+        run: python -m pip install pipenv
+
+      - name: install dependencies
+        run:  pipenv install
+
+      - name: validate sampling config
+        run: |
+          pipenv run python -m midisampling.appconfig validate-sampling sampling-config.json
+
+      - name: validate midi config
+        run: |
+          pipenv run python -m midisampling.appconfig validate-midi examples/midi-config.example.json

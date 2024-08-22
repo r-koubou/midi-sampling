@@ -38,12 +38,14 @@ def main() -> None:
             midi_conf.MidiConfig(args.input)
             print("Deserialization OK")
 
+        sys.exit(0)
+
     except Exception as e:
         print(e)
         if args.verbose:
             (_, _, trace) = sys.exc_info()
             traceback.print_tb(trace)
-
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
