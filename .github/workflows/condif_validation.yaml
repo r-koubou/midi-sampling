@@ -2,8 +2,7 @@ name: config-validation
 on:
   push:
     paths:
-      - 'midisampling/appconfig/sampling-config.schema.json'
-      - 'midisampling/appconfig/midi-config.schema.json'
+      - 'midisampling/appconfig/**'
       - 'sampling-config.json'
       - 'examples/midi-config.example.json'
 jobs:
