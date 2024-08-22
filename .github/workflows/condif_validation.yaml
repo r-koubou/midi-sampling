@@ -16,7 +16,7 @@ jobs:
       - name: install pipenv
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyenv
+          python -m pip install pipenv
           pipenv lock
 
       - name: validate sampling config
