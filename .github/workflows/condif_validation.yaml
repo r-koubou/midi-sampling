@@ -24,7 +24,7 @@ jobs:
         run: python -m pip install pipenv
 
       - name: install dependencies
-        run:  pipenv lock
+        run:  pipenv install
 
       - name: validate sampling config
         run: |

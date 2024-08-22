@@ -6,7 +6,7 @@
         "GS_Reset.mid",
         "Reverb_Chorus_Delay_Set_0.mid"
     ],
-    "midi_channel": 0,
+    "midi_channel": 9,
     "midi_program_change_list": [
         { "msb": 0, "lsb": 0, "program": 48}
     ],
