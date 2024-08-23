@@ -23,6 +23,8 @@ from midisampling.appconfig.midi import load as load_midi_config
 import midisampling.dynamic_format as dynamic_format
 
 from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+from midisampling.appconfig.postprocess import PostProcessConfig
+from midisampling.waveprocess.postprocess import run_postprocess
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
@@ -65,13 +67,17 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
 
     return dynamic_format.format(format_string=format_string, data=format_value)
 
-def main(sampling_config_path: str, midi_config_path: str) -> None:
+def main(sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None) -> None:
 
     #---------------------------------------------------------------------------
     # Load config values
     #---------------------------------------------------------------------------
     sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
     midi_config: MidiConfig = load_midi_config(midi_config_path)
+
+    postprocess_config: PostProcessConfig = None
+    if postprocess_config_path:
+        postprocess_config = PostProcessConfig(postprocess_config_path)
 
     #---------------------------------------------------------------------------
     # Get config values
@@ -207,7 +213,11 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
                     process_count += 1
         #endregion ~Sampling
 
-        #region Waveform Processing
+        #region Post Process
+
+        if not postprocess_config:
+            logger.info("Post process config is not set. Skip post process.")
+            return
 
         logger.info("Build post processed audio files path list")
 
@@ -221,18 +231,13 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
             post_process_exported_path_list.append(export_path)
             logger.debug(f"Post process export path: {export_path}")
 
-        #---------------------------------------------------------------------------
-        # Normalize -> Trim
-        #---------------------------------------------------------------------------
-        normalize.normalize_from_list(
-            file_list=post_process_exported_path_list,
-            target_peak_dBFS=target_peak
+        logger.info("Run post process")
+        run_postprocess(
+            config=postprocess_config,
+            process_files=post_process_exported_path_list
         )
-        trim.trim_from_list(
-            file_list=post_process_exported_path_list,
-            threshold_dBFS=trim_threshold,
-            min_silence_ms=trim_min_silence_duration
-        )
+
+        #endregion ~Post Process
 
     finally:
         audio_device.dispose() if audio_device else None

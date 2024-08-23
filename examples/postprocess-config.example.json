@@ -12,7 +12,7 @@
             "name": "trim",
             "params": {
                 "threshold_db": -65.0,
-                "min_silence_duration": 250
+                "min_silence_ms": 250
             }
         }
     ]
