@@ -24,7 +24,7 @@ import midisampling.dynamic_format as dynamic_format
 
 from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
 from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.waveprocess.postprocess import run_postprocess
+from midisampling.postprocess import run_postprocess
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
