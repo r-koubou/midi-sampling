@@ -172,7 +172,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   - **`sample_zone`** *(array)*: List of keymaps for the sampled MIDI notes.
     - **Items**: Refer to *[#/definitions/def_sample_zone](#definitions/def_sample_zone)*.
   - **`midi_pre_wait_duration`** *(number, required)*: Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended.
-  - **`midi_note_duration`** *(integer, required)*: Length of the MIDI note to be sampled (in seconds). Only integer values can be specified.
+  - **`midi_note_duration`** *(number, required)*: Length of the MIDI note to be sampled (in seconds).
   - **`midi_release_duration`** *(number, required)*: Wait time (in seconds) after the release of the sampled MIDI note. Only integer values can be specified.
 
   Examples:
@@ -233,7 +233,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
           }
       ],
       "midi_pre_wait_duration": 0.6,
-      "midi_note_duration": 2,
+      "midi_note_duration": 2.5,
       "midi_release_duration": 1.5
   }
   ```
