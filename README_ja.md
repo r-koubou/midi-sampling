@@ -177,7 +177,7 @@ python -m midisampling.device
   - **`sample_zone`** *(配列)*: サンプリングされたMIDIノートのキー・マッピングのリスト。
     - **アイテム**: *[#/definitions/def_sample_zone](#definitions/def_sample_zone)*を参照。
   - **`midi_pre_wait_duration`** *(数値, 必須)*: サンプリング前の待機時間（秒単位）。`0.6`秒以上が推奨されます。
-  - **`midi_note_duration`** *(整数, 必須)*: サンプリングされるMIDIノートの長さ（秒単位）。整数値のみ指定可能です。
+  - **`midi_note_duration`** *(数値, 必須)*: サンプリングするMIDIノートの長さ（秒単位）。
   - **`midi_release_duration`** *(数値, 必須)*: サンプリングされたMIDIノートのリリース後の待機時間（秒単位）。整数値のみ指定可能です。
 
   例:
@@ -238,7 +238,7 @@ python -m midisampling.device
           }
       ],
       "midi_pre_wait_duration": 0.6,
-      "midi_note_duration": 2,
+      "midi_note_duration": 2.5,
       "midi_release_duration": 1.5
   }
   ```
