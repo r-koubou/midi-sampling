@@ -71,8 +71,6 @@ def trim_from_list(file_list: List[PostProcessedAudioPath], threshold_dBFS:float
         trim(input_path, output_path, threshold_dBFS, min_silence_ms)
         logger.info(f"Trimmed: {file.path()}")
 
-    logger.info(f"Trim End")
-
 def trim_from_directory(input_directory: str, output_directory: str, threshold_dBFS:float=-50, min_silence_ms:int=250, overwrite: bool = False):
     """
     Trim silent segments from all audio files in the input directory.

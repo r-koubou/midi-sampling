@@ -29,8 +29,6 @@ def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBF
     max_peak_dBFS = None
     audio_segments = []
 
-    logger.info("Normalize Begin")
-
     # 全てのファイルの最大ピークレベルを探す
     for file in file_list:
         input_filepath  = file.recorded_audio_path.path()
@@ -61,7 +59,7 @@ def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBF
 
         logger.info(f"Normalized: file={file.path()}")
 
-    logger.info(f"Normalize End (gain={change_in_dBFS:.3f} dBFS)")
+    logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 
 def normalize_from_directory(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0, overwrite: bool = False):
     """
