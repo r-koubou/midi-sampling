@@ -251,6 +251,9 @@ class MidiConfig:
         self.processed_output_dir = _to_abs_filepath(self.config_dir, self.processed_output_dir)
         self.pre_send_smf_path_list = _to_abs_filepath_list(self.config_dir, self.pre_send_smf_path_list)
 
+        if self.output_dir == self.processed_output_dir or self.processed_output_dir.startswith(self.output_dir):
+            raise ValueError(f"processed_output_dir must be outside of output_dir.\n\toutput_dir={self.output_dir}\n\tprocessed_output_dir={self.processed_output_dir})")
+
         # Zone
         self.sample_zone = SampleZone.from_json(config_json)
 

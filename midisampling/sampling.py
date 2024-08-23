@@ -1,7 +1,6 @@
-import json
+from typing import List
 import math
 import os
-import sys
 import time
 from logging import getLogger
 
@@ -23,12 +22,14 @@ from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
 
+from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
-def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int):
+def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int):
     """
-    Get output file prefix from dynamic format string
+    Expand placeholders in format_string with given values
 
     Args:
         format_string (str): string.format compatible format string. available placeholders are
@@ -49,8 +50,6 @@ def get_output_file_prefix(format_string:str, pc_msb:int, pc_lsb:int, pc_value, 
     Returns:
         str: formatted string
     """
-
-    logger.debug(f"{get_output_file_prefix.__name__}: {locals()}")
 
     format_value = {
         "pc_msb": pc_msb,
@@ -156,6 +155,8 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
 
         os.makedirs(output_dir, exist_ok=True)
 
+        exported_audio_path_list: List[RecordedAudioPath] = []
+
         logger.info("Sampling...")
 
         process_count = 1
@@ -183,7 +184,7 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
                     audio_device.stop_recording()
 
                     # Save Audio
-                    output_file_name = get_output_file_prefix(
+                    output_file_path = expand_path_placeholder(
                         format_string=output_prefix_format,
                         pc_msb=program.msb,
                         pc_lsb=program.lsb,
@@ -195,29 +196,43 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
                         max_velocity=velocity.max_velocity,
                         velocity=velocity.send_velocity
                     )
-                    output_path = os.path.join(output_dir, output_file_name + ".wav")
-                    audio_device.export_audio(output_path)
+
+                    export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
+                    export_path.makedirs()
+
+                    audio_device.export_audio(export_path.path())
+
+                    exported_audio_path_list.append(export_path)
 
                     process_count += 1
         #endregion ~Sampling
 
         #region Waveform Processing
+
+        logger.info("Build post processed audio files path list")
+
+        post_process_exported_path_list: List[PostProcessedAudioPath] = []
+        for x in exported_audio_path_list:
+            export_path = PostProcessedAudioPath(
+                recorded_audio_path=x,
+                base_dir=processed_output_dir,
+                overwrite=True
+            )
+            post_process_exported_path_list.append(export_path)
+            logger.debug(f"Post process export path: {export_path}")
+
         #---------------------------------------------------------------------------
-        # Normalize, Trim
+        # Normalize -> Trim
         #---------------------------------------------------------------------------
-        normalize.normalize_across_mitiple(
-            input_directory=output_dir,
-            output_directory=processed_output_dir,
+        normalize.normalize_from_list(
+            file_list=post_process_exported_path_list,
             target_peak_dBFS=target_peak
         )
-
-        trim.batch_trim(
-            input_directory=processed_output_dir,
-            output_directory=processed_output_dir,
+        trim.trim_from_list(
+            file_list=post_process_exported_path_list,
             threshold_dBFS=trim_threshold,
             min_silence_ms=trim_min_silence_duration
         )
-        #endregion ~Waveform Processing
 
     finally:
         audio_device.dispose() if audio_device else None
