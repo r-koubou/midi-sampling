@@ -25,6 +25,7 @@ import midisampling.dynamic_format as dynamic_format
 from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
 from midisampling.appconfig.postprocess import PostProcessConfig
 from midisampling.postprocess import run_postprocess
+from midisampling.postprocess import validate_postprocess
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
@@ -78,6 +79,7 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
     postprocess_config: PostProcessConfig = None
     if postprocess_config_path:
         postprocess_config = PostProcessConfig(postprocess_config_path)
+        validate_postprocess(postprocess_config)
 
     #---------------------------------------------------------------------------
     # Get config values
