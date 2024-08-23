@@ -127,9 +127,6 @@ python -m midisampling.device
 - **`asio_audio_ins`** *(配列)*: デフォルト: `[]`。
   - **項目** *(整数)*: ASIO入力チャンネル番号のリスト。デバイスの入力チャンネル番号を指定します。フォーマットは0から始まります（例: 入力1と2を使用する場合、`[0, 1]`を指定）。
 - **`midi_out_device`** *(文字列, 必須)*: サンプリングに使用されるMIDIデバイスの名前。
-- **`target_peak`** *(数値, 必須)*: サンプリングされたオーディオファイルのピークレベル（dB単位）。全体のサンプルファイルのピークレベルに基づいて正規化が行われます。
-- **`trim_threshold`** *(数値)*: 無音部分をトリムするためのしきい値（dB単位）。デフォルト: `-60`。
-- **`trim_min_silence_duration`** *(整数)*: トリムされる無音部分の最小持続時間（ミリ秒単位）。デフォルト: `250`。
 
 #### 例
 
@@ -147,10 +144,7 @@ python -m midisampling.device
           2,
           3
       ],
-      "midi_out_device": "Roland SC-8850 PART A",
-      "target_peak": -8,
-      "trim_threshold": -60,
-      "trim_min_silence_duration": 250
+      "midi_out_device": "Roland SC-8850 PART A"
   }
   ```
 

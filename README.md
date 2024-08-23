@@ -123,9 +123,6 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 - **`asio_audio_ins`** *(array)*: Default: `[]`.
   - **Items** *(integer)*: List of ASIO input channel numbers. Specify the input channel numbers of your device. The format starts from 0 (e.g., to use inputs 1 and 2, specify `[0, 1]`).
 - **`midi_out_device`** *(string, required)*: Name of the MIDI device used for sampling.
-- **`target_peak`** *(number, required)*: Peak level (in dB) for the sampled audio file. Normalization is performed based on the peak level across the entire sampled file.
-- **`trim_threshold`** *(number)*: Threshold (in dB) for trimming silence. Default: `-60`.
-- **`trim_min_silence_duration`** *(integer)*: Minimum duration (in ms) of silence to be trimmed. Default: `250`.
 #### Examples
 
   ```json
@@ -142,10 +139,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
           2,
           3
       ],
-      "midi_out_device": "Roland SC-8850 PART A",
-      "target_peak": -8,
-      "trim_threshold": -60,
-      "trim_min_silence_duration": 250
+      "midi_out_device": "Roland SC-8850 PART A"
   }
   ```
 
