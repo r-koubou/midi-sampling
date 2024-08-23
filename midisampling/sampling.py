@@ -101,13 +101,9 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
     midi_note_duration          = midi_config.midi_note_duration
     midi_pre_duration           = midi_config.midi_pre_wait_duration
     midi_release_duration       = midi_config.midi_release_duration
-    target_peak                 = sampling_config.target_peak
     output_dir                  = midi_config.output_dir
     output_prefix_format        = midi_config.output_prefix_format
     processed_output_dir        = midi_config.processed_output_dir
-
-    trim_threshold              = sampling_config.trim_threshold
-    trim_min_silence_duration   = sampling_config.trim_min_silence_duration
 
     #---------------------------------------------------------------------------
     # MIDI

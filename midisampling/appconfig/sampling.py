@@ -22,9 +22,6 @@ class SamplingConfig:
         self.audio_in_device_platform: str  = config["audio_in_device"]["platform"]
         self.asio_audio_ins: List[int]      = config.get("asio_audio_ins", [])
         self.midi_out_device: str           = config["midi_out_device"]
-        self.target_peak: float             = config["target_peak"]
-        self.trim_threshold: float          = config["trim_threshold"]
-        self.trim_min_silence_duration: int = config["trim_min_silence_duration"]
 
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:

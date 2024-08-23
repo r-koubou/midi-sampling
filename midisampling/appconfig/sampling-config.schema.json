@@ -51,20 +51,6 @@
         "midi_out_device": {
             "type": "string",
             "description": "Name of the MIDI device used for sampling."
-        },
-        "target_peak": {
-            "type": "number",
-            "description": "Peak level (in dB) for the sampled audio file. Normalization is performed based on the peak level across the entire sampled file."
-        },
-        "trim_threshold": {
-            "type": "number",
-            "description": "Threshold (in dB) for trimming silence.",
-            "default": -60
-        },
-        "trim_min_silence_duration": {
-            "type": "integer",
-            "description": "Minimum duration (in ms) of silence to be trimmed.",
-            "default": 250
         }
     },
     "required": [
@@ -73,8 +59,7 @@
         "audio_sample_bits",
         "audio_sample_bits_format",
         "audio_in_device",
-        "midi_out_device",
-        "target_peak"
+        "midi_out_device"
     ],
     "examples": [
         {
@@ -89,10 +74,7 @@
             "asio_audio_ins": [
                 2, 3
             ],
-            "midi_out_device": "Roland SC-8850 PART A",
-            "target_peak": -8,
-            "trim_threshold": -60,
-            "trim_min_silence_duration": 250
+            "midi_out_device": "Roland SC-8850 PART A"
         }
     ]
 }
