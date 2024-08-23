@@ -142,7 +142,7 @@
                         }
                     ],
                     "midi_pre_wait_duration": 0.6,
-                    "midi_note_duration": 2,
+                    "midi_note_duration": 2.5,
                     "midi_release_duration": 1.5
                 }
             ]
