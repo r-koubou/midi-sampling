@@ -4,6 +4,7 @@ import argparse
 
 from midisampling.appconfig import midi as midi_conf
 from midisampling.appconfig import sampling as sampling_conf
+from midisampling.appconfig import postprocess as postprocess_conf
 
 
 def main() -> None:
@@ -22,6 +23,10 @@ def main() -> None:
     validate_midi_parser = subparsers.add_parser("validate-midi", help="Test validation and deserialization of setting file.")
     validate_midi_parser.add_argument("input", help="Path to the input setting file.")
 
+    # Validate postprocess-config
+    validate_postprocess_parser = subparsers.add_parser("validate-postprocess", help="Test validation and deserialization of setting file.")
+    validate_postprocess_parser.add_argument("input", help="Path to the input setting file.")
+
     args = parser.parse_args()
 
     # Process
@@ -36,6 +41,12 @@ def main() -> None:
             midi_conf.validate(args.input)
             print("Validation OK")
             midi_conf.MidiConfig(args.input)
+            print("Deserialization OK")
+        elif args.command == "validate-postprocess":
+            postprocess_conf.validate(args.input)
+            print("Validation OK")
+            print("Deserialization...")
+            postprocess_conf.PostProcessConfig(args.input)
             print("Deserialization OK")
 
         sys.exit(0)

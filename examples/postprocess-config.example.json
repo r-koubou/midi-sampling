@@ -1,0 +1,19 @@
+{
+    "effects": [
+        {
+            "index": 0,
+            "name": "normalize",
+            "params": {
+                "target_db": -10.0
+            }
+        },
+        {
+            "index": 1,
+            "name": "trim",
+            "params": {
+                "threshold_db": -65.0,
+                "min_silence_duration": 250
+            }
+        }
+    ]
+}
