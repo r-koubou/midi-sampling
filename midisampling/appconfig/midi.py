@@ -117,6 +117,9 @@ class VelocityLayer:
     def __hash__(self) -> int:
         return hash((self.min_velocity, self.max_velocity, self.send_velocity))
 
+    def __str__(self) -> str:
+        return f"min={self.min_velocity}, max={self.max_velocity}, send={self.send_velocity}"
+
 class SampleZone:
     """
     Represents the smallest unit of sample zone data
@@ -141,7 +144,7 @@ class SampleZone:
         return hash((self.key_root, self.key_low, self.key_high, self.velocity_layers))
 
     def __str__(self) -> str:
-        return f"{self.__dict__}"
+        return f"key_root={self.key_root}, key_low={self.key_low}, key_high={self.key_high}, velocity_layers[{len(self.velocity_layers)}]=[{[f"[{x}]" for x in self.velocity_layers]}]"
 
     @classmethod
     def __from_zone_complex_json(cls, zone_complex: dict) -> List['SampleZone']:
@@ -216,13 +219,13 @@ class SampleZone:
             return 0
 
         root_key_count = len(sample_zones) # Root key count
-        unique_velocity_layers = sample_zones[0].velocity_layers
+        unique_velocity_layers = list(sample_zones[0].velocity_layers)
 
         if len(sample_zones) == 1:
             return len(root_key_count * unique_velocity_layers)
 
         for zone in sample_zones[1:]:
-            unique_velocity_layers += zone.velocity_layers
+            unique_velocity_layers += list(zone.velocity_layers)
 
         return root_key_count * len(set(unique_velocity_layers))
 
