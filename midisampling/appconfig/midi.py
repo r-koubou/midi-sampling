@@ -219,13 +219,13 @@ class SampleZone:
             return 0
 
         root_key_count = len(sample_zones) # Root key count
-        unique_velocity_layers = sample_zones[0].velocity_layers
+        unique_velocity_layers = list(sample_zones[0].velocity_layers)
 
         if len(sample_zones) == 1:
             return len(root_key_count * unique_velocity_layers)
 
         for zone in sample_zones[1:]:
-            unique_velocity_layers += zone.velocity_layers
+            unique_velocity_layers += list(zone.velocity_layers)
 
         return root_key_count * len(set(unique_velocity_layers))
 
