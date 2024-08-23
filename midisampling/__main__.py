@@ -18,7 +18,7 @@ def _log_system_info():
 def main():
 
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
-    parser.add_argument("--verbose", help="Enable verbose logging.", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
     parser.add_argument("sampling_config_path", help="Path to the sampling configuration file.")
     parser.add_argument("midi_config_path", help="Path to the MIDI configuration file.")
     parser.add_argument("postprocess_config_path", help="Path to the postprocess configuration file.", default=None)
