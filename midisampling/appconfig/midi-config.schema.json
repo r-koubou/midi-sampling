@@ -83,8 +83,8 @@
                     "description": "Pre-wait time (in seconds) before sampling. A value of `0.6` or higher is recommended."
                 },
                 "midi_note_duration": {
-                    "type": "integer",
-                    "description": "Length of the MIDI note to be sampled (in seconds). Only integer values can be specified."
+                    "type": "number",
+                    "description": "Length of the MIDI note to be sampled (in seconds)."
                 },
                 "midi_release_duration": {
                     "type": "number",

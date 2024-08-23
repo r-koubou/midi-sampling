@@ -242,7 +242,7 @@ class MidiConfig:
         self.midi_channel: int                          = config_json["midi_channel"]
         self.program_change_list: List[ProgramChange]   = []
         self.midi_pre_wait_duration: float              = config_json["midi_pre_wait_duration"]
-        self.midi_note_duration: int                    = config_json["midi_note_duration"]
+        self.midi_note_duration: float                  = config_json["midi_note_duration"]
         self.midi_release_duration: float               = config_json["midi_release_duration"]
 
         # Program Change
