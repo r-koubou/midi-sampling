@@ -11,7 +11,7 @@
             "index": 1,
             "name": "trim",
             "params": {
-                "threshold_db": -65.0,
+                "threshold_db": -60.0,
                 "min_silence_ms": 250
             }
         }
