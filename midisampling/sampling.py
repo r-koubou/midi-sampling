@@ -42,7 +42,6 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
             {pc_msb}, {pc_lsb}, {pc},
             {key_root}, {key_low}, {key_high},
             {key_root_scale}, {key_low_scale}, {key_high_scale},
-            {key_root_scale_y}, {key_low_scale_y}, {key_high_scale_y} (notice: ???_y = yamaha format),
             {velocity}, {min_velocity}, {max_velocity}
             and Python format specifiers are also available.
         pc_msb (int): Program Change MSB
