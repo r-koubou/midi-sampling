@@ -5,8 +5,8 @@ import jsonschema
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(THIS_SCRIPT_DIR, "postprocess-config.schema.json"), "r") as f:
-    common_config_json_schema = json.load(f)
+with open(os.path.join(THIS_SCRIPT_DIR, "audioprocess-config.schema.json"), "r") as f:
+    json_schema = json.load(f)
 
 class AudioProcessInfo:
     def __init__(self, index: int, name: str, params: dict) -> None:
@@ -61,7 +61,7 @@ class AudioProcessConfig:
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
         config_json = json.load(f)
-        jsonschema.validate(config_json, common_config_json_schema)
+        jsonschema.validate(config_json, json_schema)
     return config_json
 
 def load(config_path: str) -> AudioProcessConfig:
