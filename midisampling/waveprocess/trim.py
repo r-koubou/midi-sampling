@@ -65,11 +65,11 @@ def trim_from_list(file_list: List[PostProcessedAudioPath], threshold_dBFS:float
         raise ValueError("file_list is empty")
 
     for file in file_list:
-        input_path  = file.recorded_audio_path.path()
-        output_path = file.path()
-        file.makedirs()
+        input_path  = file.working_path()
+        output_path = file.working_path()
+        file.makeworkingdirs()
         trim(input_path, output_path, threshold_dBFS, min_silence_ms)
-        logger.info(f"Trimmed: {file.path()}")
+        logger.info(f"Trimmed: {file.file_path}")
 
 def trim_from_directory(input_directory: str, output_directory: str, threshold_dBFS:float=-50, min_silence_ms:int=250, overwrite: bool = False):
     """

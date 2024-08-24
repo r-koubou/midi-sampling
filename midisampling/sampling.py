@@ -2,6 +2,7 @@ from typing import List
 import math
 import os
 import time
+import tempfile
 from logging import getLogger
 
 import midisampling.waveprocess.normalize as normalize
@@ -159,7 +160,7 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
         os.makedirs(output_dir, exist_ok=True)
 
-        exported_audio_path_list: List[RecordedAudioPath] = []
+        recorded_path_list: List[RecordedAudioPath] = []
 
         logger.info("Sampling...")
 
@@ -206,7 +207,7 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
                     audio_device.export_audio(export_path.path())
 
-                    exported_audio_path_list.append(export_path)
+                    recorded_path_list.append(export_path)
 
                     process_count += 1
         #endregion ~Sampling
@@ -217,25 +218,43 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
             logger.info("Post process config is not set. Skip post process.")
             return
 
-        logger.info("Build post processed audio files path list")
+        with tempfile.TemporaryDirectory() as working_dir:
+            logger.info("#" * 80)
+            logger.info("Post process")
+            logger.info("#" * 80)
+            logger.info("Build post processed audio files path list")
+            logger.debug(f"Working directory: {working_dir}")
+            post_process_exported_path_list: List[PostProcessedAudioPath] = []
 
-        post_process_exported_path_list: List[PostProcessedAudioPath] = []
-        for x in exported_audio_path_list:
-            export_path = PostProcessedAudioPath(
-                recorded_audio_path=x,
-                base_dir=processed_output_dir,
-                overwrite=True
+            for x in recorded_path_list:
+                export_path = PostProcessedAudioPath(
+                    recorded_audio_path=x,
+                    base_dir=processed_output_dir,
+                    working_dir=working_dir,
+                    overwrite=True
+                )
+                post_process_exported_path_list.append(export_path)
+                logger.debug(f"Post process export path: {export_path}")
+
+            logger.info("Copy recorded files to working directory")
+            for x in recorded_path_list:
+                logger.info(f"{x.file_path}")
+                x.copy_to(working_dir)
+
+            logger.info("Run post process")
+            run_postprocess(
+                config=postprocess_config,
+                process_files=post_process_exported_path_list
             )
-            post_process_exported_path_list.append(export_path)
-            logger.debug(f"Post process export path: {export_path}")
 
-        logger.info("Run post process")
-        run_postprocess(
-            config=postprocess_config,
-            process_files=post_process_exported_path_list
-        )
+            logger.info(f"Copy processed files to output directory ({processed_output_dir})")
+            for x in post_process_exported_path_list:
+                logger.info(f"{x.file_path}")
+                x.copy_working_to(processed_output_dir)
 
         #endregion ~Post Process
+
+        logger.info("done")
 
     finally:
         audio_device.dispose() if audio_device else None

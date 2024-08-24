@@ -46,18 +46,18 @@ def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBF
 
     # 各ファイルに対して同じゲインを適用
     for file in file_list:
-        input_filepath  = file.recorded_audio_path.path()
-        output_filepath = file.path()
+        input_filepath  = file.working_path()
+        output_filepath = file.working_path()
         audio           = AudioSegment.from_wav(input_filepath)
 
-        file.makedirs()
+        file.makeworkingdirs()
         normalized_audio = audio.apply_gain(change_in_dBFS)
         normalized_audio.export(output_filepath, format="wav")
 
         audio = None
         normalized_audio = None
 
-        logger.info(f"Normalized: file={file.path()}")
+        logger.info(f"Normalized: file={file.file_path}")
 
     logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 

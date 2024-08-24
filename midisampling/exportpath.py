@@ -3,6 +3,7 @@ from typing import List, override
 
 import os
 import pathlib
+import shutil
 
 class IExportingAudioPath(metaclass=abc.ABCMeta):
     """
@@ -50,6 +51,14 @@ class RecordedAudioPath(IExportingAudioPath):
         if len(target) > 0:
             os.makedirs(target, exist_ok=True)
 
+    def copy_to(self, dest_dir: str):
+        """
+        Copy processed file to dest_dir
+        """
+        dest = os.path.join(dest_dir, self.file_path) # join sub directory included in file_path
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(self.path(), dest)
+
     def __str__(self):
         return f"base_dir={self.base_dir}, file_path={self.file_path}"
 
@@ -69,14 +78,15 @@ class PostProcessedAudioPath(IExportingAudioPath):
     """
     Exporting audio path information for post process
     """
-    def __init__(self, recorded_audio_path: RecordedAudioPath, base_dir: str, overwrite: bool = False):
+    def __init__(self, recorded_audio_path: RecordedAudioPath, base_dir: str, working_dir: str, overwrite: bool = False):
 
         if base_dir == recorded_audio_path.base_dir and not overwrite:
             raise ValueError("base_dir and recorded_audio_path.base_dir must be different. If you want to force overwrite, set overwrite to enable.")
 
         self.recorded_audio_path: RecordedAudioPath = recorded_audio_path
-        self.base_dir: str  = base_dir
-        self.file_path: str = os.path.normpath(recorded_audio_path.file_path)
+        self.base_dir: str    = base_dir
+        self.working_dir: str = working_dir
+        self.file_path: str   = os.path.normpath(recorded_audio_path.file_path)
 
     @classmethod
     def from_directory(cls, input_directory: str, output_directory: str, search_extension: str = ".wav", overwrite: bool = False) -> List['PostProcessedAudioPath']:
@@ -103,11 +113,27 @@ class PostProcessedAudioPath(IExportingAudioPath):
     def path(self) -> str:
         return os.path.join(self.base_dir, self.file_path)
 
+    def working_path(self) -> str:
+        return os.path.join(self.working_dir, self.file_path)
+
     @override
     def makedirs(self):
         target = os.path.dirname(self.path())
         if len(target) > 0:
             os.makedirs(target, exist_ok=True)
+
+    def makeworkingdirs(self):
+        target = os.path.dirname(self.working_path())
+        if len(target) > 0:
+            os.makedirs(target, exist_ok=True)
+
+    def copy_working_to(self, dest_dir: str):
+        """
+        Copy processed file to dest_dir
+        """
+        dest = os.path.join(dest_dir, self.file_path) # join sub directory included in file_path
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(self.working_path(), dest)
 
     def __str__(self):
         return f"base_dir={self.base_dir}, file_path={self.file_path}, recorded_audio_path={self.recorded_audio_path}"
