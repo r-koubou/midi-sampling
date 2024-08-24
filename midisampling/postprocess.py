@@ -47,6 +47,8 @@ def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], outp
         )
 
         logger.info(f"Copy processed files to output directory ({output_dir})")
+        for x in process_files:
+            x.copy_working_to(output_dir)
 
 def process(config: PostProcessConfig, process_files: List[PostProcessedAudioPath]) -> None:
 
