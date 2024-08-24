@@ -1,15 +1,54 @@
 from typing import List
+
+import tempfile
 from logging import getLogger
 
 from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.exportpath import PostProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
 
 from midisampling.waveprocess.normalize import normalize_from_list as normalize
 from midisampling.waveprocess.trim import trim_from_list as trim
 
 logger = getLogger(__name__)
 
-def run_postprocess(config: PostProcessConfig, process_files: List[PostProcessedAudioPath]) -> None:
+def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], output_dir: str) -> None:
+    if not config:
+        logger.info("Post process config is not set. Skip post process.")
+        return
+
+    with tempfile.TemporaryDirectory() as working_dir:
+        logger.info("#" * 80)
+        logger.info("Post process")
+        logger.info("#" * 80)
+        logger.info("Build post processed audio files path list")
+        logger.debug(f"Working directory: {working_dir}")
+
+        process_files: List[PostProcessedAudioPath] = []
+
+        for x in recorded_files:
+            export_path = PostProcessedAudioPath(
+                recorded_audio_path=x,
+                base_dir=output_dir,
+                working_dir=working_dir,
+                overwrite=True
+            )
+            process_files.append(export_path)
+            logger.debug(f"Post process export path: {export_path}")
+
+        logger.info("Copy recorded files to working directory")
+        for x in recorded_files:
+            logger.info(f"{x.file_path}")
+            x.copy_to(working_dir)
+
+        logger.info("Run post process")
+        process(
+            config=config,
+            process_files=process_files
+        )
+
+        logger.info(f"Copy processed files to output directory ({output_dir})")
+
+def process(config: PostProcessConfig, process_files: List[PostProcessedAudioPath]) -> None:
 
     divider = "-" * 80
 

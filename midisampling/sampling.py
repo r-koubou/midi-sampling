@@ -25,7 +25,7 @@ import midisampling.dynamic_format as dynamic_format
 
 from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
 from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.postprocess import run_postprocess
+from midisampling.postprocess import run as run_postprocess
 from midisampling.postprocess import validate_postprocess
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -214,44 +214,11 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
         #region Post Process
 
-        if not postprocess_config:
-            logger.info("Post process config is not set. Skip post process.")
-            return
-
-        with tempfile.TemporaryDirectory() as working_dir:
-            logger.info("#" * 80)
-            logger.info("Post process")
-            logger.info("#" * 80)
-            logger.info("Build post processed audio files path list")
-            logger.debug(f"Working directory: {working_dir}")
-            post_process_exported_path_list: List[PostProcessedAudioPath] = []
-
-            for x in recorded_path_list:
-                export_path = PostProcessedAudioPath(
-                    recorded_audio_path=x,
-                    base_dir=processed_output_dir,
-                    working_dir=working_dir,
-                    overwrite=True
-                )
-                post_process_exported_path_list.append(export_path)
-                logger.debug(f"Post process export path: {export_path}")
-
-            logger.info("Copy recorded files to working directory")
-            for x in recorded_path_list:
-                logger.info(f"{x.file_path}")
-                x.copy_to(working_dir)
-
-            logger.info("Run post process")
-            run_postprocess(
-                config=postprocess_config,
-                process_files=post_process_exported_path_list
-            )
-
-            logger.info(f"Copy processed files to output directory ({processed_output_dir})")
-            for x in post_process_exported_path_list:
-                logger.info(f"{x.file_path}")
-                x.copy_working_to(processed_output_dir)
-
+        run_postprocess(
+            config=postprocess_config,
+            recorded_files=recorded_path_list,
+            output_dir=processed_output_dir
+        )
         #endregion ~Post Process
 
         logger.info("done")
