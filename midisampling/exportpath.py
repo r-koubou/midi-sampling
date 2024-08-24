@@ -67,10 +67,13 @@ class PostProcessedAudioPath:
         self.file_path: str   = os.path.normpath(recorded_audio_path.file_path)
 
     @classmethod
-    def from_directory(cls, input_directory: str, output_directory: str, search_extension: str = ".wav", overwrite: bool = False) -> List['PostProcessedAudioPath']:
+    def from_directory(cls, input_directory: str, output_directory: str, working_directory: str = None, search_extension: str = ".wav", overwrite: bool = False) -> List['PostProcessedAudioPath']:
 
         input_directory = os.path.normpath(os.path.abspath(input_directory))
         output_directory = os.path.normpath(os.path.abspath(output_directory))
+
+        if not working_directory:
+            working_directory = output_directory
 
         if not os.path.exists(input_directory):
             raise FileNotFoundError(f"input_directory not found: {input_directory}")
@@ -83,7 +86,7 @@ class PostProcessedAudioPath:
         for f in files:
             file_path = os.path.normpath(str(f.relative_to(directory)))
             source    = RecordedAudioPath(base_dir=input_directory, file_path=file_path)
-            result.append(PostProcessedAudioPath(recorded_audio_path=source, base_dir=output_directory, overwrite=overwrite))
+            result.append(PostProcessedAudioPath(recorded_audio_path=source, base_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
 
         return result
 
