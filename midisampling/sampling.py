@@ -27,10 +27,13 @@ from midisampling.appconfig.audioprocess import AudioProcessConfig
 from midisampling.waveprocess.processing import process as run_postprocess
 from midisampling.waveprocess.processing import validate_process_config
 
+import midisampling.notenumber as notenumber_util
+
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
-def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int):
+def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int, use_scale_spn_format: bool):
     """
     Expand placeholders in format_string with given values
 
@@ -38,6 +41,8 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
         format_string (str): string.format compatible format string. available placeholders are
             {pc_msb}, {pc_lsb}, {pc},
             {key_root}, {key_low}, {key_high},
+            {key_root_scale}, {key_low_scale}, {key_high_scale},
+            {key_root_scale_y}, {key_low_scale_y}, {key_high_scale_y} (notice: ???_y = yamaha format),
             {velocity}, {min_velocity}, {max_velocity}
             and Python format specifiers are also available.
         pc_msb (int): Program Change MSB
@@ -49,18 +54,26 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
         min_velocity (int): Velocity Layer: Minimum definition
         max_velocity (int): Velocity Layer: Maximum definition
         velocity (int): Send as MIDI velocity to device
+        use_scale_spn_format (bool): True: Scientific pitch notation format, False: Yamaha format
 
     Returns:
         str: formatted string
     """
 
     format_value = {
+        # MIDI Controll Change
         "pc_msb": pc_msb,
         "pc_lsb": pc_lsb,
         "pc": pc_value,
+        # MIDI Note number
         "key_root": key_root,
         "key_low": key_low,
         "key_high": key_high,
+        # Note name
+        "key_root_scale": notenumber_util.as_scalename(key_root, spn_format=use_scale_spn_format),
+        "key_low_scale": notenumber_util.as_scalename(key_low, spn_format=use_scale_spn_format),
+        "key_high_scale": notenumber_util.as_scalename(key_high, spn_format=use_scale_spn_format),
+        # MIDI Velocity
         "velocity": velocity,
         "min_velocity": min_velocity,
         "max_velocity": max_velocity,
@@ -105,6 +118,7 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
     midi_release_duration       = midi_config.midi_release_duration
     output_dir                  = midi_config.output_dir
     output_prefix_format        = midi_config.output_prefix_format
+    scale_name_format           = midi_config.scale_name_format
     processed_output_dir        = midi_config.processed_output_dir
 
     #---------------------------------------------------------------------------
@@ -198,7 +212,8 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
                         key_high=zone.key_high,
                         min_velocity=velocity.min_velocity,
                         max_velocity=velocity.max_velocity,
-                        velocity=velocity.send_velocity
+                        velocity=velocity.send_velocity,
+                        use_scale_spn_format=scale_name_format == "SPN"
                     )
 
                     export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
