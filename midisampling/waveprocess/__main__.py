@@ -7,9 +7,9 @@ from midisampling.waveprocess import normalize
 from midisampling.waveprocess import trim
 
 from midisampling.exportpath import RecordedAudioPath
-from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.postprocess import run as run_postprocess
-from midisampling.postprocess import validate_postprocess
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+from midisampling.waveprocess.processing import process
+from midisampling.waveprocess.processing import validate_process_config
 
 from midisampling.logging_management import init_logging_as_stdout
 
@@ -26,16 +26,16 @@ def main() -> None:
     init_logging_as_stdout(args.verbose)
 
     try:
-        postprocess_config = PostProcessConfig(args.processing_config_path)
-        validate_postprocess(postprocess_config)
+        process_config = AudioProcessConfig(args.processing_config_path)
+        validate_process_config(process_config)
 
         sources: List[RecordedAudioPath] = RecordedAudioPath.from_directory(args.input_directory)
 
         for i in sources:
             print(i)
 
-        run_postprocess(
-            config=postprocess_config,
+        process(
+            config=process_config,
             recorded_files=sources,
             output_dir=args.output_directory
         )

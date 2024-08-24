@@ -71,7 +71,7 @@ class RecordedAudioPath:
     def __hash__(self):
         return hash((self.base_dir, self.file_path))
 
-class PostProcessedAudioPath:
+class ProcessedAudioPath:
     """
     Exporting audio path information for post process
     """
@@ -86,7 +86,7 @@ class PostProcessedAudioPath:
         self.file_path: str   = os.path.normpath(recorded_audio_path.file_path)
 
     @classmethod
-    def from_directory(cls, input_directory: str, output_directory: str, working_directory: str = None, search_extension: str = ".wav", overwrite: bool = False) -> List['PostProcessedAudioPath']:
+    def from_directory(cls, input_directory: str, output_directory: str, working_directory: str = None, search_extension: str = ".wav", overwrite: bool = False) -> List['ProcessedAudioPath']:
 
         input_directory = os.path.normpath(os.path.abspath(input_directory))
         output_directory = os.path.normpath(os.path.abspath(output_directory))
@@ -98,10 +98,10 @@ class PostProcessedAudioPath:
             raise FileNotFoundError(f"input_directory not found: {input_directory}")
 
         files = RecordedAudioPath.from_directory(input_directory=input_directory, search_extension=search_extension)
-        result: List[PostProcessedAudioPath] = []
+        result: List[ProcessedAudioPath] = []
 
         for f in files:
-            result.append(PostProcessedAudioPath(recorded_audio_path=f, output_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
+            result.append(ProcessedAudioPath(recorded_audio_path=f, output_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
 
         return result
 
@@ -140,7 +140,7 @@ class PostProcessedAudioPath:
 
 
     def __eq__(self, other):
-        if not isinstance(other, PostProcessedAudioPath):
+        if not isinstance(other, ProcessedAudioPath):
             return False
 
         return (

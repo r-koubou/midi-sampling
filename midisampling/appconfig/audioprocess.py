@@ -8,7 +8,7 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(THIS_SCRIPT_DIR, "postprocess-config.schema.json"), "r") as f:
     common_config_json_schema = json.load(f)
 
-class PostProcessInfo:
+class AudioProcessInfo:
     def __init__(self, index: int, name: str, params: dict) -> None:
         self.index: int   = index
         self.name: str    = name
@@ -18,7 +18,7 @@ class PostProcessInfo:
         return f"index={self.index}, name={self.name}, params={self.params}"
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, PostProcessInfo):
+        if not isinstance(other, AudioProcessInfo):
             return False
         return (
             self.index == other.index
@@ -29,14 +29,14 @@ class PostProcessInfo:
     def __hash__(self) -> int:
         return hash((self.index, self.name, tuple(self.params.items())))
 
-class PostProcessConfig:
+class AudioProcessConfig:
     def __init__(self, config_path: str) -> None:
         config = validate(config_path)
-        self.effects: List[PostProcessInfo] = []
+        self.effects: List[AudioProcessInfo] = []
 
         for effect in config.get("effects", []):
             self.effects.append(
-                PostProcessInfo(
+                AudioProcessInfo(
                     index=effect["index"],
                     name=effect["name"],
                     params=effect["params"]
@@ -64,5 +64,5 @@ def validate(config_path: str) -> dict:
         jsonschema.validate(config_json, common_config_json_schema)
     return config_json
 
-def load(config_path: str) -> PostProcessConfig:
-    return PostProcessConfig(config_path)
+def load(config_path: str) -> AudioProcessConfig:
+    return AudioProcessConfig(config_path)

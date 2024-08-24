@@ -3,45 +3,42 @@ from typing import List
 import tempfile
 from logging import getLogger
 
-from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 
 from midisampling.waveprocess.normalize import normalize_from_list as normalize
 from midisampling.waveprocess.trim import trim_from_list as trim
 
 logger = getLogger(__name__)
 
-def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], output_dir: str) -> None:
+def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath], output_dir: str) -> None:
     if not config:
-        logger.info("Post process config is not set. Skip post process.")
+        logger.info("Process config is not set. Skip post process.")
         return
 
     with tempfile.TemporaryDirectory() as working_dir:
-        logger.info("#" * 80)
-        logger.info("Post process")
-        logger.info("#" * 80)
-        logger.info("Build post processed audio files path list")
+        logger.info("Build processed audio files path list")
         logger.debug(f"Working directory: {working_dir}")
 
-        process_files: List[PostProcessedAudioPath] = []
+        process_files: List[ProcessedAudioPath] = []
 
         for x in recorded_files:
-            export_path = PostProcessedAudioPath(
+            export_path = ProcessedAudioPath(
                 recorded_audio_path=x,
                 output_dir=output_dir,
                 working_dir=working_dir,
                 overwrite=True # Overwrite via effect chain
             )
             process_files.append(export_path)
-            logger.debug(f"Post process export path: {export_path}")
+            logger.debug(f"Process export path: {export_path}")
 
         logger.info("Copy recorded files to working directory")
         for x in recorded_files:
             logger.info(f"{x.file_path}")
             x.copy_to(working_dir)
 
-        logger.info("Run post process")
-        process(
+        logger.info("Run processes")
+        _process_impl(
             config=config,
             process_files=process_files
         )
@@ -50,7 +47,7 @@ def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], outp
         for x in process_files:
             x.copy_working_to(output_dir)
 
-def process(config: PostProcessConfig, process_files: List[PostProcessedAudioPath]) -> None:
+def _process_impl(config: AudioProcessConfig, process_files: List[ProcessedAudioPath]) -> None:
 
     divider = "-" * 80
 
@@ -77,17 +74,17 @@ def process(config: PostProcessConfig, process_files: List[PostProcessedAudioPat
                 min_silence_ms=int(params["min_silence_ms"])
             )
         else:
-            raise ValueError(f"Unknown postprocess name: {name}")
+            raise ValueError(f"Unknown processing name: {name}")
 
         logger.info(end_message)
 
 
-def validate_postprocess(config: PostProcessConfig) -> None:
+def validate_process_config(config: AudioProcessConfig) -> None:
     """
-    Validate the postprocess configuration values.
+    Validate the process configuration values.
     """
 
-    logger.info("Validating postprocess configuration")
+    logger.info("Validating process configuration")
 
     for effect in config.effects:
         name   = effect.name
@@ -103,4 +100,4 @@ def validate_postprocess(config: PostProcessConfig) -> None:
             if "min_silence_ms" not in params:
                 raise ValueError(f"min_silence_ms is required for {name}")
         else:
-            raise ValueError(f"Unknown postprocess name: {name}")
+            raise ValueError(f"Unknown process name: {name}")

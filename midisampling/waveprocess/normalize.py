@@ -5,18 +5,18 @@ import pathlib
 from logging import getLogger
 from pydub import AudioSegment
 
-from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 
 logger = getLogger(__name__)
 
-def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBFS:float =-1.0):
+def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:float =-1.0):
     """
     Normalize with respect to the highest peak of the audio file(s) in the input directory.
 
     Parameters
     ----------
-    file_list : List[PostProcessedAudioPath]
-        List of PostProcessedAudioPath instances.
+    file_list : List[ProcessedAudioPath]
+        List of ProcessedAudioPath instances.
 
     target_peak_dBFS : float (default=-1.0)
     """
@@ -76,7 +76,7 @@ def normalize_from_directory(input_directory: str, output_directory: str, target
     target_peak_dBFS : float (default=-1.0)
     """
 
-    process_files: List[PostProcessedAudioPath] = PostProcessedAudioPath.from_directory(
+    process_files: List[ProcessedAudioPath] = ProcessedAudioPath.from_directory(
         input_directory=input_directory,
         output_directory=output_directory,
         overwrite=overwrite

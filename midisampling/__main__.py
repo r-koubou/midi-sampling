@@ -1,6 +1,5 @@
 import os.path
 import sys
-import json
 import argparse
 from logging import getLogger
 from midisampling.logging_management import init_logging_from_config
@@ -21,7 +20,7 @@ def main():
     parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
     parser.add_argument("sampling_config_path", help="Path to the sampling configuration file.")
     parser.add_argument("midi_config_path", help="Path to the MIDI configuration file.")
-    parser.add_argument("postprocess_config_path", help="Path to the postprocess configuration file.", default=None)
+    parser.add_argument("postprocess_config_path", help="Path to the process configuration file for post processing.", default=None, nargs="?")
     parser.add_argument("-l", "--log-file", help="Path to save the log file.")
 
     args = parser.parse_args()

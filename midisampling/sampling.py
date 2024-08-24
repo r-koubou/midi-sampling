@@ -2,7 +2,6 @@ from typing import List
 import math
 import os
 import time
-import tempfile
 from logging import getLogger
 
 import midisampling.waveprocess.normalize as normalize
@@ -23,10 +22,10 @@ from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
 
-from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
-from midisampling.appconfig.postprocess import PostProcessConfig
-from midisampling.postprocess import run as run_postprocess
-from midisampling.postprocess import validate_postprocess
+from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+from midisampling.waveprocess.processing import process as run_postprocess
+from midisampling.waveprocess.processing import validate_process_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
@@ -77,10 +76,10 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
     sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
     midi_config: MidiConfig = load_midi_config(midi_config_path)
 
-    postprocess_config: PostProcessConfig = None
+    postprocess_config: AudioProcessConfig = None
     if postprocess_config_path:
-        postprocess_config = PostProcessConfig(postprocess_config_path)
-        validate_postprocess(postprocess_config)
+        postprocess_config = AudioProcessConfig(postprocess_config_path)
+        validate_process_config(postprocess_config)
 
     #---------------------------------------------------------------------------
     # Get config values
@@ -214,6 +213,9 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
         #region Post Process
 
+        logger.info("#" * 80)
+        logger.info("Post process")
+        logger.info("#" * 80)
         run_postprocess(
             config=postprocess_config,
             recorded_files=recorded_path_list,
