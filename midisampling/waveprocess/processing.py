@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import os
 import sys
 import json
@@ -98,12 +98,13 @@ def validate_process_config(config: AudioProcessConfig) -> None:
     directory = pathlib.Path(THIS_SCRIPT_DIR)
     schema_file_path_list = directory.glob(f"**/*.schema.json")
 
-    schema_table = {}
+    schema_table: Dict[str, dict] = {}
     for file in schema_file_path_list:
         with open(file, "r") as f:
             schema = json.load(f)
 
-        schema_table[schema["title"]] =  schema
+        title = str(schema["title"]).lower()
+        schema_table[title] =  schema
 
     for effect in config.effects:
         name   = effect.name

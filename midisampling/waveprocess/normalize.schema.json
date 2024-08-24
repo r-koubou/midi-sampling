@@ -1,28 +1,29 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "normalize",
+    "title": "Normalize",
     "description": "Structure of the normalize process configuration.",
-    "definitions": {
-        "def_normalize_config": {
-            "type":"object",
-            "additionalProperties": false,
-            "properties": {
-                "target_db": {
-                    "type": "number",
-                    "description": "The target decibel level"
-                }
-            },
-            "required": ["target_db"]
-        }
-    },
     "type": "object",
     "additionalProperties": false,
-    "$ref": "#/definitions/def_normalize_config",
+    "properties": {
+        "target_db": {
+            "type": "number",
+            "description": "The target decibel level"
+        }
+    },
+    "required": [
+        "target_db"
+    ],
     "examples": [
-        [
-            {
-                "target_db": -10.0
-            }
-        ]
+        {
+            "effects":[
+                {
+                    "index": 0,
+                    "name": "normalize",
+                    "params": {
+                        "target_db": -10.0
+                    }
+                }
+            ]
+        }
     ]
 }
