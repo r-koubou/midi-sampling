@@ -238,6 +238,7 @@ class MidiConfig:
         self.output_dir: str                            = config_json["output_dir"]
         self.processed_output_dir: str                  = config_json["processed_output_dir"]
         self.output_prefix_format: str                  = config_json["output_prefix_format"]
+        self.scale_name_format: str                     = config_json.get("scale_name_format", "Yamaha")
         self.pre_send_smf_path_list: List[str]          = config_json["pre_send_smf_path_list"]
         self.midi_channel: int                          = config_json["midi_channel"]
         self.program_change_list: List[ProgramChange]   = []
