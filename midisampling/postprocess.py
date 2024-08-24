@@ -30,7 +30,7 @@ def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], outp
                 recorded_audio_path=x,
                 output_dir=output_dir,
                 working_dir=working_dir,
-                overwrite=True
+                overwrite=True # Overwrite via effect chain
             )
             process_files.append(export_path)
             logger.debug(f"Post process export path: {export_path}")

@@ -37,6 +37,25 @@ class RecordedAudioPath:
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copyfile(self.path(), dest)
 
+    @classmethod
+    def from_directory(cls, input_directory: str, search_extension: str = ".wav") -> List['RecordedAudioPath']:
+
+        input_directory = os.path.normpath(os.path.abspath(input_directory))
+
+        if not os.path.exists(input_directory):
+            raise FileNotFoundError(f"input_directory not found: {input_directory}")
+
+        directory = pathlib.Path(input_directory)
+        files = list(directory.glob(f"**/*{search_extension}"))
+
+        result: List[RecordedAudioPath] = []
+
+        for f in files:
+            file_path = os.path.normpath(str(f.relative_to(directory)))
+            result.append(RecordedAudioPath(base_dir=input_directory, file_path=file_path))
+
+        return result
+
     def __str__(self):
         return f"base_dir={self.base_dir}, file_path={self.file_path}"
 
@@ -78,15 +97,11 @@ class PostProcessedAudioPath:
         if not os.path.exists(input_directory):
             raise FileNotFoundError(f"input_directory not found: {input_directory}")
 
-        directory = pathlib.Path(input_directory)
-        files = list(directory.glob(f"**/*{search_extension}"))
-
+        files = RecordedAudioPath.from_directory(input_directory=input_directory, search_extension=search_extension)
         result: List[PostProcessedAudioPath] = []
 
         for f in files:
-            file_path = os.path.normpath(str(f.relative_to(directory)))
-            source    = RecordedAudioPath(base_dir=input_directory, file_path=file_path)
-            result.append(PostProcessedAudioPath(recorded_audio_path=source, output_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
+            result.append(PostProcessedAudioPath(recorded_audio_path=f, output_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
 
         return result
 
