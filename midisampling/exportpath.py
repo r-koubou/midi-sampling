@@ -5,27 +5,7 @@ import os
 import pathlib
 import shutil
 
-class IExportingAudioPath(metaclass=abc.ABCMeta):
-    """
-    Exporting audio path information.
-    Implementations should implement __eq__ and __hash__ methods for comparison.
-    """
-
-    @abc.abstractmethod
-    def path(self) -> str:
-        """
-        Get joined path of base_dir and file_path
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def makedirs(self):
-        """
-        Create directory by using `base_dir + file_path`
-        """
-        raise NotImplementedError
-
-class RecordedAudioPath(IExportingAudioPath):
+class RecordedAudioPath:
     """
     Exporting audio path information
     """
@@ -34,14 +14,12 @@ class RecordedAudioPath(IExportingAudioPath):
         self.base_dir: str  = base_dir
         self.file_path: str = os.path.normpath(file_path)
 
-    @override
     def path(self) -> str:
         """
         Get joined path of base_dir and file_path
         """
         return os.path.join(self.base_dir, self.file_path)
 
-    @override
     def makedirs(self):
         """
         Create directory by using `base_dir + file_path`
@@ -74,7 +52,7 @@ class RecordedAudioPath(IExportingAudioPath):
     def __hash__(self):
         return hash((self.base_dir, self.file_path))
 
-class PostProcessedAudioPath(IExportingAudioPath):
+class PostProcessedAudioPath:
     """
     Exporting audio path information for post process
     """
@@ -109,34 +87,38 @@ class PostProcessedAudioPath(IExportingAudioPath):
 
         return result
 
-    @override
     def path(self) -> str:
         return os.path.join(self.base_dir, self.file_path)
 
     def working_path(self) -> str:
         return os.path.join(self.working_dir, self.file_path)
 
-    @override
     def makedirs(self):
+        """
+        Create directory by using `base_dir + file_path`
+        """
         target = os.path.dirname(self.path())
         if len(target) > 0:
             os.makedirs(target, exist_ok=True)
 
     def makeworkingdirs(self):
+        """
+        Create directory by using `working_dir + file_path`
+        """
         target = os.path.dirname(self.working_path())
         if len(target) > 0:
             os.makedirs(target, exist_ok=True)
 
     def copy_working_to(self, dest_dir: str):
         """
-        Copy processed file to dest_dir
+        Copy processed file (in working directory) to dest_dir
         """
         dest = os.path.join(dest_dir, self.file_path) # join sub directory included in file_path
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copyfile(self.working_path(), dest)
 
     def __str__(self):
-        return f"base_dir={self.base_dir}, file_path={self.file_path}, recorded_audio_path={self.recorded_audio_path}"
+        return f"base_dir={self.base_dir}, file_path={self.file_path}, working_dir={self.working_dir}, recorded_audio_path={self.recorded_audio_path}"
 
 
     def __eq__(self, other):
