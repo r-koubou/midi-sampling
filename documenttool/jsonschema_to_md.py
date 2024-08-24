@@ -25,6 +25,7 @@ def json_schema_to_markdown(schema_file_path: str, add_paragraph_count: int = 0)
 def main() -> None:
     parser = argparse.ArgumentParser(prog=f"python -m {__spec__.name}", description="Convert JSON schema to markdown. The result will be copied to the clipboard.")
     parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
+    parser.add_argument("-p", "--paragraph", type=int, default=2, help="Add paragraph count to the header.")
     parser.add_argument("input_files", nargs="+", help="Path to the input JSON schema file(s).")
 
     args = parser.parse_args()
@@ -38,7 +39,10 @@ def main() -> None:
         result.append(HEADER_COMMENT)
 
         for file in args.input_files:
-            md_txt = json_schema_to_markdown(file, 2)
+            md_txt = json_schema_to_markdown(
+                schema_file_path=file,
+                add_paragraph_count=args.paragraph
+            )
             result.append(md_txt)
 
         result.append(FOOTER_COMMENT)
