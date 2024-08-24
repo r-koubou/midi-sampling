@@ -28,7 +28,7 @@ def run(config: PostProcessConfig, recorded_files: List[RecordedAudioPath], outp
         for x in recorded_files:
             export_path = PostProcessedAudioPath(
                 recorded_audio_path=x,
-                base_dir=output_dir,
+                output_dir=output_dir,
                 working_dir=working_dir,
                 overwrite=True
             )

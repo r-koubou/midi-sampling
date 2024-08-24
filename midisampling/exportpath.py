@@ -56,13 +56,13 @@ class PostProcessedAudioPath:
     """
     Exporting audio path information for post process
     """
-    def __init__(self, recorded_audio_path: RecordedAudioPath, base_dir: str, working_dir: str, overwrite: bool = False):
+    def __init__(self, recorded_audio_path: RecordedAudioPath, output_dir: str, working_dir: str, overwrite: bool = False):
 
-        if base_dir == recorded_audio_path.base_dir and not overwrite:
+        if output_dir == recorded_audio_path.base_dir and not overwrite:
             raise ValueError("base_dir and recorded_audio_path.base_dir must be different. If you want to force overwrite, set overwrite to enable.")
 
         self.recorded_audio_path: RecordedAudioPath = recorded_audio_path
-        self.base_dir: str    = base_dir
+        self.output_dir: str  = output_dir
         self.working_dir: str = working_dir
         self.file_path: str   = os.path.normpath(recorded_audio_path.file_path)
 
@@ -86,19 +86,19 @@ class PostProcessedAudioPath:
         for f in files:
             file_path = os.path.normpath(str(f.relative_to(directory)))
             source    = RecordedAudioPath(base_dir=input_directory, file_path=file_path)
-            result.append(PostProcessedAudioPath(recorded_audio_path=source, base_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
+            result.append(PostProcessedAudioPath(recorded_audio_path=source, output_dir=output_directory, working_dir=working_directory, overwrite=overwrite))
 
         return result
 
     def path(self) -> str:
-        return os.path.join(self.base_dir, self.file_path)
+        return os.path.join(self.output_dir, self.file_path)
 
     def working_path(self) -> str:
         return os.path.join(self.working_dir, self.file_path)
 
     def makedirs(self):
         """
-        Create directory by using `base_dir + file_path`
+        Create directory by using `output_dir + file_path`
         """
         target = os.path.dirname(self.path())
         if len(target) > 0:
@@ -121,17 +121,17 @@ class PostProcessedAudioPath:
         shutil.copyfile(self.working_path(), dest)
 
     def __str__(self):
-        return f"base_dir={self.base_dir}, file_path={self.file_path}, working_dir={self.working_dir}, recorded_audio_path={self.recorded_audio_path}"
+        return f"output_dir={self.output_dir}, file_path={self.file_path}, working_dir={self.working_dir}, recorded_audio_path={self.recorded_audio_path}"
 
 
     def __eq__(self, other):
-        if not isinstance(other, RecordedAudioPath):
+        if not isinstance(other, PostProcessedAudioPath):
             return False
 
         return (
-            self.base_dir == other.base_dir
+            self.output_dir == other.output_dir
             and self.file_path == other.file_path
         )
 
     def __hash__(self):
-        return hash((self.base_dir, self.file_path))
+        return hash((self.output_dir, self.file_path))
