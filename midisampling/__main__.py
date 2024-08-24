@@ -29,10 +29,9 @@ def main():
 
     logfile_path = args.log_file
     if not logfile_path:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        logdir = os.path.dirname(os.path.abspath(args.midi_config_path))
-        logfile_path = os.path.join(logdir, f"midi-sampling-{timestamp}.log")
-        del logdir
+        timestamp    = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        logfile_dir  = os.path.dirname(os.path.abspath(args.midi_config_path))
+        logfile_path = os.path.join(logfile_dir, f"midi-sampling-{timestamp}.log")
 
     init_logging_from_config(logfile_path=logfile_path, verbose=args.verbose)
     _log_system_info()
