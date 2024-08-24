@@ -2,9 +2,13 @@ name: config-validation
 on:
   push:
     paths:
+      # config files
       - 'midisampling/appconfig/**'
       - 'sampling-config.json'
       - 'examples/midi-config.example.json'
+      - 'examples/postprocess-config.example.json'
+      # audio process parameters
+      - 'midisampling/waveprocess/**'
 jobs:
   config-validation:
     runs-on: ubuntu-latest
@@ -33,3 +37,11 @@ jobs:
       - name: validate midi config
         run: |
           pipenv run python -m midisampling.appconfig validate-midi examples/midi-config.example.json
+
+      - name: validate audio process config
+        run: |
+          pipenv run python -m midisampling.appconfig validate-audioprocess examples/postprocess-config.example.json
+
+      - name: validate audio process parameters
+        run: |
+          pipenv run python -m midisampling.waveprocess.processing examples/postprocess-config.example.json

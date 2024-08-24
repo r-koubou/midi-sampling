@@ -22,7 +22,10 @@ from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
 
-from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+from midisampling.waveprocess.processing import process as run_postprocess
+from midisampling.waveprocess.processing import validate_process_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
@@ -65,13 +68,18 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
 
     return dynamic_format.format(format_string=format_string, data=format_value)
 
-def main(sampling_config_path: str, midi_config_path: str) -> None:
+def main(sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None) -> None:
 
     #---------------------------------------------------------------------------
     # Load config values
     #---------------------------------------------------------------------------
     sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
     midi_config: MidiConfig = load_midi_config(midi_config_path)
+
+    postprocess_config: AudioProcessConfig = None
+    if postprocess_config_path:
+        postprocess_config = AudioProcessConfig(postprocess_config_path)
+        validate_process_config(postprocess_config)
 
     #---------------------------------------------------------------------------
     # Get config values
@@ -95,13 +103,9 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
     midi_note_duration          = midi_config.midi_note_duration
     midi_pre_duration           = midi_config.midi_pre_wait_duration
     midi_release_duration       = midi_config.midi_release_duration
-    target_peak                 = sampling_config.target_peak
     output_dir                  = midi_config.output_dir
     output_prefix_format        = midi_config.output_prefix_format
     processed_output_dir        = midi_config.processed_output_dir
-
-    trim_threshold              = sampling_config.trim_threshold
-    trim_min_silence_duration   = sampling_config.trim_min_silence_duration
 
     #---------------------------------------------------------------------------
     # MIDI
@@ -155,7 +159,7 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        exported_audio_path_list: List[RecordedAudioPath] = []
+        recorded_path_list: List[RecordedAudioPath] = []
 
         logger.info("Sampling...")
 
@@ -202,37 +206,24 @@ def main(sampling_config_path: str, midi_config_path: str) -> None:
 
                     audio_device.export_audio(export_path.path())
 
-                    exported_audio_path_list.append(export_path)
+                    recorded_path_list.append(export_path)
 
                     process_count += 1
         #endregion ~Sampling
 
-        #region Waveform Processing
+        #region Post Process
 
-        logger.info("Build post processed audio files path list")
-
-        post_process_exported_path_list: List[PostProcessedAudioPath] = []
-        for x in exported_audio_path_list:
-            export_path = PostProcessedAudioPath(
-                recorded_audio_path=x,
-                base_dir=processed_output_dir,
-                overwrite=True
-            )
-            post_process_exported_path_list.append(export_path)
-            logger.debug(f"Post process export path: {export_path}")
-
-        #---------------------------------------------------------------------------
-        # Normalize -> Trim
-        #---------------------------------------------------------------------------
-        normalize.normalize_from_list(
-            file_list=post_process_exported_path_list,
-            target_peak_dBFS=target_peak
+        logger.info("#" * 80)
+        logger.info("Post process")
+        logger.info("#" * 80)
+        run_postprocess(
+            config=postprocess_config,
+            recorded_files=recorded_path_list,
+            output_dir=processed_output_dir
         )
-        trim.trim_from_list(
-            file_list=post_process_exported_path_list,
-            threshold_dBFS=trim_threshold,
-            min_silence_ms=trim_min_silence_duration
-        )
+        #endregion ~Post Process
+
+        logger.info("done")
 
     finally:
         audio_device.dispose() if audio_device else None

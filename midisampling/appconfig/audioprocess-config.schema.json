@@ -1,0 +1,67 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Audio process Configuration",
+    "description": "Structure of the audio process configuration.",
+    "definitions": {
+        "def_audioprocess_config": {
+            "type":"object",
+            "additionalProperties": false,
+            "properties": {
+                "effects": {
+                    "type": "array",
+                    "description": "A list of audio process configurations",
+                    "items": {
+                        "$ref": "#/definitions/def_effect"
+                    }
+                }
+            }
+        },
+        "def_effect": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Effect configuration",
+            "properties": {
+                "index": {
+                    "type": "integer",
+                    "description": "The index of the effect in the chain"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A effect name"
+                },
+                "params": {
+                    "type": "object",
+                    "description": "A dictionary of parameters for the effect",
+                    "additionalProperties": true
+                }
+            },
+            "required": [
+                "index",
+                "name",
+                "params"
+            ]
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "$ref": "#/definitions/def_audioprocess_config",
+    "examples": [
+        [
+            {
+                "index": 0,
+                "name": "normalize",
+                "params": {
+                    "target_db": -10.0
+                }
+            },
+            {
+                "index": 1,
+                "name": "trim",
+                "params": {
+                    "threshold_db": -65.0,
+                    "min_silence_duration": 250
+                }
+            }
+        ]
+    ]
+}

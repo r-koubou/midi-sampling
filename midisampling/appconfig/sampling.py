@@ -6,7 +6,7 @@ import jsonschema
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(THIS_SCRIPT_DIR, "sampling-config.schema.json"), "r") as f:
-    common_config_json_schema = json.load(f)
+    json_schema = json.load(f)
 
 class SamplingConfig:
     def __init__(self, config_path: str) -> None:
@@ -22,14 +22,11 @@ class SamplingConfig:
         self.audio_in_device_platform: str  = config["audio_in_device"]["platform"]
         self.asio_audio_ins: List[int]      = config.get("asio_audio_ins", [])
         self.midi_out_device: str           = config["midi_out_device"]
-        self.target_peak: float             = config["target_peak"]
-        self.trim_threshold: float          = config["trim_threshold"]
-        self.trim_min_silence_duration: int = config["trim_min_silence_duration"]
 
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
         config_json = json.load(f)
-        jsonschema.validate(config_json, common_config_json_schema)
+        jsonschema.validate(config_json, json_schema)
     return config_json
 
 def load(config_path: str) -> SamplingConfig:

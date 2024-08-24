@@ -6,7 +6,7 @@ import jsonschema
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(THIS_SCRIPT_DIR, "midi-config.schema.json"), "r") as f:
-    config_json_schema = json.load(f)
+    json_schema = json.load(f)
 
 def _to_abs_filepath(base_dir: str, file_path: str) -> str:
     """
@@ -263,7 +263,7 @@ class MidiConfig:
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
         config_json = json.load(f)
-        jsonschema.validate(config_json, config_json_schema)
+        jsonschema.validate(config_json, json_schema)
     return config_json
 
 def load(config_path: str) -> MidiConfig:

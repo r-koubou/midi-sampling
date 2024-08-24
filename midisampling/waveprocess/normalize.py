@@ -5,18 +5,18 @@ import pathlib
 from logging import getLogger
 from pydub import AudioSegment
 
-from midisampling.exportpath import RecordedAudioPath, PostProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 
 logger = getLogger(__name__)
 
-def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBFS:float =-1.0):
+def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:float =-1.0):
     """
     Normalize with respect to the highest peak of the audio file(s) in the input directory.
 
     Parameters
     ----------
-    file_list : List[PostProcessedAudioPath]
-        List of PostProcessedAudioPath instances.
+    file_list : List[ProcessedAudioPath]
+        List of ProcessedAudioPath instances.
 
     target_peak_dBFS : float (default=-1.0)
     """
@@ -28,8 +28,6 @@ def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBF
 
     max_peak_dBFS = None
     audio_segments = []
-
-    logger.info("Normalize Begin")
 
     # 全てのファイルの最大ピークレベルを探す
     for file in file_list:
@@ -48,20 +46,20 @@ def normalize_from_list(file_list: List[PostProcessedAudioPath], target_peak_dBF
 
     # 各ファイルに対して同じゲインを適用
     for file in file_list:
-        input_filepath  = file.recorded_audio_path.path()
-        output_filepath = file.path()
+        input_filepath  = file.working_path()
+        output_filepath = file.working_path()
         audio           = AudioSegment.from_wav(input_filepath)
 
-        file.makedirs()
+        file.makeworkingdirs()
         normalized_audio = audio.apply_gain(change_in_dBFS)
         normalized_audio.export(output_filepath, format="wav")
 
         audio = None
         normalized_audio = None
 
-        logger.info(f"Normalized: file={file.path()}")
+        logger.info(f"Normalized: file={file.file_path}")
 
-    logger.info(f"Normalize End (gain={change_in_dBFS:.3f} dBFS)")
+    logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 
 def normalize_from_directory(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0, overwrite: bool = False):
     """
@@ -78,7 +76,7 @@ def normalize_from_directory(input_directory: str, output_directory: str, target
     target_peak_dBFS : float (default=-1.0)
     """
 
-    process_files: List[PostProcessedAudioPath] = PostProcessedAudioPath.from_directory(
+    process_files: List[ProcessedAudioPath] = ProcessedAudioPath.from_directory(
         input_directory=input_directory,
         output_directory=output_directory,
         overwrite=overwrite

@@ -1,6 +1,5 @@
 import os.path
 import sys
-import json
 import argparse
 from logging import getLogger
 from midisampling.logging_management import init_logging_from_config
@@ -18,9 +17,10 @@ def _log_system_info():
 def main():
 
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
-    parser.add_argument("--verbose", help="Enable verbose logging.", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
     parser.add_argument("sampling_config_path", help="Path to the sampling configuration file.")
     parser.add_argument("midi_config_path", help="Path to the MIDI configuration file.")
+    parser.add_argument("postprocess_config_path", help="Path to the process configuration file for post processing.", default=None, nargs="?")
     parser.add_argument("-l", "--log-file", help="Path to save the log file.")
 
     args = parser.parse_args()
@@ -30,7 +30,11 @@ def main():
 
     from midisampling.sampling import main as sampling_main
     try:
-        sampling_main(args.sampling_config_path, args.midi_config_path)
+        sampling_main(
+            sampling_config_path=args.sampling_config_path,
+            midi_config_path=args.midi_config_path,
+            postprocess_config_path=args.postprocess_config_path
+        )
     except Exception as e:
         logger.error(e, exc_info=True)
     finally:
