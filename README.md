@@ -152,7 +152,8 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 - <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(object)*: The main configuration body. Cannot contain additional properties.
   - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
   - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
-  - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {min_velocity} {max_velocity} {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`.
+  - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {key_root_scale}, {key_low_scale}, {key_high_scale}, {min_velocity} {max_velocity} {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`.
+  - **`scale_name_format`** *(string)*: Format for representation by keyscale name, e.g. Scientific pitch notation with C3 = 60 or Yamaha method with C4 = 60. Works as a placeholder replacement. Must be one of: `["SPN", "Yamaha"]`. Default: `"Yamaha"`.
   - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
     - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
   - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.

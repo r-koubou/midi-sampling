@@ -157,7 +157,8 @@ python -m midisampling.device
 - <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(オブジェクト)*: メイン構成本体。追加のプロパティは含めることができません。
   - **`output_dir`** *(文字列, 必須)*: サンプリングされたオーディオファイルの出力先ディレクトリ。
   - **`processed_output_dir`** *(文字列, 必須)*: 処理されたサンプリングオーディオファイルの出力先ディレクトリ。
-  - **`output_prefix_format`** *(文字列)*: サンプリングされたオーディオファイルのファイル名の接頭辞。このプレースホルダーが使用できます: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {min_velocity} {max_velocity} {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`。
+  - **`output_prefix_format`** *(文字列)*: サンプルされたオーディオファイルのファイル名のプレフィックス。以下のプレースホルダーを使用できます: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {key_root_scale}, {key_low_scale}, {key_high_scale}, {min_velocity}, {max_velocity}, {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`。
+  - **`scale_name_format`** *(文字列)*: キースケール名の表現フォーマット。例: C3 = 60を示す科学的ピッチ表記法（SPN）や、C4 = 60を示すヤマハ方式。プレースホルダーの置き換えとして機能します。次のいずれかである必要があります: `["SPN", "Yamaha"]`。デフォルト: `"Yamaha"`。
   - **`pre_send_smf_path_list`** *(配列)*: サンプリングの前にMIDIデバイスに送信されるファイル（例：GMリセット、CCリセットなど）。デフォルト: `[]`。
     - **アイテム** *(文字列)*: SMF(*.mid/*.midi)ファイルへのパス。
   - **`midi_channel`** *(整数, 必須)*: サンプリング用のMIDIチャンネル番号。最小: `0`。最大: `15`。
