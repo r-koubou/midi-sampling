@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "trim",
+    "description": "Structure of the trim process configuration.",
+    "definitions": {
+        "def_trim_config": {
+            "type":"object",
+            "additionalProperties": false,
+            "properties": {
+                "threshold_db": {
+                    "type": "number",
+                    "description": "Silence threshold in dB."
+                },
+                "min_silence_ms": {
+                    "type": "number",
+                    "description": "Minimum silence duration in milliseconds."
+                }
+            },
+            "required": [
+                "threshold_db",
+                "min_silence_ms"
+            ]
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "$ref": "#/definitions/def_trim_config",
+    "examples": [
+        [
+            {
+                "threshold_db": -60.0,
+                "min_silence_ms": 250
+            }
+        ]
+    ]
+}

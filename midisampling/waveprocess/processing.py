@@ -1,13 +1,21 @@
 from typing import List
-
+import os
+import sys
+import json
+import jsonschema
+import pathlib
 import tempfile
 from logging import getLogger
+import argparse
+import traceback
 
 from midisampling.appconfig.audioprocess import AudioProcessConfig
 from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 
 from midisampling.waveprocess.normalize import normalize_from_list as normalize
 from midisampling.waveprocess.trim import trim_from_list as trim
+
+THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logger = getLogger(__name__)
 
@@ -84,20 +92,56 @@ def validate_process_config(config: AudioProcessConfig) -> None:
     Validate the process configuration values.
     """
 
-    logger.info("Validating process configuration")
+    def validate_parameter(parameter_json: dict, schema: dict):
+        jsonschema.validate(parameter_json, schema)
+
+    directory = pathlib.Path(THIS_SCRIPT_DIR)
+    schema_file_path_list = directory.glob(f"**/*.schema.json")
+
+    schema_table = {}
+    for file in schema_file_path_list:
+        with open(file, "r") as f:
+            schema = json.load(f)
+
+        schema_table[schema["title"]] =  schema
 
     for effect in config.effects:
         name   = effect.name
         params = effect.params
-        logger.debug(f"effect: name={name}, params={params}")
 
-        if name == "normalize":
-            if "target_db" not in params:
-                raise ValueError(f"target_db is required for {name}")
-        elif name == "trim":
-            if "threshold_db" not in params:
-                raise ValueError(f"threshold_db is required for {name}")
-            if "min_silence_ms" not in params:
-                raise ValueError(f"min_silence_ms is required for {name}")
-        else:
+        logger.debug(f"process: name={name}, params={params}")
+
+        if name not in schema_table:
             raise ValueError(f"Unknown process name: {name}")
+
+        validate_parameter(params, schema_table[name])
+
+        logger.info(f"Validation OK: {name}")
+
+def main() -> None:
+    from midisampling.logging_management import init_logging_as_stdout
+
+    parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
+    parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
+    parser.add_argument("processing_config_path", help="Path to the processing configuration file.")
+
+    args = parser.parse_args()
+
+    init_logging_as_stdout(args.verbose)
+
+    logger.info(f"Configuration file: {args.processing_config_path}")
+
+    try:
+        process_config = AudioProcessConfig(args.processing_config_path)
+        validate_process_config(process_config)
+        logger.info("All validation passed.")
+    except Exception as e:
+        print(e)
+        if args.verbose:
+            (_, _, trace) = sys.exc_info()
+            traceback.print_tb(trace)
+
+    return
+
+if __name__ == '__main__':
+    main()
