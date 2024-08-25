@@ -181,29 +181,18 @@ python -m midisampling.device
   ```json
   {
       "output_dir": "_recorded",
-      "processed_output_dir": "_recorded/_processed",
-      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
-      "scale_name_format": "Yamaha",
+      "processed_output_dir": "_processed",
+      "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{key_low}_{key_high}_{velocity}_{min_velocity}_{max_velocity}",
       "pre_send_smf_path_list": [
-          "path/to/GM_Reset.mid",
-          "path/to/CC_Init.mid"
+          "GS_Reset.mid",
+          "Reverb_Chorus_Delay_Set_0.mid"
       ],
       "midi_channel": 0,
       "midi_program_change_list": [
           {
               "msb": 0,
               "lsb": 0,
-              "program": 0
-          },
-          {
-              "msb": 0,
-              "lsb": 0,
-              "program": 1
-          },
-          {
-              "msb": 0,
-              "lsb": 0,
-              "program": 2
+              "program": 48
           }
       ],
       "velocity_layers_presets": [
@@ -233,45 +222,75 @@ python -m midisampling.device
               ]
           }
       ],
-      "sample_zone": [
+      "sample_zone_complex": [
           {
-              "key_root": {
-                  "from": 40,
-                  "to": 41
-              },
+              "key_low": 0,
+              "key_high": 32,
+              "key_root": 16,
               "velocity_layers": [
                   {
                       "min": 0,
+                      "max": 31,
+                      "send": 31
+                  },
+                  {
+                      "min": 32,
+                      "max": 63,
+                      "send": 63
+                  },
+                  {
+                      "min": 64,
+                      "max": 95,
+                      "send": 95
+                  },
+                  {
+                      "min": 96,
                       "max": 127,
                       "send": 127
                   }
               ]
           },
           {
-              "key_root": {
-                  "from": 62,
-                  "to": 63
-              },
+              "key_low": 32,
+              "key_high": 64,
+              "key_root": 48,
               "velocity_layers_preset_id": 0
           }
       ],
-      "sample_zone_complex": [
+      "sample_zone": [
           {
-              "key_low": 0,
-              "key_high": 40,
-              "key_root": 20,
+              "keys": {
+                  "from": 40,
+                  "to": 40
+              },
               "velocity_layers": [
                   {
                       "min": 0,
+                      "max": 31,
+                      "send": 31
+                  },
+                  {
+                      "min": 32,
                       "max": 63,
                       "send": 63
+                  },
+                  {
+                      "min": 64,
+                      "max": 95,
+                      "send": 95
+                  },
+                  {
+                      "min": 96,
+                      "max": 127,
+                      "send": 127
                   }
               ]
           },
           {
-              "key_low": 40,
-              "key_high": 60,
-              "key_root": 50,
+              "keys": {
+                  "from": 41,
+                  "to": 41
+              },
               "velocity_layers_preset_id": 0
           }
       ],
