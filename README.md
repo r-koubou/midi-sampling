@@ -153,7 +153,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   - **`output_dir`** *(string, required)*: Directory for the output of the sampled audio files.
   - **`processed_output_dir`** *(string, required)*: Directory for the output of processed sampled audio files.
   - **`output_prefix_format`** *(string)*: Prefix for the filenames of the sampled audio files. The following placeholders can be used: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {key_root_scale}, {key_low_scale}, {key_high_scale}, {min_velocity} {max_velocity} {velocity}. Default: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`.
-  - **`scale_name_format`** *(string)*: Format for representation by keyscale name, e.g. Scientific pitch notation with C4 = 60 or Yamaha method with C3 = 60. Works as a placeholder replacement. Must be one of: `["SPN", "Yamaha"]`. Default: `"Yamaha"`.
+  - **`scale_name_format`** *(string)*: Format for representation by keyscale name, e.g. Scientific pitch notation with C3 = 60 or Yamaha method with C4 = 60. Works as a placeholder replacement. Must be one of: `["SPN", "Yamaha"]`. Default: `"Yamaha"`.
   - **`pre_send_smf_path_list`** *(array)*: These file(s) will be sent to the MIDI device before sampling once e.g. GM Reset, CC Reset, etc. Default: `[]`.
     - **Items** *(string)*: Path to the SMF(*.mid/*.midi) file(s).
   - **`midi_channel`** *(integer, required)*: MIDI channel number for sampling. Minimum: `0`. Maximum: `15`.
@@ -162,6 +162,8 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       - **`msb`** *(integer)*: MSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`lsb`** *(integer)*: LSB value for the MIDI program change. Minimum: `0`. Maximum: `127`.
       - **`program`** *(integer)*: Program number for the MIDI program change. Minimum: `0`. Maximum: `127`.
+  - **`velocity_layers_presets`** *(array)*: List of velocity layers presets. In addition to defining individual layers with `sample_zone_complex` and `sample_zone`, you can also refer to this preset by ID.
+    - **Items**: Refer to *[#/definitions/def_velocity_layers_preset](#definitions/def_velocity_layers_preset)*.
   - **`sample_zone_complex`** *(array)*: List of keymaps for the sampled MIDI notes.
     - **Items**: Refer to *[#/definitions/def_sample_zone_complex](#definitions/def_sample_zone_complex)*.
   - **`sample_zone`** *(array)*: List of keymaps for the sampled MIDI notes.
@@ -176,6 +178,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
       "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
+      "scale_name_format": "Yamaha",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
@@ -198,6 +201,33 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
               "program": 2
           }
       ],
+      "velocity_layers_presets": [
+          {
+              "id": 0,
+              "layers": [
+                  {
+                      "min": 0,
+                      "max": 31,
+                      "send": 31
+                  },
+                  {
+                      "min": 32,
+                      "max": 63,
+                      "send": 63
+                  },
+                  {
+                      "min": 64,
+                      "max": 95,
+                      "send": 95
+                  },
+                  {
+                      "min": 96,
+                      "max": 127,
+                      "send": 127
+                  }
+              ]
+          }
+      ],
       "sample_zone": [
           {
               "key_root": {
@@ -207,17 +237,24 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
               "velocity_layers": [
                   {
                       "min": 0,
-                      "max": 63,
-                      "send": 63
+                      "max": 127,
+                      "send": 127
                   }
               ]
+          },
+          {
+              "key_root": {
+                  "from": 62,
+                  "to": 63
+              },
+              "velocity_layers_preset_id": 0
           }
       ],
       "sample_zone_complex": [
           {
               "key_low": 0,
-              "key_high": 0,
-              "key_root": 40,
+              "key_high": 40,
+              "key_root": 20,
               "velocity_layers": [
                   {
                       "min": 0,
@@ -225,6 +262,12 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
                       "send": 63
                   }
               ]
+          },
+          {
+              "key_low": 40,
+              "key_high": 60,
+              "key_root": 50,
+              "velocity_layers_preset_id": 0
           }
       ],
       "midi_pre_wait_duration": 0.6,
@@ -272,13 +315,49 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   }
   ```
 
+- <a id="definitions/def_velocity_layers_preset"></a>**`def_velocity_layers_preset`** *(object)*: Velocity layers preset configuration. Cannot contain additional properties.
+  - **`id`** *(integer, required)*: ID of the velocity layer preset.
+  - **`layers`** *(array, required)*
+    - **Items**:
+        - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+
+  Examples:
+  ```json
+  {
+      "id": 0,
+      "layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
+  }
+  ```
+
 - <a id="definitions/def_sample_zone_complex"></a>**`def_sample_zone_complex`** *(object)*: Sample zone complex configuration. The key range, root key, must be specified explicitly. Cannot contain additional properties.
   - **`key_low`** *(integer, required)*: Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software. Minimum: `0`. Maximum: `127`.
   - **`key_high`** *(integer, required)*: Highest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software. Minimum: `0`. Maximum: `127`.
   - **`key_root`** *(integer, required)*: Root key number (note number) in the keymap. This value is intended to be used as information for mapping note-on messages sent to MIDI devices and third-party sampler software when sampling. Minimum: `0`. Maximum: `127`.
-  - **`velocity_layers`** *(array, required)*
+  - **`velocity_layers`** *(array)*
     - **Items**:
         - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+  - **`velocity_layers_preset_id`** *(integer)*: ID of the velocity layer preset.
 
   Examples:
   ```json
@@ -311,11 +390,21 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   }
   ```
 
+  ```json
+  {
+      "key_low": 0,
+      "key_high": 32,
+      "key_root": 16,
+      "velocity_layers_preset_id": 0
+  }
+  ```
+
 - <a id="definitions/def_sample_zone"></a>**`def_sample_zone`** *(object)*: A simple configuration of sample zone. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`. Cannot contain additional properties.
   - **`keys`**: Root key number (note number) in the keymap. Refer to *[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*.
-  - **`velocity_layers`** *(array, required)*
+  - **`velocity_layers`** *(array)*
     - **Items**:
         - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
+  - **`velocity_layers_preset_id`** *(integer)*: ID of the velocity layer preset.
 
   Examples:
   ```json
@@ -346,6 +435,16 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
               "send": 127
           }
       ]
+  }
+  ```
+
+  ```json
+  {
+      "keys": {
+          "from": 10,
+          "to": 100
+      },
+      "velocity_layers_preset_id": 0
   }
   ```
 

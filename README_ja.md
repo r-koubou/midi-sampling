@@ -148,32 +148,34 @@ python -m midisampling.device
   }
   ```
 
-### MIDIサンプリング構成
+### MIDIサンプリング設定
 
-*MIDIサンプリング構成の構造。*
+*MIDIサンプリング設定の構造。*
 
 #### 定義
 
-- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(オブジェクト)*: メイン構成本体。追加のプロパティは含めることができません。
-  - **`output_dir`** *(文字列, 必須)*: サンプリングされたオーディオファイルの出力先ディレクトリ。
-  - **`processed_output_dir`** *(文字列, 必須)*: 処理されたサンプリングオーディオファイルの出力先ディレクトリ。
-  - **`output_prefix_format`** *(文字列)*: サンプルされたオーディオファイルのファイル名のプレフィックス。以下のプレースホルダーを使用できます: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {key_root_scale}, {key_low_scale}, {key_high_scale}, {min_velocity}, {max_velocity}, {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`。
-  - **`scale_name_format`** *(文字列)*: キースケール名の表現フォーマット。例: C4 = 60を示す科学的ピッチ表記法（SPN）や、C3 = 60を示すヤマハ方式。プレースホルダーの置き換えとして機能します。次のいずれかである必要があります: `["SPN", "Yamaha"]`。デフォルト: `"Yamaha"`。
-  - **`pre_send_smf_path_list`** *(配列)*: サンプリングの前にMIDIデバイスに送信されるファイル（例：GMリセット、CCリセットなど）。デフォルト: `[]`。
-    - **アイテム** *(文字列)*: SMF(*.mid/*.midi)ファイルへのパス。
+- <a id="definitions/def_midi_config"></a>**`def_midi_config`** *(オブジェクト)*: メインの設定本体。追加のプロパティを含むことはできません。
+  - **`output_dir`** *(文字列, 必須)*: サンプリングされたオーディオファイルの出力ディレクトリ。
+  - **`processed_output_dir`** *(文字列, 必須)*: 処理されたサンプリングオーディオファイルの出力ディレクトリ。
+  - **`output_prefix_format`** *(文字列)*: サンプリングされたオーディオファイルのファイル名のプレフィックス。次のプレースホルダーが使用可能: {pc_msb}, {pc_lsb}, {pc}, {key_root}, {key_low}, {key_high}, {key_root_scale}, {key_low_scale}, {key_high_scale}, {min_velocity}, {max_velocity}, {velocity}。デフォルト: `"{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}"`。
+  - **`scale_name_format`** *(文字列)*: キースケール名の表現形式、例：C3 = 60の科学的ピッチ表記法またはC4 = 60のヤマハ方式。プレースホルダー置換として機能します。次のいずれかである必要があります: `["SPN", "Yamaha"]`。デフォルト: `"Yamaha"`。
+  - **`pre_send_smf_path_list`** *(配列)*: サンプリング前にMIDIデバイスに一度送信されるファイル（例: GMリセット, CCリセットなど）。デフォルト: `[]`。
+    - **アイテム** *(文字列)*: SMF(*.mid/*.midi)ファイルのパス。
   - **`midi_channel`** *(整数, 必須)*: サンプリング用のMIDIチャンネル番号。最小: `0`。最大: `15`。
-  - **`midi_program_change_list`** *(配列, 必須)*: サンプリング用のMIDIプログラムチェンジ(MSB, LSB, Program No)のリスト。
-    - **アイテム** *(オブジェクト)*: 追加のプロパティは含めることができません。
-      - **`msb`** *(整数)*: MIDIプログラムチェンジのMSB値。最小: `0`。最大: `127`。
-      - **`lsb`** *(整数)*: MIDIプログラムチェンジのLSB値。最小: `0`。最大: `127`。
-      - **`program`** *(整数)*: MIDIプログラムチェンジのプログラム番号。最小: `0`。最大: `127`。
-  - **`sample_zone_complex`** *(配列)*: サンプリングされたMIDIノートのキー・マッピングのリスト。
+  - **`midi_program_change_list`** *(配列, 必須)*: サンプリング用のMIDIプログラムチェンジ（MSB, LSB, プログラム番号）のリスト。
+    - **アイテム** *(オブジェクト)*: 追加のプロパティを含むことはできません。
+      - **`msb`** *(整数)*: MIDIプログラムチェンジ用のMSB値。最小: `0`。最大: `127`。
+      - **`lsb`** *(整数)*: MIDIプログラムチェンジ用のLSB値。最小: `0`。最大: `127`。
+      - **`program`** *(整数)*: MIDIプログラムチェンジ用のプログラム番号。最小: `0`。最大: `127`。
+  - **`velocity_layers_presets`** *(配列)*: ベロシティレイヤープリセットのリスト。`sample_zone_complex`および`sample_zone`で個別のレイヤーを定義するだけでなく、このプリセットをIDで参照することもできます。
+    - **アイテム**: *[#/definitions/def_velocity_layers_preset](#definitions/def_velocity_layers_preset)*を参照。
+  - **`sample_zone_complex`** *(配列)*: サンプリングされたMIDIノートのキーマップのリスト。
     - **アイテム**: *[#/definitions/def_sample_zone_complex](#definitions/def_sample_zone_complex)*を参照。
-  - **`sample_zone`** *(配列)*: サンプリングされたMIDIノートのキー・マッピングのリスト。
+  - **`sample_zone`** *(配列)*: サンプリングされたMIDIノートのキーマップのリスト。
     - **アイテム**: *[#/definitions/def_sample_zone](#definitions/def_sample_zone)*を参照。
   - **`midi_pre_wait_duration`** *(数値, 必須)*: サンプリング前の待機時間（秒単位）。`0.6`秒以上が推奨されます。
   - **`midi_note_duration`** *(数値, 必須)*: サンプリングするMIDIノートの長さ（秒単位）。
-  - **`midi_release_duration`** *(数値, 必須)*: サンプリングされたMIDIノートのリリース後の待機時間（秒単位）。整数値のみ指定可能です。
+  - **`midi_release_duration`** *(数値, 必須)*: サンプリングされたMIDIノートのリリース後の待機時間（秒単位）。整数値のみ指定可能。
 
   例:
   ```json
@@ -181,6 +183,7 @@ python -m midisampling.device
       "output_dir": "_recorded",
       "processed_output_dir": "_recorded/_processed",
       "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
+      "scale_name_format": "Yamaha",
       "pre_send_smf_path_list": [
           "path/to/GM_Reset.mid",
           "path/to/CC_Init.mid"
@@ -203,6 +206,33 @@ python -m midisampling.device
               "program": 2
           }
       ],
+      "velocity_layers_presets": [
+          {
+              "id": 0,
+              "layers": [
+                  {
+                      "min": 0,
+                      "max": 31,
+                      "send": 31
+                  },
+                  {
+                      "min": 32,
+                      "max": 63,
+                      "send": 63
+                  },
+                  {
+                      "min": 64,
+                      "max": 95,
+                      "send": 95
+                  },
+                  {
+                      "min": 96,
+                      "max": 127,
+                      "send": 127
+                  }
+              ]
+          }
+      ],
       "sample_zone": [
           {
               "key_root": {
@@ -212,17 +242,24 @@ python -m midisampling.device
               "velocity_layers": [
                   {
                       "min": 0,
-                      "max": 63,
-                      "send": 63
+                      "max": 127,
+                      "send": 127
                   }
               ]
+          },
+          {
+              "key_root": {
+                  "from": 62,
+                  "to": 63
+              },
+              "velocity_layers_preset_id": 0
           }
       ],
       "sample_zone_complex": [
           {
               "key_low": 0,
-              "key_high": 0,
-              "key_root": 40,
+              "key_high": 40,
+              "key_root": 20,
               "velocity_layers": [
                   {
                       "min": 0,
@@ -230,6 +267,12 @@ python -m midisampling.device
                       "send": 63
                   }
               ]
+          },
+          {
+              "key_low": 40,
+              "key_high": 60,
+              "key_root": 50,
+              "velocity_layers_preset_id": 0
           }
       ],
       "midi_pre_wait_duration": 0.6,
@@ -238,8 +281,8 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(整数)*: MIDIメッセージバイトの値(0-127)を表します。最小: `0`。最大: `127`。
-- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(オブジェクト)*: 整数値の範囲を表します。追加のプロパティは含めることができません。
+- <a id="definitions/def_midi_message_byte"></a>**`def_midi_message_byte`** *(整数)*: MIDIメッセージバイトの値（0-127）を表します。最小: `0`。最大: `127`。
+- <a id="definitions/def_integer_range"></a>**`def_integer_range`** *(オブジェクト)*: 整数の値範囲を表します。追加のプロパティを含むことはできません。
   - **`from`** *(整数, 必須)*
   - **`to`** *(整数, 必須)*
 
@@ -251,7 +294,7 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(オブジェクト)*: MIDIメッセージバイトの値範囲(0-127)を表します。追加のプロパティは含めることができません。
+- <a id="definitions/def_midi_message_byte_range"></a>**`def_midi_message_byte_range`** *(オブジェクト)*: MIDIメッセージバイトの値範囲（0-127）を表します。追加のプロパティを含むことはできません。
   - **`from`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
   - **`to`**: *[#/definitions/def_midi_message_byte](#definitions/def_midi_message_byte)*を参照。
 
@@ -263,10 +306,12 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(オブジェクト)*: ベロシティレイヤーの設定。追加のプロパティは含めることができません。
+- <a id="definitions/def_midivelocity_layer"></a>**`def_midivelocity_layer`** *(オブジェクト)*: ベロシティレイヤーの設定。追加のプロパティを含むことはできません。
   - **`min`** *(整数, 必須)*: 最小ベロシティ値。最小: `0`。最大: `127`。
-  - **`max`** *(整数, 必須)*: 最大ベロシティ値。最小: `0`。最大: `127`。
-  - **`send`** *(整数, 必須)*: サンプリング時にMIDIデバイスに送信されるベロシティ値。最小: `0`。最大: `127`。
+  - **`max`** *(整数, 必須)*: 最大ベロシティ値。最小: `
+
+0`。最大: `127`。
+  - **`send`** *(整数, 必須)*: サンプリング時にMIDIデバイスに実際に送信されるベロシティ値。最小: `0`。最大: `127`。
 
   例:
   ```json
@@ -277,15 +322,49 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_sample_zone_complex"></a>**`def_sample_zone_complex`** *(オブジェクト)*: 複雑なサンプルゾーン設定。キー範囲とルートキーを明示的に指定する必要があります。追加のプロパティは含めることができません。
-  - **`key_low`** *(整数, 必須)*: キーマップ内の最低キー番号（ノート番号）。この値は、サードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
-  - **`key_high`** *(整数, 必須)*: キーマップ内の最高キー番号（ノート番号）。この値は、サードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
-  - **`key_root`** *(整数, 必須)*: キーマップのルートキー番号（ノート番号）。この値は、サンプリング時にMIDIデバイスやサードパーティのサンプラーソフトウェアに送信されるノートオンメッセージの情報として使用されることを意図しています。最小: `0`。最大: `127`。
-  - **`velocity_layers`** *(配列, 必
-
-須)*
+- <a id="definitions/def_velocity_layers_preset"></a>**`def_velocity_layers_preset`** *(オブジェクト)*: ベロシティレイヤープリセットの設定。追加のプロパティを含むことはできません。
+  - **`id`** *(整数, 必須)*: ベロシティレイヤープリセットのID。
+  - **`layers`** *(配列, 必須)*
     - **アイテム**:
         - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
+
+  例:
+  ```json
+  {
+      "id": 0,
+      "layers": [
+          {
+              "min": 0,
+              "max": 31,
+              "send": 31
+          },
+          {
+              "min": 32,
+              "max": 63,
+              "send": 63
+          },
+          {
+              "min": 64,
+              "max": 95,
+              "send": 95
+          },
+          {
+              "min": 96,
+              "max": 127,
+              "send": 127
+          }
+      ]
+  }
+  ```
+
+- <a id="definitions/def_sample_zone_complex"></a>**`def_sample_zone_complex`** *(オブジェクト)*: 複雑なサンプルゾーン設定。キーレンジとルートキーは明示的に指定する必要があります。追加のプロパティを含むことはできません。
+  - **`key_low`** *(整数, 必須)*: キーマップ内の最も低いキー番号（ノート番号）。これはサードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`key_high`** *(整数, 必須)*: キーマップ内の最も高いキー番号（ノート番号）。これはサードパーティのサンプラーソフトウェアとのマッピング情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`key_root`** *(整数, 必須)*: キーマップ内のルートキー番号（ノート番号）。これは、サンプリング時にMIDIデバイスおよびサードパーティのサンプラーソフトウェアに送信されるノートオンメッセージの情報として使用されることを意図しています。最小: `0`。最大: `127`。
+  - **`velocity_layers`** *(配列)*
+    - **アイテム**:
+        - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
+  - **`velocity_layers_preset_id`** *(整数)*: ベロシティレイヤープリセットのID。
 
   例:
   ```json
@@ -318,11 +397,21 @@ python -m midisampling.device
   }
   ```
 
-- <a id="definitions/def_sample_zone"></a>**`def_sample_zone`** *(オブジェクト)*: シンプルなサンプルゾーン設定。複雑なバージョンとは異なり、`ルートキー`だけを指定でき、個々の`key_range`の値が`ルートキー`、`最低キー`、`最高キー`として適用されます。追加のプロパティは含めることができません。
-  - **`keys`**: キーマップのルートキー番号（ノート番号）。*[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*を参照。
-  - **`velocity_layers`** *(配列, 必須)*
+  ```json
+  {
+      "key_low": 0,
+      "key_high": 32,
+      "key_root": 16,
+      "velocity_layers_preset_id": 0
+  }
+  ```
+
+- <a id="definitions/def_sample_zone"></a>**`def_sample_zone`** *(オブジェクト)*: シンプルなサンプルゾーンの設定。複雑なバージョンとは異なり、ルートキーのみを指定でき、個々の`key_range`の値が`ルートキー`、`ロウキー`、`ハイキー`として適用されます。追加のプロパティを含むことはできません。
+  - **`keys`**: キーマップ内のルートキー番号（ノート番号）。*[#/definitions/def_midi_message_byte_range](#definitions/def_midi_message_byte_range)*を参照。
+  - **`velocity_layers`** *(配列)*
     - **アイテム**:
         - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
+  - **`velocity_layers_preset_id`** *(整数)*: ベロシティレイヤープリセットのID。
 
   例:
   ```json
@@ -353,6 +442,16 @@ python -m midisampling.device
               "send": 127
           }
       ]
+  }
+  ```
+
+  ```json
+  {
+      "keys": {
+          "from": 10,
+          "to": 100
+      },
+      "velocity_layers_preset_id": 0
   }
   ```
 
