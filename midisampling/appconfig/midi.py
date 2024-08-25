@@ -322,9 +322,6 @@ class MidiConfig:
         # Velocity Layer Preset
         if "velocity_layers_presets" in config_json:
             self.velocity_layer_presets = VelocityLayerPreset.from_json(config_json["velocity_layers_presets"])
-        else:
-            self.velocity_layer_presets = []
-            print("velocity_layer_presets is empty.")
 
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
