@@ -302,10 +302,18 @@
                     "maximum": 127
                 },
                 "velocity_layers": {
-                    "type": "array",
-                    "items": [
+                    "anyOf": [
                         {
-                            "$ref": "#/definitions/def_midivelocity_layer"
+                            "type": "array",
+                            "items": [
+                                {
+                                    "$ref": "#/definitions/def_midivelocity_layer"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "integer",
+                            "description": "ID of the velocity layer preset."
                         }
                     ]
                 }
@@ -340,10 +348,18 @@
                     "$ref": "#/definitions/def_midi_message_byte_range"
                 },
                 "velocity_layers": {
-                    "type": "array",
-                    "items":[
+                    "anyOf": [
                         {
-                            "$ref": "#/definitions/def_midivelocity_layer"
+                            "type": "array",
+                            "items": [
+                                {
+                                    "$ref": "#/definitions/def_midivelocity_layer"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "integer",
+                            "description": "ID of the velocity layer preset."
                         }
                     ]
                 }
