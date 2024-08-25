@@ -309,7 +309,7 @@
                         }
                     ]
                 },
-                "velocity_layers_ref": {
+                "velocity_layers_preset_id": {
                     "type": "integer",
                     "description": "ID of the velocity layer preset."
                 }
@@ -350,7 +350,7 @@
                         }
                     ]
                 },
-                "velocity_layers_ref": {
+                "velocity_layers_preset_id": {
                     "type": "integer",
                     "description": "ID of the velocity layer preset."
                 }
