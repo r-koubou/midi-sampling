@@ -73,7 +73,7 @@ class ChunkData:
                 chunk_size=chunk_size
             ))
 
-            print(f"index={current_index}, chunk_name={chunk_name}, chunk_size={chunk_size}, data={len(chunk_data)}, padding_count={padding_count}")
+            logger.debug(f"index={current_index}, chunk_name={chunk_name}, chunk_size={chunk_size}, data={len(chunk_data)}, padding_count={padding_count}")
 
             if chunk_name == "RIFF":
                 # RIFF `chunk size` is `file size - 8` stored
@@ -93,30 +93,30 @@ class ChunkData:
 
 class WavChunkKeeper:
     """
-    Retain the specified chunks in case the waveform processing library is not considered to retain chunks in the wav file
-    during the course of successive wav file processing.
+    As a response to the case where the waveform processing library does not consider keeping chunks of the wav file,
+    if the chunks before waveform processing are not included in the file after waveform processing,
+    the corresponding chunks in the file before waveform processing will be inserted as is.
+
+    As a typical example, we assume chunks unique to waveform editing software or music production software.
 
     Examples
     --------
+
     ```python
     # initialize
-    keeper = WavChunkKeeper("source.wav", "target.wav", ['smpl'])
+    keeper = WavChunkKeeper("source.wav", "target.wav")
 
-    # read source wav file and extract chunks that are specified in keep_chunk_names
-    keeper.read()
-
-    # waveform processings and output to target.wav
+    # waveform processings and output to "target.wav"
     # ...
     # processing
     # ...
 
-    # restore the chunks to target.wav
+    # restore the chunks to "target.wav"
     keeper.restore()
     ```
     """
 
-
-    def __init__(self, source_path: str, target_path: str, keep_chunk_names: List[str] = ['smpl']):
+    def __init__(self, source_path: str, target_path: str, keep_chunk_names: List[str] = []):
         """
         Parameters
         ----------
@@ -126,74 +126,50 @@ class WavChunkKeeper:
         target_path : str
             Target wav file path
 
-        keep_chunk_names : List[str]
-            List of chunk names to keep (default: ['smpl'])
+        keep_chunk_names : List[str] (default: [])
+            A list of chunk names to be retained explicitly. Only the specified chunk names will be retained.
+            If not specified, retain all chunks.
         """
-        self.source_path: str               = source_path
-        self.target_path: str               = target_path
-        self.keep_chunk_names: List[str]    = keep_chunk_names
-        self.keep_chunk_list: List[ChunkData] = []
+        self.source_path: str = source_path
+        self.target_path: str = target_path
+        self.source_file_chunk_list: List[ChunkData] = []
 
-    def read(self):
-        """
-        Read source wav file and extract chunks that are specified in keep_chunk_names
-        """
-        with open(self.source_path, 'rb') as f:
-            file_bytes = f.read()
+        with(open(self.source_path, 'rb')) as f:
+            source_file_bytes = f.read()
+            self.source_file_chunk_list = ChunkData.from_bytes(source_file_bytes)
 
-        file_chunk_list = ChunkData.from_bytes(file_bytes)
-        self.keep_chunk_list = [i for i in file_chunk_list if i.chunk_name in self.keep_chunk_names]
-
-        for i in self.keep_chunk_list:
-            print(f"keep_chunk_list: {i.chunk_name}")
+        if len(keep_chunk_names) > 0:
+            logger.debug(f"Request to keep only specified chunks: {keep_chunk_names}")
+            self.source_file_chunk_list = [
+                x for x in self.source_file_chunk_list if x.chunk_name in keep_chunk_names
+            ]
 
     def restore(self):
         """
         Restore the chunks to target_path
         """
-        print("------------- Restore -------------")
+
         with open(self.target_path, 'rb') as f:
             file_bytes = f.read()
 
-        file_chunk_list = ChunkData.from_bytes(file_bytes)
-        appenging_chunk_list = []
+        file_chunk_list        = ChunkData.from_bytes(file_bytes)
+        appenging_chunk_list   = []
 
-        # If keep chunk does not exist in the target file, append it to the end of the file
-        for keep_chunk in self.keep_chunk_list:
+        for source_chunk in self.source_file_chunk_list:
             found = False
             for file_chunk in file_chunk_list:
-                if keep_chunk.chunk_name == file_chunk.chunk_name:
+                if source_chunk.chunk_name == file_chunk.chunk_name:
                     found = True
                     break
             if not found:
-                appenging_chunk_list.append(keep_chunk)
+                appenging_chunk_list.append(source_chunk)
 
+        logger.info(f"write to {self.target_path}")
         with open(self.target_path, 'wb') as f:
             for x in file_chunk_list:
-                print(f"write: {x.chunk_name}")
+                logger.debug(f"write: {x.chunk_name}")
                 x.write(f)
 
             for x in appenging_chunk_list:
-                print(f"appending_chunk_list: {x.chunk_name}")
+                logger.debug(f"write: {x.chunk_name} (from source)")
                 x.write(f)
-
-from pydub import AudioSegment
-import shutil
-
-input  = "C:\\UserData\\Develop\\Project\\OSS\\midi-sampling\\examples\\_processed\\40_40_40_127_96_127.wav"
-output = "C:\\UserData\\Develop\\Project\\OSS\\midi-sampling\\examples\\_processed\\40_40_40_127_96_127_zzz.wav"
-
-# shutil.copy(input, output)
-
-with open(input, 'rb') as f:
-    file_bytes = f.read()
-
-#c = ChunkData.from_bytes(file_bytes)
-
-audio = AudioSegment.from_file(input, format='wav')
-processed_audio = audio + 5
-processed_audio.export(output, format='wav')
-
-keeper = WavChunkKeeper(input, output, ['smpl'])
-keeper.read()
-keeper.restore()
