@@ -125,7 +125,7 @@ class VelocityLayerPreset:
         self.id: int = int(velocity_layer_preset["id"])
         self.layers: List[VelocityLayer] = []
 
-        for x in velocity_layer_preset["layers"]:
+        for x in velocity_layer_preset["velocities"]:
             self.layers.append(VelocityLayer(x))
 
     def __eq__(self, other: object) -> bool:
