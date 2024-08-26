@@ -70,6 +70,13 @@
                         }
                     }
                 },
+                "velocity_layers_presets": {
+                    "type": "array",
+                    "description": "List of velocity layers presets. In addition to defining individual layers with `sample_zone_complex` and `sample_zone`, you can also refer to this preset by ID.",
+                    "items": {
+                        "$ref": "#/definitions/def_velocity_layers_preset"
+                    }
+                },
                 "sample_zone_complex" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
@@ -109,43 +116,59 @@
             "examples": [
                 {
                     "output_dir": "_recorded",
-                    "processed_output_dir": "_recorded/_processed",
-                    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{velocity}",
-                    "scale_name_format": "Yamaha",
+                    "processed_output_dir": "_processed",
+                    "output_prefix_format": "{pc}_{pc_msb}_{pc_lsb}_{key_root}_{key_low}_{key_high}_{velocity}_{min_velocity}_{max_velocity}",
                     "pre_send_smf_path_list": [
-                        "path/to/GM_Reset.mid",
-                        "path/to/CC_Init.mid"
+                        "GS_Reset.mid",
+                        "Reverb_Chorus_Delay_Set_0.mid"
                     ],
                     "midi_channel": 0,
                     "midi_program_change_list": [
-                        { "msb": 0, "lsb": 0, "program": 0},
-                        { "msb": 0, "lsb": 0, "program": 1},
-                        { "msb": 0, "lsb": 0, "program": 2}
+                        { "msb": 0, "lsb": 0, "program": 48}
                     ],
-                    "sample_zone": [
+                    "velocity_layers_presets": [
                         {
-                            "key_root": {"from": 40, "to": 41},
-                            "velocity_layers": [
-                                {
-                                    "min": 0,
-                                    "max": 63,
-                                    "send": 63
-                                }
+                            "id": 0,
+                            "layers": [
+                                { "min": 0,  "max": 31,  "send": 31 },
+                                { "min": 32, "max": 63,  "send": 63 },
+                                { "min": 64, "max": 95,  "send": 95 },
+                                { "min": 96, "max": 127, "send": 127 }
                             ]
                         }
                     ],
                     "sample_zone_complex": [
                         {
                             "key_low": 0,
-                            "key_high": 0,
-                            "key_root": 40,
+                            "key_high": 32,
+                            "key_root": 16,
                             "velocity_layers": [
-                                {
-                                    "min": 0,
-                                    "max": 63,
-                                    "send": 63
-                                }
+                                { "min": 0,  "max": 31,  "send": 31 },
+                                { "min": 32, "max": 63,  "send": 63 },
+                                { "min": 64, "max": 95,  "send": 95 },
+                                { "min": 96, "max": 127, "send": 127 }
                             ]
+                        },
+                        {
+                            "key_low": 32,
+                            "key_high": 64,
+                            "key_root": 48,
+                            "velocity_layers_preset_id": 0
+                        }
+                    ],
+                    "sample_zone": [
+                        {
+                            "keys": {"from": 40, "to": 40},
+                            "velocity_layers": [
+                                {"min": 0,  "max": 31,  "send": 31},
+                                {"min": 32, "max": 63,  "send": 63},
+                                {"min": 64, "max": 95,  "send": 95},
+                                {"min": 96, "max": 127, "send": 127}
+                            ]
+                        },
+                        {
+                            "keys": {"from": 41, "to": 41},
+                            "velocity_layers_preset_id": 0
                         }
                     ],
                     "midi_pre_wait_duration": 0.6,
@@ -237,6 +260,40 @@
                 }
             ]
         },
+        "def_velocity_layers_preset": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Velocity layers preset configuration.",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "ID of the velocity layer preset."
+                },
+                "layers": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "$ref": "#/definitions/def_midivelocity_layer"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "layers"
+            ],
+            "examples": [
+                {
+                    "id": 0,
+                    "layers": [
+                        { "min": 0,  "max": 31,  "send": 31 },
+                        { "min": 32, "max": 63,  "send": 63 },
+                        { "min": 64, "max": 95,  "send": 95 },
+                        { "min": 96, "max": 127, "send": 127 }
+                    ]
+                }
+            ]
+        },
         "def_sample_zone_complex": {
             "type": "object",
             "additionalProperties": false,
@@ -267,13 +324,16 @@
                             "$ref": "#/definitions/def_midivelocity_layer"
                         }
                     ]
+                },
+                "velocity_layers_preset_id": {
+                    "type": "integer",
+                    "description": "ID of the velocity layer preset."
                 }
             },
             "required": [
                 "key_low",
                 "key_high",
-                "key_root",
-                "velocity_layers"
+                "key_root"
             ],
             "examples": [
                 {
@@ -286,6 +346,12 @@
                         { "min": 64, "max": 95,  "send": 95 },
                         { "min": 96, "max": 127, "send": 127 }
                     ]
+                },
+                {
+                    "key_low": 0,
+                    "key_high": 32,
+                    "key_root": 16,
+                    "velocity_layers_preset_id": 0
                 }
             ]
         },
@@ -300,16 +366,19 @@
                 },
                 "velocity_layers": {
                     "type": "array",
-                    "items":[
+                    "items": [
                         {
                             "$ref": "#/definitions/def_midivelocity_layer"
                         }
                     ]
+                },
+                "velocity_layers_preset_id": {
+                    "type": "integer",
+                    "description": "ID of the velocity layer preset."
                 }
             },
             "required": [
-                "keys",
-                "velocity_layers"
+                "keys"
             ],
             "examples": [
                 {
@@ -320,6 +389,10 @@
                         { "min": 64, "max": 95,  "send": 95 },
                         { "min": 96, "max": 127, "send": 127 }
                     ]
+                },
+                {
+                    "keys": { "from": 10, "to": 100 },
+                    "velocity_layers_preset_id": 0
                 }
             ]
         }

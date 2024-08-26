@@ -120,6 +120,59 @@ class VelocityLayer:
     def __str__(self) -> str:
         return f"min={self.min_velocity}, max={self.max_velocity}, send={self.send_velocity}"
 
+class VelocityLayerPreset:
+    def __init__(self, velocity_layer_preset: dict) -> None:
+        self.id: int = int(velocity_layer_preset["id"])
+        self.layers: List[VelocityLayer] = []
+
+        for x in velocity_layer_preset["layers"]:
+            self.layers.append(VelocityLayer(x))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, VelocityLayerPreset):
+            return False
+        return (
+            self.id == other.id
+            and self.layers == other.layers
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.id, self.layers))
+
+    def __str__(self) -> str:
+        return f"id={self.id}, layers[{len(self.layers)}]=[{[f"[{x}]" for x in self.layers]}]"
+
+    @classmethod
+    def from_json(cls, velocity_layer_presets: dict) -> List['VelocityLayerPreset']:
+        """
+        Create VelocityLayerPreset list from json data
+        """
+        result: List['VelocityLayerPreset'] = []
+
+        for x in velocity_layer_presets:
+            result.append(VelocityLayerPreset(x))
+
+        return result
+
+    @classmethod
+    def get_velocity_layer_preset(cls, velocity_layer_presets: List['VelocityLayerPreset'], id: int) -> 'VelocityLayerPreset':
+        """
+        Get VelocityLayerPreset by id
+
+        Parameters
+        ----------
+        velocity_layer_presets : List['VelocityLayerPreset']
+            List of VelocityLayerPreset
+
+        id : int
+            ID to search
+        """
+        for x in velocity_layer_presets:
+            if x.id == id:
+                return x
+
+        raise ValueError(f"VelocityLayerPreset not found. id={id}")
+
 class SampleZone:
     """
     Represents the smallest unit of sample zone data
@@ -147,21 +200,41 @@ class SampleZone:
         return f"key_root={self.key_root}, key_low={self.key_low}, key_high={self.key_high}, velocity_layers[{len(self.velocity_layers)}]=[{[f"[{x}]" for x in self.velocity_layers]}]"
 
     @classmethod
-    def __from_zone_complex_json(cls, zone_complex: dict) -> List['SampleZone']:
+    def __parse_velocity_layer(cls, zone: dict, presets: List[VelocityLayerPreset] ) -> List[VelocityLayer]:
+        """
+        Parse velocity layer data to list
+        """
+
+        result: List[VelocityLayer] = []
+
+        if "velocity_layers_preset_id" in zone:
+            id = int(zone["velocity_layers_preset_id"])
+            preset: VelocityLayerPreset = VelocityLayerPreset.get_velocity_layer_preset(presets, id)
+            for preset_data in preset.layers:
+                result.append(preset_data)
+
+        if "velocity_layers" in zone:
+            for x in zone["velocity_layers"]:
+                result.append(VelocityLayer(x))
+
+        return result
+
+    @classmethod
+    def __from_zone_complex_json(cls, zone_complex: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone_complex)
         """
         result: List['SampleZone'] = []
 
-        for key in zone_complex:
-            key_root = key["key_root"]
-            key_low  = key["key_low"]
-            key_high = key["key_high"]
+        for zone in zone_complex:
+            key_root = zone["key_root"]
+            key_low  = zone["key_low"]
+            key_high = zone["key_high"]
 
-            velocity_layers: List[VelocityLayer] = []
+            velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
-            for x in key["velocity_layers"]:
-                velocity_layers.append(VelocityLayer(x))
+            if len(velocity_layers) == 0:
+                raise ValueError(f"velocity layers is empty.")
 
             result.append(
                 SampleZone(
@@ -173,18 +246,18 @@ class SampleZone:
         return result
 
     @classmethod
-    def __from_sample_simple_json(cls, zone_simple: dict) -> List['SampleZone']:
+    def __from_sample_simple_json(cls, zone_simple: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone)
         """
         result: List['SampleZone'] = []
 
-        for key in zone_simple:
-            notes = _parse_midi_byte_range(key["keys"])
-            velocity_layers: List[VelocityLayer] = []
+        for zone in zone_simple:
+            notes = _parse_midi_byte_range(zone["keys"])
+            velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
-            for x in key["velocity_layers"]:
-                velocity_layers.append(VelocityLayer(x))
+            if len(velocity_layers) == 0:
+                raise ValueError(f"velocity layers is empty.")
 
             for note in notes:
                 result.append(
@@ -197,15 +270,15 @@ class SampleZone:
         return result
 
     @classmethod
-    def from_json(cls, config_json: dict) -> List['SampleZone']:
+    def from_json(cls, config_json: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data
         """
         result: List['SampleZone'] = []
         if "sample_zone_complex" in config_json:
-            result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"]))
+            result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"], velocity_layers_presets))
         if "sample_zone" in config_json:
-            result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"]))
+            result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"], velocity_layers_presets))
 
         return result
 
@@ -218,16 +291,11 @@ class SampleZone:
         if sample_zones is None or len(sample_zones) == 0:
             return 0
 
-        root_key_count = len(sample_zones) # Root key count
-        unique_velocity_layers = list(sample_zones[0].velocity_layers)
+        total = 0
+        for zone in sample_zones:
+            total += len(zone.velocity_layers)
 
-        if len(sample_zones) == 1:
-            return len(root_key_count * unique_velocity_layers)
-
-        for zone in sample_zones[1:]:
-            unique_velocity_layers += list(zone.velocity_layers)
-
-        return root_key_count * len(set(unique_velocity_layers))
+        return total
 
 class MidiConfig:
     def __init__(self, config_path: str) -> None:
@@ -242,6 +310,7 @@ class MidiConfig:
         self.pre_send_smf_path_list: List[str]          = config_json["pre_send_smf_path_list"]
         self.midi_channel: int                          = config_json["midi_channel"]
         self.program_change_list: List[ProgramChange]   = []
+        self.velocity_layer_presets: List[VelocityLayerPreset] = []
         self.midi_pre_wait_duration: float              = config_json["midi_pre_wait_duration"]
         self.midi_note_duration: float                  = config_json["midi_note_duration"]
         self.midi_release_duration: float               = config_json["midi_release_duration"]
@@ -249,6 +318,10 @@ class MidiConfig:
         # Program Change
         for pc in config_json["midi_program_change_list"]:
             self.program_change_list.append(ProgramChange(pc))
+
+        # Velocity Layer Preset
+        if "velocity_layers_presets" in config_json:
+            self.velocity_layer_presets = VelocityLayerPreset.from_json(config_json["velocity_layers_presets"])
 
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
@@ -259,7 +332,7 @@ class MidiConfig:
             raise ValueError(f"processed_output_dir must be outside of output_dir.\n\toutput_dir={self.output_dir}\n\tprocessed_output_dir={self.processed_output_dir})")
 
         # Zone
-        self.sample_zone = SampleZone.from_json(config_json)
+        self.sample_zone = SampleZone.from_json(config_json, self.velocity_layer_presets)
 
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
