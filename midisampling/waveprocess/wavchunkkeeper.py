@@ -1,10 +1,95 @@
 from typing import List
 
+import io
 import struct
 
 from logging import getLogger
 
 logger = getLogger(__name__)
+
+class ChunkData:
+    def __init__(self, chunk_name: str, chunk_data: bytes, chunk_size):
+        self.chunk_name: str    = chunk_name
+        self.chunk_data: bytes  = chunk_data
+        self.chunk_size: int    = chunk_size
+
+    def write(self, f: io.BufferedWriter):
+        """
+        Write chunk data to given file object
+        """
+        if self.chunk_name == "RIFF":
+            f.write(self.chunk_name.encode('ascii'))
+            f.write(self.chunk_size.to_bytes(4, byteorder='little'))
+            f.write("WAVE".encode('ascii'))
+        else:
+            f.write(self.chunk_name.encode('ascii'))
+            f.write((len(self.chunk_data)).to_bytes(4, byteorder='little'))
+            f.write(self.chunk_data)
+
+    @classmethod
+    def from_bytes(cls, file_bytes: bytes) -> List['ChunkData']:
+        result: List['ChunkData'] = []
+        length = len(file_bytes)
+        current_index = 0
+
+        NAME_AND_SIZE_LENGTH = 8
+
+        while current_index < length:
+
+            # Chunk format
+
+            # | 'xxxx' (chunk name: 4 byte)  |  chunk size (4 byte) |    chunk data ...   |
+            # |<<-----------------NAME_AND_SIZE_LENGTH ----------->>|<<-- chunk_size-- >> |
+            # ^                                                     ^
+            # |                                                     |
+            # current_index                                         chunk_data_start_index
+
+            chunk_name = file_bytes[current_index:current_index + 4].decode('ascii')
+            chunk_size = struct.unpack(
+                '<I',
+                file_bytes[
+                    current_index + 4:
+                    current_index + NAME_AND_SIZE_LENGTH
+                ]
+            )[0]
+
+            chunk_data_start_index = current_index + NAME_AND_SIZE_LENGTH
+
+            padding_count = 0
+            if chunk_size % 2 != 0:
+                padding_count = 1
+
+            if chunk_name == "RIFF":
+                chunk_data = "WAVE".encode('ascii')
+            else:
+                chunk_data = file_bytes[
+                    chunk_data_start_index:
+                    chunk_data_start_index + chunk_size + padding_count
+                ]
+
+            result.append(ChunkData(
+                chunk_name=chunk_name,
+                chunk_data=chunk_data,
+                chunk_size=chunk_size
+            ))
+
+            print(f"index={current_index}, chunk_name={chunk_name}, chunk_size={chunk_size}, data={len(chunk_data)}, padding_count={padding_count}")
+
+            if chunk_name == "RIFF":
+                # RIFF `chunk size` is `file size - 8` stored
+                #
+                # | 'RIFF' (4byte) | chunk size (4byte) | 'WAVE' (4byte) |
+                #
+                # -> (Next chunk start index is + 12)
+                current_index += 12
+            else:
+                current_index += chunk_size + NAME_AND_SIZE_LENGTH + padding_count
+
+        return result
+
+    def __str__(self) -> str:
+        return f"ChunkData(chunk_name={self.chunk_name}, chunk_start={self.chunk_start}, chunk_size={self.chunk_size})"
+
 
 class WavChunkKeeper:
     """
@@ -30,15 +115,6 @@ class WavChunkKeeper:
     ```
     """
 
-    class ChunkData:
-        def __init__(self, chunk_name: str, chunk_data: bytes, chunk_size: int, chunk_start: int):
-            self.chunk_name: str    = chunk_name
-            self.chunk_data: bytes  = chunk_data
-            self.chunk_size: int    = chunk_size
-            self.chunk_start: int   = chunk_start
-
-        def __str__(self) -> str:
-            return f"ChunkData(chunk_name={self.chunk_name}, chunk_start={self.chunk_start}, chunk_size={self.chunk_size})"
 
     def __init__(self, source_path: str, target_path: str, keep_chunk_names: List[str] = ['smpl']):
         """
@@ -56,31 +132,7 @@ class WavChunkKeeper:
         self.source_path: str               = source_path
         self.target_path: str               = target_path
         self.keep_chunk_names: List[str]    = keep_chunk_names
-        self.chunk_data_list: List[WavChunkKeeper.ChunkData] = []
-
-    @classmethod
-    def __exist_chunk(cls, chunk_name: str, file_bytes: bytes) -> bool:
-        chunk_index = file_bytes.find(chunk_name.encode('ascii'))
-        return chunk_index != -1
-
-    @classmethod
-    def __find_chunk(cls, chunk_name: str, file_bytes: bytes) -> ChunkData:
-        chunk_index = file_bytes.find(chunk_name.encode('ascii'))
-
-        if not WavChunkKeeper.__exist_chunk(chunk_name, file_bytes):
-            return None
-
-        # Chunk format
-        # | 'xxxx' (chunk name: 4 bytes) | chunk size (4 bytes) | data ...
-        chunk_size  = struct.unpack('<I', file_bytes[chunk_index + 4:chunk_index + 8])[0]
-        chunk_bytes = file_bytes[chunk_index:chunk_index+chunk_size + 8] # + 8: chunk name + chunk size
-
-        return WavChunkKeeper.ChunkData(
-            chunk_name=chunk_name,
-            chunk_data=chunk_bytes,
-            chunk_size=chunk_size,
-            chunk_start=chunk_index
-        )
+        self.keep_chunk_list: List[ChunkData] = []
 
     def read(self):
         """
@@ -89,59 +141,54 @@ class WavChunkKeeper:
         with open(self.source_path, 'rb') as f:
             file_bytes = f.read()
 
-            for chunk_name in self.keep_chunk_names:
-                chunk_data = WavChunkKeeper.__find_chunk(chunk_name, file_bytes)
-                if chunk_data:
-                    self.chunk_data_list.append(chunk_data)
-                    print(chunk_data)
+        file_chunk_list = ChunkData.from_bytes(file_bytes)
+        self.keep_chunk_list = [i for i in file_chunk_list if i.chunk_name in self.keep_chunk_names]
+
+        for i in self.keep_chunk_list:
+            print(f"keep_chunk_list: {i.chunk_name}")
 
     def restore(self):
         """
         Restore the chunks to target_path
         """
+        print("------------- Restore -------------")
         with open(self.target_path, 'rb') as f:
             file_bytes = f.read()
 
-        # Check if the chunk to restore exists in the target file
-        exists_indexes: List[int] = []
-        for i, chunk_data in enumerate(self.chunk_data_list):
-            chunk_name  = chunk_data.chunk_name
-            chunk_index = file_bytes.find(chunk_name.encode('ascii'))
-            if chunk_index != -1:
-                exists_indexes.append(i)
+        file_chunk_list = ChunkData.from_bytes(file_bytes)
+        appenging_chunk_list = []
 
-
-
-        # If there is no chunk to restore, do nothing
-        if len(exists_indexes) == 0:
-            return
+        # If keep chunk does not exist in the target file, append it to the end of the file
+        for keep_chunk in self.keep_chunk_list:
+            found = False
+            for file_chunk in file_chunk_list:
+                if keep_chunk.chunk_name == file_chunk.chunk_name:
+                    found = True
+                    break
+            if not found:
+                appenging_chunk_list.append(keep_chunk)
 
         with open(self.target_path, 'wb') as f:
+            for x in file_chunk_list:
+                print(f"write: {x.chunk_name}")
+                x.write(f)
 
-            riff_index = file_bytes.find(b'RIFF')
-            fmt_index  = file_bytes.find(b'fmt ')
-            data_start = fmt_index + 8 + struct.unpack('<I', file_bytes[fmt_index + 4:fmt_index + 8])[0]
-
-            f.write(file_bytes[:data_start])
-
-            for i in self.chunk_data_list:
-                if WavChunkKeeper.__exist_chunk(i.chunk_name, file_bytes):
-                    continue
-
-                f.write(i.chunk_data)
-
-            f.write(file_bytes[data_start:])
-
-            # Update RIFF chunk size
-            riff_size = len(file_bytes) - 8
-            f.seek(4)
-            f.write(struct.pack('<I', riff_size))
-
+            for x in appenging_chunk_list:
+                print(f"appending_chunk_list: {x.chunk_name}")
+                x.write(f)
 
 from pydub import AudioSegment
+import shutil
 
 input  = "C:\\UserData\\Develop\\Project\\OSS\\midi-sampling\\examples\\_processed\\40_40_40_127_96_127.wav"
 output = "C:\\UserData\\Develop\\Project\\OSS\\midi-sampling\\examples\\_processed\\40_40_40_127_96_127_zzz.wav"
+
+# shutil.copy(input, output)
+
+with open(input, 'rb') as f:
+    file_bytes = f.read()
+
+#c = ChunkData.from_bytes(file_bytes)
 
 audio = AudioSegment.from_file(input, format='wav')
 processed_audio = audio + 5
