@@ -193,7 +193,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
       "velocity_layers_presets": [
           {
               "id": 0,
-              "layers": [
+              "velocities": [
                   {
                       "min": 0,
                       "max": 31,
@@ -336,7 +336,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 - <a id="definitions/def_velocity_layers_preset"></a>**`def_velocity_layers_preset`** *(object)*: Velocity layers preset configuration. Cannot contain additional properties.
   - **`id`** *(integer, required)*: ID of the velocity layer preset.
-  - **`layers`** *(array, required)*
+  - **`velocities`** *(array, required)*
     - **Items**:
         - : Refer to *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*.
 
@@ -344,7 +344,7 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   ```json
   {
       "id": 0,
-      "layers": [
+      "velocities": [
           {
               "min": 0,
               "max": 31,

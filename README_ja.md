@@ -198,7 +198,7 @@ python -m midisampling.device
       "velocity_layers_presets": [
           {
               "id": 0,
-              "layers": [
+              "velocities": [
                   {
                       "min": 0,
                       "max": 31,
@@ -343,7 +343,7 @@ python -m midisampling.device
 
 - <a id="definitions/def_velocity_layers_preset"></a>**`def_velocity_layers_preset`** *(オブジェクト)*: ベロシティレイヤープリセットの設定。追加のプロパティを含むことはできません。
   - **`id`** *(整数, 必須)*: ベロシティレイヤープリセットのID。
-  - **`layers`** *(配列, 必須)*
+  - **`velocities`** *(配列, 必須)*
     - **アイテム**:
         - : *[#/definitions/def_midivelocity_layer](#definitions/def_midivelocity_layer)*を参照。
 
@@ -351,7 +351,7 @@ python -m midisampling.device
   ```json
   {
       "id": 0,
-      "layers": [
+      "velocities": [
           {
               "min": 0,
               "max": 31,

@@ -13,7 +13,7 @@
     "velocity_layers_presets": [
         {
             "id": 0,
-            "layers": [
+            "velocities": [
                 { "min": 0,  "max": 31,  "send": 31 },
                 { "min": 32, "max": 63,  "send": 63 },
                 { "min": 64, "max": 95,  "send": 95 },
