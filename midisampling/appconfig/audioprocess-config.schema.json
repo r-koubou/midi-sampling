@@ -9,7 +9,7 @@
             "properties": {
                 "keep_wav_chunks": {
                     "type":"array",
-                    "description": "A list of wave chunk names to keep via the audio process",
+                    "description": "A list of wave chunk names to keep via the audio process. if not specified, all chunks will be kept.",
                     "items": {
                         "type": "string"
                     },

@@ -474,38 +474,63 @@ python -m midisampling.device
   }
   ```
 
-### オーディオプロセス設定
+### オーディオプロセスの設定
 
 *オーディオプロセス設定の構造。*
 
 #### 定義
 
-- <a id="definitions/def_postprocess_config"></a>**`def_postprocess_config`** *(オブジェクト)*: 追加のプロパティを含むことはできません。
-  - **`effects`** *(配列)*: ポストプロセス設定のリスト。
-    - **アイテム**: *[#/definitions/def_effect](#definitions/def_effect)*を参照。
+- <a id="definitions/def_audioprocess_config"></a>**`def_audioprocess_config`** *(オブジェクト)*: 追加のプロパティを含むことはできません。
+  - **`keep_wav_chunks`** *(配列)*: オーディオプロセスで保持するWAVチャンク名のリスト。指定されていない場合、すべてのチャンクが保持されます。デフォルト: `[]`。
+    - **項目** *(文字列)*
+
+    例:
+    ```json
+    [
+        "smpl"
+    ]
+    ```
+
+    ```json
+    [
+        "smpl",
+        "cue"
+    ]
+    ```
+
+  - **`effects`** *(配列)*: オーディオプロセス設定のリスト。
+    - **項目**: *[#/definitions/def_effect](#definitions/def_effect)* を参照。
+
 - <a id="definitions/def_effect"></a>**`def_effect`** *(オブジェクト)*: エフェクト設定。追加のプロパティを含むことはできません。
   - **`index`** *(整数, 必須)*: チェーン内のエフェクトのインデックス。
   - **`name`** *(文字列, 必須)*: エフェクト名。
-  - **`params`** *(オブジェクト, 必須)*: エフェクトのパラメータの辞書。追加のプロパティを含むことができます。
+  - **`params`** *(オブジェクト, 必須)*: エフェクトのパラメータ辞書。追加のプロパティを含むことができます。
 
 #### 例
 
   ```json
   [
       {
-          "index": 0,
-          "name": "normalize",
-          "params": {
-              "target_db": -10.0
-          }
-      },
-      {
-          "index": 1,
-          "name": "trim",
-          "params": {
-              "threshold_db": -65.0,
-              "min_silence_duration": 250
-          }
+          "keep_wav_chunks": [
+              "smpl"
+          ],
+          "effects": [
+              {
+                  "index": 0,
+                  "name": "normalize",
+                  "params": {
+                      "target_db": -10.0
+                  }
+              },
+              {
+                  "index": 1,
+                  "name": "trim",
+                  "params": {
+                      "threshold_db": -65.0,
+                      "min_silence_duration": 250
+                  }
+              }
+          ]
       }
   ]
   ```
