@@ -12,11 +12,14 @@ class ChunkData:
         self.chunk_name: str    = chunk_name
         self.chunk_data: bytes  = chunk_data
         self.chunk_size: int    = chunk_size
+        self.padding_count: int = 0 if len(chunk_data) % 2 == 0 else 1
 
     def write(self, f: io.BufferedWriter):
         """
         Write chunk data to given file object
         """
+        start = f.tell()
+
         if self.chunk_name == "RIFF":
             f.write(self.chunk_name.encode('ascii'))
             f.write(self.chunk_size.to_bytes(4, byteorder='little'))
@@ -26,20 +29,26 @@ class ChunkData:
             f.write((len(self.chunk_data)).to_bytes(4, byteorder='little'))
             f.write(self.chunk_data)
 
+        written_size = f.tell() - start
+        logger.debug(f"written: {self} - size={written_size}/0x{written_size:x} bytes")
+
+    SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE = 8
+    """
+    Size of chunk name and chunk size (4byte + 4byte)
+    """
+
     @classmethod
     def from_bytes(cls, file_bytes: bytes) -> List['ChunkData']:
         result: List['ChunkData'] = []
         length = len(file_bytes)
         current_index = 0
 
-        NAME_AND_SIZE_LENGTH = 8
-
         while current_index < length:
 
             # Chunk format
 
             # | 'xxxx' (chunk name: 4 byte)  |  chunk size (4 byte) |    chunk data ...   |
-            # |<<-----------------NAME_AND_SIZE_LENGTH ----------->>|<<-- chunk_size-- >> |
+            # |<<-------SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE --------->>|<<-- chunk_size-- >> |
             # ^                                                     ^
             # |                                                     |
             # current_index                                         chunk_data_start_index
@@ -49,11 +58,11 @@ class ChunkData:
                 '<I',
                 file_bytes[
                     current_index + 4:
-                    current_index + NAME_AND_SIZE_LENGTH
+                    current_index + ChunkData.SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE
                 ]
             )[0]
 
-            chunk_data_start_index = current_index + NAME_AND_SIZE_LENGTH
+            chunk_data_start_index = current_index + ChunkData.SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE
 
             padding_count = 0
             if chunk_size % 2 != 0:
@@ -67,13 +76,14 @@ class ChunkData:
                     chunk_data_start_index + chunk_size + padding_count
                 ]
 
-            result.append(ChunkData(
+            chunk_data = ChunkData(
                 chunk_name=chunk_name,
                 chunk_data=chunk_data,
                 chunk_size=chunk_size
-            ))
+            )
+            result.append(chunk_data)
 
-            logger.debug(f"index={current_index}, chunk_name={chunk_name}, chunk_size={chunk_size}, data={len(chunk_data)}, padding_count={padding_count}")
+            logger.debug(f"read: {chunk_data}")
 
             if chunk_name == "RIFF":
                 # RIFF `chunk size` is `file size - 8` stored
@@ -83,12 +93,55 @@ class ChunkData:
                 # -> (Next chunk start index is + 12)
                 current_index += 12
             else:
-                current_index += chunk_size + NAME_AND_SIZE_LENGTH + padding_count
+                current_index += chunk_size + ChunkData.SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE + padding_count
 
         return result
 
+    @classmethod
+    def calc_riff_chunk_size(cls, chunks: List['ChunkData']) -> int:
+        """
+        Calculate RIFF chunk size from given chunks
+        """
+        result = 0
+        for x in chunks:
+            if x.chunk_name == "RIFF":
+                result += 4 # sizeof 'WAVE' in chunk_data
+            else:
+                logger.debug(f"calc: {x}")
+                result += (
+                    ChunkData.SIZEOF_CHUNK_NAME_AND_CHUNK_SIZE
+                    + len(x.chunk_data)
+                    + x.padding_count
+                )
+
+        return result
+
+    @classmethod
+    def update_riff_chunk_size(cls, chunks: List['ChunkData']) -> bool:
+        """
+        Update RIFF chunk size in given chunks
+
+        Parameters
+        ----------
+        chunks : List['ChunkData']
+            List of chunks
+
+        Returns
+        -------
+        bool
+            If RIFF chunk is found and updated, return True. Otherwise, return False.
+        """
+        logger.debug(f"update_riff_chunk_size")
+        new_size = ChunkData.calc_riff_chunk_size(chunks)
+        for x in chunks:
+            if x.chunk_name == "RIFF":
+                x.chunk_size = new_size
+                return True
+
+        return False
+
     def __str__(self) -> str:
-        return f"ChunkData(chunk_name={self.chunk_name}, chunk_start={self.chunk_start}, chunk_size={self.chunk_size})"
+        return f"chunk_name={self.chunk_name}, chunk_size={self.chunk_size}/0x{self.chunk_size:x}, data={len(self.chunk_data)}, padding_count={self.padding_count}"
 
 
 class WavChunkKeeper:
@@ -166,10 +219,20 @@ class WavChunkKeeper:
 
         logger.info(f"write to {self.target_path}")
         with open(self.target_path, 'wb') as f:
-            for x in file_chunk_list:
-                logger.debug(f"write: {x.chunk_name}")
+
+            write_chunk_list = file_chunk_list + appenging_chunk_list
+            ChunkData.update_riff_chunk_size(write_chunk_list)
+
+            for x in write_chunk_list:
                 x.write(f)
 
-            for x in appenging_chunk_list:
-                logger.debug(f"write: {x.chunk_name} (from source)")
-                x.write(f)
+            logger.debug(f"Validate RIFF chunk size")
+            expected_riff_size = f.tell() - 8
+            actual_riff_size   = ChunkData.calc_riff_chunk_size(write_chunk_list)
+            logger.debug(f"expected_riff_size: 0x{expected_riff_size:x}")
+            logger.debug(f"actual_riff_size: 0x{actual_riff_size:x}")
+
+            if expected_riff_size != actual_riff_size:
+                raise ValueError("RIFF chunk size is not matched")
+
+            logger.debug(f"restored: {self.target_path}")
