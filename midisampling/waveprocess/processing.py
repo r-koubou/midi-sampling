@@ -25,6 +25,7 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
     if not config:
         logger.info("Process config is not set. Skip post process.")
         return
+    logger.debug(f"Process config: {config}")
 
     with tempfile.TemporaryDirectory() as working_dir:
         logger.info("Build processed audio files path list")
@@ -47,7 +48,7 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
             keeper = WavChunkKeeper(
                 source_path=x.path(),
                 target_path=export_path.working_path(),
-                keep_chunk_names=["smpl"]
+                keep_chunk_names=config.keep_wav_chunks
             )
             wav_chunk_keepers.append(keeper)
 

@@ -7,6 +7,18 @@
             "type":"object",
             "additionalProperties": false,
             "properties": {
+                "keep_wav_chunks": {
+                    "type":"array",
+                    "description": "A list of wave chunk names to keep via the audio process",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "examples": [
+                        ["smpl"],
+                        ["smpl", "cue"]
+                    ]
+                },
                 "effects": {
                     "type": "array",
                     "description": "A list of audio process configurations",
@@ -48,19 +60,24 @@
     "examples": [
         [
             {
-                "index": 0,
-                "name": "normalize",
-                "params": {
-                    "target_db": -10.0
-                }
-            },
-            {
-                "index": 1,
-                "name": "trim",
-                "params": {
-                    "threshold_db": -65.0,
-                    "min_silence_duration": 250
-                }
+                "keep_wav_chunks": ["smpl"],
+                "effects": [
+                    {
+                        "index": 0,
+                        "name": "normalize",
+                        "params": {
+                            "target_db": -10.0
+                        }
+                    },
+                    {
+                        "index": 1,
+                        "name": "trim",
+                        "params": {
+                            "threshold_db": -65.0,
+                            "min_silence_duration": 250
+                        }
+                    }
+                ]
             }
         ]
     ]
