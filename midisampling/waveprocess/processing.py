@@ -15,6 +15,8 @@ from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 from midisampling.waveprocess.normalize import normalize_from_list as normalize
 from midisampling.waveprocess.trim import trim_from_list as trim
 
+from midisampling.waveprocess.wavchunkkeeper import WavChunkKeeper
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logger = getLogger(__name__)
@@ -29,6 +31,7 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
         logger.debug(f"Working directory: {working_dir}")
 
         process_files: List[ProcessedAudioPath] = []
+        wav_chunk_keepers: List[WavChunkKeeper] = []
 
         for x in recorded_files:
             export_path = ProcessedAudioPath(
@@ -38,6 +41,15 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
                 overwrite=True # Overwrite via effect chain
             )
             process_files.append(export_path)
+
+            # Keep the original wav chunks
+            keeper = WavChunkKeeper(
+                source_path=x.path(),
+                target_path=export_path.working_path(),
+                keep_chunk_names=["smpl"]
+            )
+            wav_chunk_keepers.append(keeper)
+
             logger.debug(f"Process export path: {export_path}")
 
         logger.info("Copy recorded files to working directory")
@@ -51,6 +63,13 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
             process_files=process_files
         )
 
+        # Restore original wav chunks
+        logger.info("Restore original wav chunks which removed by the process")
+        for x in wav_chunk_keepers:
+            logger.debug(f"Restore wav chunks: {x.source_path}")
+            x.restore()
+
+        # Finally, copy processed files in working directory to output directory
         logger.info(f"Copy processed files to output directory ({output_dir})")
         for x in process_files:
             x.copy_working_to(output_dir)
