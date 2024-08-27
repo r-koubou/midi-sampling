@@ -33,6 +33,7 @@ class AudioProcessConfig:
     def __init__(self, config_path: str) -> None:
         config = validate(config_path)
         self.effects: List[AudioProcessInfo] = []
+        self.keep_wav_chunks: List[str] = config.get("keep_wav_chunks", [])
 
         for effect in config.get("effects", []):
             self.effects.append(
@@ -54,6 +55,7 @@ class AudioProcessConfig:
         result = "["
         for effect in self.effects:
             result += f"[{effect}], "
+        result += f"keep_wav_chunks={self.keep_wav_chunks}"
         result += "]"
 
         return result

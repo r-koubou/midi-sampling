@@ -469,12 +469,29 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
 
 ### Audio process Configuration
 
-*Structure of the post process configuration.*
+*Structure of the audio process configuration.*
 
 #### Definitions
 
-- <a id="definitions/def_postprocess_config"></a>**`def_postprocess_config`** *(object)*: Cannot contain additional properties.
-  - **`effects`** *(array)*: A list of post process configurations.
+- <a id="definitions/def_audioprocess_config"></a>**`def_audioprocess_config`** *(object)*: Cannot contain additional properties.
+  - **`keep_wav_chunks`** *(array)*: A list of wave chunk names to keep via the audio process. if not specified, all chunks will be kept. Default: `[]`.
+    - **Items** *(string)*
+
+    Examples:
+    ```json
+    [
+        "smpl"
+    ]
+    ```
+
+    ```json
+    [
+        "smpl",
+        "cue"
+    ]
+    ```
+
+  - **`effects`** *(array)*: A list of audio process configurations.
     - **Items**: Refer to *[#/definitions/def_effect](#definitions/def_effect)*.
 - <a id="definitions/def_effect"></a>**`def_effect`** *(object)*: Effect configuration. Cannot contain additional properties.
   - **`index`** *(integer, required)*: The index of the effect in the chain.
@@ -485,19 +502,26 @@ Sample files, `sampling-config.json` and `midi-config.example.json`, are include
   ```json
   [
       {
-          "index": 0,
-          "name": "normalize",
-          "params": {
-              "target_db": -10.0
-          }
-      },
-      {
-          "index": 1,
-          "name": "trim",
-          "params": {
-              "threshold_db": -65.0,
-              "min_silence_duration": 250
-          }
+          "keep_wav_chunks": [
+              "smpl"
+          ],
+          "effects": [
+              {
+                  "index": 0,
+                  "name": "normalize",
+                  "params": {
+                      "target_db": -10.0
+                  }
+              },
+              {
+                  "index": 1,
+                  "name": "trim",
+                  "params": {
+                      "threshold_db": -65.0,
+                      "min_silence_duration": 250
+                  }
+              }
+          ]
       }
   ]
   ```

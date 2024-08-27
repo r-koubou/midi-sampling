@@ -15,6 +15,8 @@ from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
 from midisampling.waveprocess.normalize import normalize_from_list as normalize
 from midisampling.waveprocess.trim import trim_from_list as trim
 
+from midisampling.waveprocess.wavchunkkeeper import WavChunkKeeper
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logger = getLogger(__name__)
@@ -23,14 +25,17 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
     if not config:
         logger.info("Process config is not set. Skip post process.")
         return
+    logger.debug(f"Process config: {config}")
 
     with tempfile.TemporaryDirectory() as working_dir:
         logger.info("Build processed audio files path list")
         logger.debug(f"Working directory: {working_dir}")
 
         process_files: List[ProcessedAudioPath] = []
+        wav_chunk_keepers: List[WavChunkKeeper] = []
 
         for x in recorded_files:
+            # Configure the export path information
             export_path = ProcessedAudioPath(
                 recorded_audio_path=x,
                 output_dir=output_dir,
@@ -38,19 +43,37 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
                 overwrite=True # Overwrite via effect chain
             )
             process_files.append(export_path)
+
+            # Keep the original wav chunks
+            keeper = WavChunkKeeper(
+                source_path=x.path(),
+                target_path=export_path.working_path(),
+                keep_chunk_names=config.keep_wav_chunks
+            )
+            wav_chunk_keepers.append(keeper)
+
             logger.debug(f"Process export path: {export_path}")
 
+        # Copy recorded files to working directory to process
         logger.info("Copy recorded files to working directory")
         for x in recorded_files:
             logger.info(f"{x.file_path}")
             x.copy_to(working_dir)
 
-        logger.info("Run processes")
+        # Procssing
+        logger.info("Processing...")
         _process_impl(
             config=config,
             process_files=process_files
         )
 
+        # Restore original wav chunks
+        logger.info("Restore original wav chunks which removed by the process")
+        for x in wav_chunk_keepers:
+            logger.debug(f"Restore wav chunks: {x.source_path}")
+            x.restore()
+
+        # Finally, copy processed files in working directory to output directory
         logger.info(f"Copy processed files to output directory ({output_dir})")
         for x in process_files:
             x.copy_working_to(output_dir)
