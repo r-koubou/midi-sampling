@@ -34,6 +34,7 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
         wav_chunk_keepers: List[WavChunkKeeper] = []
 
         for x in recorded_files:
+            # Configure the export path information
             export_path = ProcessedAudioPath(
                 recorded_audio_path=x,
                 output_dir=output_dir,
@@ -52,12 +53,14 @@ def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath],
 
             logger.debug(f"Process export path: {export_path}")
 
+        # Copy recorded files to working directory to process
         logger.info("Copy recorded files to working directory")
         for x in recorded_files:
             logger.info(f"{x.file_path}")
             x.copy_to(working_dir)
 
-        logger.info("Run processes")
+        # Procssing
+        logger.info("Processing...")
         _process_impl(
             config=config,
             process_files=process_files
