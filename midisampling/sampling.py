@@ -80,7 +80,7 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
 
     return dynamic_format.format(format_string=format_string, data=format_value)
 
-def main(sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None) -> None:
+def main(sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None, over_write_recorded: bool = False) -> None:
 
     #---------------------------------------------------------------------------
     # Load config values
@@ -217,6 +217,15 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
                     export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
                     export_path.makedirs()
+
+                    logger.debug(f"  -> Export recorded data to: {export_path.path()}")
+
+                    # Check recorded file has already existed
+                    # If over_write_recorded is False, raise exception
+                    if not over_write_recorded and os.path.exists(export_path.path()):
+                        logger.error(f"Recorded file already exists: {export_path.path()}")
+                        logger.error("If you want to overwrite anyway, please set overwrite option.")
+                        raise FileExistsError(f"Recorded file already exists: {export_path.path()}")
 
                     audio_device.export_audio(export_path.path())
 

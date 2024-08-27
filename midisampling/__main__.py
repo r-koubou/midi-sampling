@@ -24,6 +24,7 @@ def main():
     parser.add_argument("midi_config_path", help="Path to the MIDI configuration file.")
     parser.add_argument("postprocess_config_path", help="Path to the process configuration file for post processing.", default=None, nargs="?")
     parser.add_argument("-l", "--log-file", help="Path to save the log file.")
+    parser.add_argument("-rw", "--overwrite-recorded", help="Overwrite recorded file if it exists.", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -41,7 +42,8 @@ def main():
         sampling_main(
             sampling_config_path=args.sampling_config_path,
             midi_config_path=args.midi_config_path,
-            postprocess_config_path=args.postprocess_config_path
+            postprocess_config_path=args.postprocess_config_path,
+            over_write_recorded=args.overwrite_recorded
         )
     except Exception as e:
         logger.error(e, exc_info=True)
