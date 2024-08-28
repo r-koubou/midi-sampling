@@ -5,9 +5,6 @@ import os
 import time
 from logging import getLogger
 
-import midisampling.waveprocess.normalize as normalize
-import midisampling.waveprocess.trim as trim
-
 from midisampling.device.mididevice import IMidiDevice
 from midisampling.device.MidoMidiDevice import MidoMidiDevice
 
