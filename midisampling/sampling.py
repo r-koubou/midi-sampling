@@ -16,17 +16,13 @@ from midisampling.device.SdAudioDevice import SdAudioDevice
 
 
 from midisampling.appconfig.sampling import SamplingConfig
-from midisampling.appconfig.sampling import load as load_samplingconfig
-
 from midisampling.appconfig.midi import MidiConfig, SampleZone, VelocityLayer, ProgramChange
-from midisampling.appconfig.midi import load as load_midi_config
 
 import midisampling.dynamic_format as dynamic_format
 
-from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath
 from midisampling.appconfig.audioprocess import AudioProcessConfig
 from midisampling.waveprocess.processing import process as run_postprocess
-from midisampling.waveprocess.processing import validate_process_config
 
 import midisampling.notenumber as notenumber_util
 
@@ -86,7 +82,24 @@ class ISampling(abc.ABC):
     @abc.abstractmethod
     def execute(self) -> None:
         """
-        The sampling entry point
+        The sampling entry point.
+
+        In most cases, the following order of processing is assumed.
+        However, this order may vary depending on the implementation.
+
+        1. `self.pre_send_smf()`
+        - Send MIDI from file to device before sampling
+        2. `self.pre_sampling()`
+        - Perform any necessary setup before the sampling process
+        3. For each program change:
+        - `self.send_progam_change()`
+        - Send program change to the MIDI device
+        4. For each sample zone:
+        - For each velocity layer:
+            - `self.sample()`
+            - Perform the actual sampling for the current program, zone, and velocity
+        5. `self.post_process()`
+        - Perform post-processing on all recorded samples
         """
         pass
 
@@ -261,17 +274,9 @@ class SamplingBase(ISampling):
         Execute sampling
         """
 
-        pre_send_smf_path_list  = self.midi_config.pre_send_smf_path_list
-
         program_change_list     = self.midi_config.program_change_list
         midi_channel            = self.midi_config.midi_channel
         sample_zone             = self.midi_config.sample_zone
-        midi_note_duration      = self.midi_config.midi_note_duration
-        midi_pre_duration       = self.midi_config.midi_pre_wait_duration
-        midi_release_duration   = self.midi_config.midi_release_duration
-        output_dir              = self.midi_config.output_dir
-        output_prefix_format    = self.midi_config.output_prefix_format
-        scale_name_format       = self.midi_config.scale_name_format
         processed_output_dir    = self.midi_config.processed_output_dir
 
         # Calculate total sampling count
@@ -316,6 +321,7 @@ class SamplingBase(ISampling):
         logger.info("Post process")
         logger.info("#" * 80)
         self.post_process(self.postprocess_config, recorded_path_list, processed_output_dir)
+
 
 class DefaultSampling(SamplingBase):
     """

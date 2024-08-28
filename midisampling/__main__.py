@@ -89,23 +89,5 @@ def main():
 
     return
 
-    if args.dry_run:
-        from midisampling.dryrun import execute as dry_run
-        try:
-            dry_run(args=samplig_args)
-        except Exception as e:
-            logger.error(e, exc_info=True)
-        finally:
-            logger.debug("End")
-        return
-
-    from midisampling.sampling import main as sampling_main
-    try:
-        sampling_main(args=samplig_args)
-    except Exception as e:
-        logger.error(e, exc_info=True)
-    finally:
-        logger.debug("End")
-
 if __name__ == '__main__':
     main()
