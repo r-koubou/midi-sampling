@@ -33,6 +33,17 @@ import midisampling.notenumber as notenumber_util
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
+
+class SamplingArguments:
+    """
+    Composite of sampling, MIDI, and post process configurations.
+    """
+    def __init__(self, sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None, overwrite_recorded: bool = False):
+        self.sampling_config_path = sampling_config_path
+        self.midi_config_path = midi_config_path
+        self.postprocess_config_path = postprocess_config_path
+        self.overwrite_recorded = overwrite_recorded
+
 def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int, use_scale_spn_format: bool):
     """
     Expand placeholders in format_string with given values
@@ -80,17 +91,17 @@ def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value,
 
     return dynamic_format.format(format_string=format_string, data=format_value)
 
-def main(sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None) -> None:
+def main(args: SamplingArguments) -> None:
 
     #---------------------------------------------------------------------------
     # Load config values
     #---------------------------------------------------------------------------
-    sampling_config: SamplingConfig = load_samplingconfig(sampling_config_path)
-    midi_config: MidiConfig = load_midi_config(midi_config_path)
+    sampling_config: SamplingConfig = load_samplingconfig(args.sampling_config_path)
+    midi_config: MidiConfig = load_midi_config(args.midi_config_path)
 
     postprocess_config: AudioProcessConfig = None
-    if postprocess_config_path:
-        postprocess_config = AudioProcessConfig(postprocess_config_path)
+    if args.postprocess_config_path:
+        postprocess_config = AudioProcessConfig(args.postprocess_config_path)
         validate_process_config(postprocess_config)
 
     #---------------------------------------------------------------------------
@@ -217,6 +228,15 @@ def main(sampling_config_path: str, midi_config_path: str, postprocess_config_pa
 
                     export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
                     export_path.makedirs()
+
+                    logger.debug(f"  -> Export recorded data to: {export_path.path()}")
+
+                    # Check recorded file has already existed
+                    # If over_write_recorded is False, raise exception
+                    if not args.overwrite_recorded and os.path.exists(export_path.path()):
+                        logger.error(f"Recorded file already exists: {export_path.path()}")
+                        logger.error("If you want to overwrite anyway, please set overwrite option.")
+                        raise FileExistsError(f"Recorded file already exists: {export_path.path()}")
 
                     audio_device.export_audio(export_path.path())
 
