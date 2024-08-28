@@ -6,6 +6,8 @@ from logging import getLogger
 
 from midisampling.logging_management import init_logging_from_config
 
+from midisampling.sampling import SamplingArguments
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)
 
@@ -39,12 +41,7 @@ def main():
 
     from midisampling.sampling import main as sampling_main
     try:
-        sampling_main(
-            sampling_config_path=args.sampling_config_path,
-            midi_config_path=args.midi_config_path,
-            postprocess_config_path=args.postprocess_config_path,
-            over_write_recorded=args.overwrite_recorded
-        )
+        sampling_main(args=samplig_args)
     except Exception as e:
         logger.error(e, exc_info=True)
     finally:
