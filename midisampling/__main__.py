@@ -6,7 +6,7 @@ from logging import getLogger
 
 from midisampling.logging_management import init_logging_from_config
 
-from midisampling.sampling import SamplingArguments, ISampling, DefaultSampling, DryRunSampling
+from midisampling.sampling import ISampling, DefaultSampling, DryRunSampling
 from midisampling.appconfig.midi import MidiConfig, load as load_midi_config
 from midisampling.appconfig.sampling import SamplingConfig, load as load_samplingconfig
 from midisampling.appconfig.audioprocess import AudioProcessConfig
@@ -43,13 +43,6 @@ def main():
 
     init_logging_from_config(logfile_path=logfile_path, verbose=args.verbose)
     _log_system_info()
-
-    samplig_args = SamplingArguments(
-        sampling_config_path=args.sampling_config_path,
-        midi_config_path=args.midi_config_path,
-        postprocess_config_path=args.postprocess_config_path,
-        overwrite_recorded=args.overwrite_recorded
-    )
 
     sampling_config: SamplingConfig = load_samplingconfig(args.sampling_config_path)
     midi_config: MidiConfig = load_midi_config(args.midi_config_path)

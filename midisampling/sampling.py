@@ -31,17 +31,6 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
 
-class SamplingArguments:
-    """
-    Composite of sampling, MIDI, and post process configurations.
-    """
-    def __init__(self, sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None, overwrite_recorded: bool = False):
-        self.sampling_config_path = sampling_config_path
-        self.midi_config_path = midi_config_path
-        self.postprocess_config_path = postprocess_config_path
-        self.overwrite_recorded = overwrite_recorded
-
-
 class ISampling(abc.ABC):
 
     @abc.abstractmethod
