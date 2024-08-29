@@ -10,7 +10,7 @@ from midisampling.sampling import ISampling, DefaultSampling, DryRunSampling
 from midisampling.appconfig.midi import MidiConfig, load as load_midi_config
 from midisampling.appconfig.sampling import SamplingConfig, load as load_samplingconfig
 from midisampling.appconfig.audioprocess import AudioProcessConfig
-from midisampling.waveprocess.processing import validate_process_config
+from midisampling.waveprocess.processing import validate_effect_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)
@@ -50,7 +50,7 @@ def main():
     postprocess_config: AudioProcessConfig = None
     if args.postprocess_config_path:
         postprocess_config = AudioProcessConfig(args.postprocess_config_path)
-        validate_process_config(postprocess_config)
+        validate_effect_config(postprocess_config)
 
     sampling: ISampling = None
 

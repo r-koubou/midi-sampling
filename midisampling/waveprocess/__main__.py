@@ -9,7 +9,7 @@ from midisampling.waveprocess import trim
 from midisampling.exportpath import RecordedAudioPath
 from midisampling.appconfig.audioprocess import AudioProcessConfig
 from midisampling.waveprocess.processing import process
-from midisampling.waveprocess.processing import validate_process_config
+from midisampling.waveprocess.processing import validate_effect_config
 
 from midisampling.logging_management import init_logging_as_stdout
 
@@ -27,7 +27,7 @@ def main() -> None:
 
     try:
         process_config = AudioProcessConfig(args.processing_config_path)
-        validate_process_config(process_config)
+        validate_effect_config(process_config)
 
         sources: List[RecordedAudioPath] = RecordedAudioPath.from_directory(args.input_directory)
 
