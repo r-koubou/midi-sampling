@@ -1,11 +1,9 @@
-from typing import List
+from typing import List, override
+import abc
 import math
 import os
 import time
 from logging import getLogger
-
-import midisampling.waveprocess.normalize as normalize
-import midisampling.waveprocess.trim as trim
 
 from midisampling.device.mididevice import IMidiDevice
 from midisampling.device.MidoMidiDevice import MidoMidiDevice
@@ -15,17 +13,13 @@ from midisampling.device.SdAudioDevice import SdAudioDevice
 
 
 from midisampling.appconfig.sampling import SamplingConfig
-from midisampling.appconfig.sampling import load as load_samplingconfig
-
-from midisampling.appconfig.midi import MidiConfig, SampleZone
-from midisampling.appconfig.midi import load as load_midi_config
+from midisampling.appconfig.midi import MidiConfig, SampleZone, VelocityLayer, ProgramChange
 
 import midisampling.dynamic_format as dynamic_format
 
-from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.exportpath import RecordedAudioPath
 from midisampling.appconfig.audioprocess import AudioProcessConfig
 from midisampling.waveprocess.processing import process as run_postprocess
-from midisampling.waveprocess.processing import validate_process_config
 
 import midisampling.notenumber as notenumber_util
 
@@ -34,138 +28,242 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = getLogger(__name__)
 
 
-class SamplingArguments:
+class ISampling(abc.ABC):
+
+    @abc.abstractmethod
+    def initialize(self) -> None:
+        """
+        Initialize sampling
+        """
+        pass
+
+    @abc.abstractmethod
+    def dispose(self) -> None:
+        """
+        Dispose resources in sampling
+        """
+        pass
+
+    @abc.abstractmethod
+    def create_audio_device(self) -> IAudioDevice:
+        """
+        Create audio device
+
+        Returns
+        -------
+            IAudioDevice: Audio device
+        """
+        pass
+
+    @abc.abstractmethod
+    def create_midi_device(self) -> IMidiDevice:
+        """
+        Create MIDI device
+
+        Returns
+        -------
+            IMidiDevice: MIDI device
+        """
+
+    @abc.abstractmethod
+    def execute(self) -> None:
+        """
+        The sampling entry point.
+
+        In most cases, the following order of processing is assumed.
+        However, this order may vary depending on the implementation.
+
+        1. `self.pre_send_smf()`
+        - Send MIDI from file to device before sampling
+        2. `self.pre_sampling()`
+        - Perform any necessary setup before the sampling process
+        3. For each program change:
+        - `self.send_progam_change()`
+        - Send program change to the MIDI device
+        4. For each sample zone:
+        - For each velocity layer:
+            - `self.sample()`
+            - Perform the actual sampling for the current program, zone, and velocity
+        5. `self.post_process()`
+        - Perform post-processing on all recorded samples
+        """
+        pass
+
+    @abc.abstractmethod
+    def pre_sampling(self):
+        """
+        Do something before sampling process once.
+        """
+        pass
+
+    @abc.abstractmethod
+    def pre_send_smf(self):
+        """
+        Sending MIDI from file.
+        Call before sampling process once.
+        """
+        pass
+
+    @abc.abstractmethod
+    def send_progam_change(self, channel: int, program: ProgramChange):
+        """
+        Send program change to device
+        """
+        pass
+
+    @abc.abstractmethod
+    def sample(self, program: ProgramChange, zone: SampleZone, velocity: VelocityLayer, recorded_path_list: List[RecordedAudioPath]) -> None:
+        """
+        Invidual sampling process. Play MIDI and record audio.
+
+        Parameters
+        ----------
+        program : ProgramChange
+            Program change information used for sampling
+        zone : SampleZone
+            Key zone to be sampled
+        velocity : VelocityLayer
+            Velocity layer to be sampled
+        recorded_path_list : List[RecordedAudioPath]
+            List of recorded audio paths
+            Append recorded audio path to this list
+        """
+        pass
+
+    def validate_recorded_file(self, this_time_recorded_path: RecordedAudioPath, recorded_path_list: List[RecordedAudioPath]):
+        """
+        Validate recorded file before export recorded file.
+        In this class, the implementation checks if the file already exists & if output was done during this sampling process.
+
+        Parameters
+        ----------
+        this_time_recorded_path : RecordedAudioPath
+            Recorded audio path to be exported
+
+        recorded_path_list : List[RecordedAudioPath]
+            List of previous recorded audio paths
+        """
+        # Check duplicate sample zone or already recorded file
+        # If overwrite_recorded is False, raise exception
+        if not self.overwrite_recorded:
+            if(this_time_recorded_path in recorded_path_list):
+                raise ValueError(f"Duplecate sample zone(s) defined in midi-sampling-config file. {this_time_recorded_path.path()}")
+            if(os.path.exists(this_time_recorded_path.path())):
+                raise FileExistsError(f"Recorded file already exists. {this_time_recorded_path.path()}")
+        else:
+            if(this_time_recorded_path in recorded_path_list):
+                logger.warning(f"Overwrite recorded file. {this_time_recorded_path.path()}")
+            if(os.path.exists(this_time_recorded_path.path())):
+                logger.warning(f"Overwrite recorded file. {this_time_recorded_path.path()}")
+
+    @abc.abstractmethod
+    def post_process(self, config: AudioProcessConfig, recorded_path_list: List[RecordedAudioPath], processed_output_dir: str):
+        """
+        Post process recorded audio data
+        """
+        pass
+
+    @classmethod
+    def expand_path_placeholder(self, format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int, use_scale_spn_format: bool):
+        """
+        Expand placeholders in format_string with given values
+
+        Parameters
+        ----------
+            format_string (str): string.format compatible format string. available placeholders are
+                {pc_msb}, {pc_lsb}, {pc},
+                {key_root}, {key_low}, {key_high},
+                {key_root_scale}, {key_low_scale}, {key_high_scale},
+                {velocity}, {min_velocity}, {max_velocity}
+                and Python format specifiers are also available.
+            pc_msb (int): Program Change MSB
+            pc_lsb (int): Program Change LSB
+            pc_value: Program Change Value
+            key_root (int): Zone: Root key (Send as MIDI note number to device)
+            key_low (int): Zone: Low key
+            key_high (int): Zone: High key
+            min_velocity (int): Velocity Layer: Minimum definition
+            max_velocity (int): Velocity Layer: Maximum definition
+            velocity (int): Send as MIDI velocity to device
+            use_scale_spn_format (bool): True: Scientific pitch notation format, False: Yamaha format
+
+        Returns
+        -------
+            str: formatted string
+        """
+
+        format_value = {
+            # MIDI Controll Change
+            "pc_msb": pc_msb,
+            "pc_lsb": pc_lsb,
+            "pc": pc_value,
+            # MIDI Note number
+            "key_root": key_root,
+            "key_low": key_low,
+            "key_high": key_high,
+            # Note name
+            "key_root_scale": notenumber_util.as_scalename(key_root, spn_format=use_scale_spn_format),
+            "key_low_scale": notenumber_util.as_scalename(key_low, spn_format=use_scale_spn_format),
+            "key_high_scale": notenumber_util.as_scalename(key_high, spn_format=use_scale_spn_format),
+            # MIDI Velocity
+            "velocity": velocity,
+            "min_velocity": min_velocity,
+            "max_velocity": max_velocity,
+        }
+
+        return dynamic_format.format(format_string=format_string, data=format_value)
+
+class SamplingBase(ISampling):
     """
-    Composite of sampling, MIDI, and post process configurations.
+    Common implementation for sampling
     """
-    def __init__(self, sampling_config_path: str, midi_config_path: str, postprocess_config_path:str = None, overwrite_recorded: bool = False):
-        self.sampling_config_path = sampling_config_path
-        self.midi_config_path = midi_config_path
-        self.postprocess_config_path = postprocess_config_path
+    def __init__(self, sampling_config: SamplingConfig, midi_config: MidiConfig, postprocess_config: AudioProcessConfig, overwrite_recorded: bool = False):
+        self.sampling_config = sampling_config
+        self.midi_config = midi_config
+        self.postprocess_config = postprocess_config
         self.overwrite_recorded = overwrite_recorded
 
-def expand_path_placeholder(format_string:str, pc_msb:int, pc_lsb:int, pc_value, key_root: int, key_low: int, key_high: int, min_velocity:int, max_velocity:int, velocity: int, use_scale_spn_format: bool):
-    """
-    Expand placeholders in format_string with given values
+        self.audio_device: IAudioDevice = None
+        self.midi_device: IMidiDevice = None
 
-    Args:
-        format_string (str): string.format compatible format string. available placeholders are
-            {pc_msb}, {pc_lsb}, {pc},
-            {key_root}, {key_low}, {key_high},
-            {key_root_scale}, {key_low_scale}, {key_high_scale},
-            {velocity}, {min_velocity}, {max_velocity}
-            and Python format specifiers are also available.
-        pc_msb (int): Program Change MSB
-        pc_lsb (int): Program Change LSB
-        pc_value: Program Change Value
-        key_root (int): Zone: Root key (Send as MIDI note number to device)
-        key_low (int): Zone: Low key
-        key_high (int): Zone: High key
-        min_velocity (int): Velocity Layer: Minimum definition
-        max_velocity (int): Velocity Layer: Maximum definition
-        velocity (int): Send as MIDI velocity to device
-        use_scale_spn_format (bool): True: Scientific pitch notation format, False: Yamaha format
-
-    Returns:
-        str: formatted string
-    """
-
-    format_value = {
-        # MIDI Controll Change
-        "pc_msb": pc_msb,
-        "pc_lsb": pc_lsb,
-        "pc": pc_value,
-        # MIDI Note number
-        "key_root": key_root,
-        "key_low": key_low,
-        "key_high": key_high,
-        # Note name
-        "key_root_scale": notenumber_util.as_scalename(key_root, spn_format=use_scale_spn_format),
-        "key_low_scale": notenumber_util.as_scalename(key_low, spn_format=use_scale_spn_format),
-        "key_high_scale": notenumber_util.as_scalename(key_high, spn_format=use_scale_spn_format),
-        # MIDI Velocity
-        "velocity": velocity,
-        "min_velocity": min_velocity,
-        "max_velocity": max_velocity,
-    }
-
-    return dynamic_format.format(format_string=format_string, data=format_value)
-
-def main(args: SamplingArguments) -> None:
-
-    #---------------------------------------------------------------------------
-    # Load config values
-    #---------------------------------------------------------------------------
-    sampling_config: SamplingConfig = load_samplingconfig(args.sampling_config_path)
-    midi_config: MidiConfig = load_midi_config(args.midi_config_path)
-
-    postprocess_config: AudioProcessConfig = None
-    if args.postprocess_config_path:
-        postprocess_config = AudioProcessConfig(args.postprocess_config_path)
-        validate_process_config(postprocess_config)
-
-    #---------------------------------------------------------------------------
-    # Get config values
-    #---------------------------------------------------------------------------
-
-    audio_device_name           = sampling_config.audio_in_device
-    audio_device_platform       = sampling_config.audio_in_device_platform
-    audio_sample_rate           = sampling_config.audio_sample_rate
-    audio_channels              = sampling_config.audio_channels
-    audio_data_format           = AudioDataFormat.parse(
-                                    f"{sampling_config.audio_sample_bits_format}{sampling_config.audio_sample_bits}"
-                                )
-    audio_input_ports           = sampling_config.asio_audio_ins
-
-    midi_out_device_name        = sampling_config.midi_out_device
-    pre_send_smf_path_list      = midi_config.pre_send_smf_path_list
-
-    program_change_list         = midi_config.program_change_list
-    midi_channel                = midi_config.midi_channel
-    sample_zone                 = midi_config.sample_zone
-    midi_note_duration          = midi_config.midi_note_duration
-    midi_pre_duration           = midi_config.midi_pre_wait_duration
-    midi_release_duration       = midi_config.midi_release_duration
-    output_dir                  = midi_config.output_dir
-    output_prefix_format        = midi_config.output_prefix_format
-    scale_name_format           = midi_config.scale_name_format
-    processed_output_dir        = midi_config.processed_output_dir
-
-    #---------------------------------------------------------------------------
-    # MIDI
-    #---------------------------------------------------------------------------
-    midi_device: IMidiDevice = MidoMidiDevice(midi_out_device_name)
-
-    #---------------------------------------------------------------------------
-    # Audio
-    #---------------------------------------------------------------------------
-    audio_option: AudioDeviceOption = AudioDeviceOption(
-        device_name=audio_device_name,
-        device_platform=audio_device_platform,
-        sample_rate=audio_sample_rate,
-        channels=audio_channels,
-        data_format=audio_data_format,
-        input_ports=audio_input_ports,
-    )
-    audio_device: IAudioDevice = SdAudioDevice(audio_option)
-
-    try:
+    @override
+    def initialize(self) -> None:
         #---------------------------------------------------------------------------
-        # Setup MIDI
+        # MIDI
         #---------------------------------------------------------------------------
-        logger.debug("Initialize MIDI")
-        midi_device.initialize()
+        self.midi_device = self.create_midi_device()
+        self.midi_device.initialize()
 
         #---------------------------------------------------------------------------
-        # Setup Audio
+        # Audio
         #---------------------------------------------------------------------------
-        logger.debug("Initialize audio")
-        audio_device.initialize()
+        self.audio_device = self.create_audio_device()
+        self.audio_device.initialize()
 
-        #region Sampling
-        #---------------------------------------------------------------------------
-        # Sampling
-        #---------------------------------------------------------------------------
+    @override
+    def dispose(self) -> None:
+        try:
+            if self.midi_device:
+                self.midi_device.dispose()
+        finally:
+            pass
+
+        try:
+            if self.audio_device:
+                self.audio_device.dispose()
+        finally:
+            pass
+
+    @override
+    def execute(self) -> None:
+        """
+        Execute sampling
+        """
+
+        program_change_list     = self.midi_config.program_change_list
+        midi_channel            = self.midi_config.midi_channel
+        sample_zone             = self.midi_config.sample_zone
+        processed_output_dir    = self.midi_config.processed_output_dir
 
         # Calculate total sampling count
         total_sampling_count = len(program_change_list) * SampleZone.get_total_sample_count(sample_zone)
@@ -174,14 +272,15 @@ def main(args: SamplingArguments) -> None:
             logger.warning("No sampling target (Sample zone is empty)")
             return
 
+        #---------------------------------------------------------------------------
+        # Sampling
+        #---------------------------------------------------------------------------
+
         # Send MIDI from file to device before sampling
-        if len(pre_send_smf_path_list) > 0:
-            for file in pre_send_smf_path_list:
-                logger.info(f"Send MIDI from file: {file}")
-                midi_device.send_message_from_file(file)
+        self.pre_send_smf()
 
-
-        os.makedirs(output_dir, exist_ok=True)
+        # Do something before sampling process once.
+        self.pre_sampling()
 
         recorded_path_list: List[RecordedAudioPath] = []
 
@@ -192,73 +291,180 @@ def main(args: SamplingArguments) -> None:
         for program in program_change_list:
             # Send program change
             logger.info(f"Program Change - MSB: {program.msb}, LSB: {program.lsb}, Program: {program.program}")
-            midi_device.send_progam_change(midi_channel, program.msb, program.lsb, program.program)
-            time.sleep(0.5)
+            self.send_progam_change(midi_channel, program)
 
             for zone in sample_zone:
                 for velocity in zone.velocity_layers:
-                    # Record Audio
-                    record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
-
-                    audio_device.start_recording(record_duration)
-                    time.sleep(midi_pre_duration)
-
-                    # Play MIDI
                     logger.info(f"[{process_count: 4d} / {total_sampling_count:4d}] Note on - Channel: {midi_channel:2d}, Note: {zone.key_root:3d}, Velocity: {velocity.send_velocity:3d} (Key Low:{zone.key_low:3d}, Key High:{zone.key_high:3d}, Min Velocity:{velocity.min_velocity:3d}, Max Velocity:{velocity.max_velocity:3d})")
-                    midi_device.play_note(midi_channel, zone.key_root, velocity.send_velocity, midi_note_duration)
-
-                    time.sleep(midi_release_duration)
-
-                    audio_device.stop_recording()
-
-                    # Save Audio
-                    output_file_path = expand_path_placeholder(
-                        format_string=output_prefix_format,
-                        pc_msb=program.msb,
-                        pc_lsb=program.lsb,
-                        pc_value=program.program,
-                        key_root=zone.key_root,
-                        key_low=zone.key_low,
-                        key_high=zone.key_high,
-                        min_velocity=velocity.min_velocity,
-                        max_velocity=velocity.max_velocity,
-                        velocity=velocity.send_velocity,
-                        use_scale_spn_format=scale_name_format == "SPN"
-                    )
-
-                    export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
-                    export_path.makedirs()
-
-                    logger.debug(f"  -> Export recorded data to: {export_path.path()}")
-
-                    # Check recorded file has already existed
-                    # If over_write_recorded is False, raise exception
-                    if not args.overwrite_recorded and os.path.exists(export_path.path()):
-                        logger.error(f"Recorded file already exists: {export_path.path()}")
-                        logger.error("If you want to overwrite anyway, please set overwrite option.")
-                        raise FileExistsError(f"Recorded file already exists: {export_path.path()}")
-
-                    audio_device.export_audio(export_path.path())
-
-                    recorded_path_list.append(export_path)
+                    self.sample(program, zone, velocity, recorded_path_list)
 
                     process_count += 1
-        #endregion ~Sampling
 
-        #region Post Process
-
+        #---------------------------------------------------------------------------
+        # Post Process
+        #---------------------------------------------------------------------------
         logger.info("#" * 80)
         logger.info("Post process")
         logger.info("#" * 80)
+        self.post_process(self.postprocess_config, recorded_path_list, processed_output_dir)
+
+
+class DefaultSampling(SamplingBase):
+    """
+    Default implementation of the ISampling interface
+    """
+    def __init__(self, sampling_config: SamplingConfig, midi_config: MidiConfig, postprocess_config: AudioProcessConfig, overwrite_recorded: bool = False):
+        super().__init__(sampling_config, midi_config, postprocess_config, overwrite_recorded)
+
+    @override
+    def create_midi_device(self) -> IMidiDevice:
+        return MidoMidiDevice(self.sampling_config.midi_out_device)
+
+    @override
+    def create_audio_device(self) -> IAudioDevice:
+        audio_data_format = AudioDataFormat.parse(
+            f"{self.sampling_config.audio_sample_bits_format}{self.sampling_config.audio_sample_bits}"
+        )
+
+        audio_option: AudioDeviceOption = AudioDeviceOption(
+            device_name=self.sampling_config.audio_in_device,
+            device_platform=self.sampling_config.audio_in_device_platform,
+            sample_rate=self.sampling_config.audio_sample_rate,
+            channels=self.sampling_config.audio_channels,
+            data_format=audio_data_format,
+            input_ports=self.sampling_config.asio_audio_ins
+        )
+        return SdAudioDevice(audio_option)
+
+    @override
+    def pre_sampling(self):
+        os.makedirs(self.midi_config.output_dir, exist_ok=True)
+
+    @override
+    def pre_send_smf(self):
+        pre_send_smf_path_list = self.midi_config.pre_send_smf_path_list
+
+        # Send MIDI from file to device before sampling
+        if len(pre_send_smf_path_list) > 0:
+            for file in pre_send_smf_path_list:
+                logger.info(f"Send MIDI from file: {file}")
+                self.midi_device.send_message_from_file(file)
+
+    @override
+    def send_progam_change(self, channel: int, program: ProgramChange):
+        self.midi_device.send_progam_change(channel, program.msb, program.lsb, program.program)
+
+    @override
+    def sample(self, program: ProgramChange, zone: SampleZone, velocity: VelocityLayer, recorded_path_list: List[RecordedAudioPath]) -> None:
+        midi_channel          = self.midi_config.midi_channel
+        midi_note_duration    = self.midi_config.midi_note_duration
+        midi_pre_duration     = self.midi_config.midi_pre_wait_duration
+        midi_release_duration = self.midi_config.midi_release_duration
+        scale_name_format     = self.midi_config.scale_name_format
+        output_dir            = self.midi_config.output_dir
+
+        # Record Audio
+        record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
+
+        self.audio_device.start_recording(record_duration)
+        time.sleep(midi_pre_duration)
+
+        # Play MIDI
+        self.midi_device.play_note(midi_channel, zone.key_root, velocity.send_velocity, midi_note_duration)
+
+        time.sleep(midi_release_duration)
+
+        self.audio_device.stop_recording()
+
+        # Save Audio
+        output_file_path = ISampling.expand_path_placeholder(
+            format_string=self.midi_config.output_prefix_format,
+            pc_msb=program.msb,
+            pc_lsb=program.lsb,
+            pc_value=program.program,
+            key_root=zone.key_root,
+            key_low=zone.key_low,
+            key_high=zone.key_high,
+            min_velocity=velocity.min_velocity,
+            max_velocity=velocity.max_velocity,
+            velocity=velocity.send_velocity,
+            use_scale_spn_format=scale_name_format == "SPN"
+        )
+
+        export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
+        export_path.makedirs()
+
+        logger.debug(f"  -> Export recorded data to: {export_path.path()}")
+
+        self.validate_recorded_file(export_path, recorded_path_list)
+
+        self.audio_device.export_audio(export_path.path())
+        recorded_path_list.append(export_path)
+
+    @override
+    def post_process(self, config: AudioProcessConfig, recorded_path_list: List[RecordedAudioPath], processed_output_dir: str):
         run_postprocess(
-            config=postprocess_config,
+            config=config,
             recorded_files=recorded_path_list,
             output_dir=processed_output_dir
         )
-        #endregion ~Post Process
 
-        logger.info("done")
+class DryRunSampling(SamplingBase):
+    """
+    Dry run implementation of the ISampling interface.
+    This class does not perform actual sampling. But print out the sampling process.
+    """
+    def __init__(self, sampling_config: SamplingConfig, midi_config: MidiConfig, postprocess_config: AudioProcessConfig, overwrite_recorded: bool = False):
+        super().__init__(sampling_config, midi_config, postprocess_config, overwrite_recorded)
 
-    finally:
-        audio_device.dispose() if audio_device else None
-        midi_device.dispose() if midi_device else None
+    @override
+    def initialize(self) -> None:
+        pass
+
+    @override
+    def create_midi_device(self) -> IMidiDevice:
+        return None
+
+    @override
+    def create_audio_device(self) -> IAudioDevice:
+        return None
+
+    @override
+    def pre_sampling(self):
+        pass
+
+    @override
+    def pre_send_smf(self):
+        pass
+
+    @override
+    def send_progam_change(self, channel: int, program: ProgramChange):
+        pass
+
+    @override
+    def sample(self, program: ProgramChange, zone: SampleZone, velocity: VelocityLayer, recorded_path_list: List[RecordedAudioPath]) -> None:
+        scale_name_format = self.midi_config.scale_name_format
+        output_dir        = self.midi_config.output_dir
+
+        output_file_path = ISampling.expand_path_placeholder(
+            format_string=self.midi_config.output_prefix_format,
+            pc_msb=program.msb,
+            pc_lsb=program.lsb,
+            pc_value=program.program,
+            key_root=zone.key_root,
+            key_low=zone.key_low,
+            key_high=zone.key_high,
+            min_velocity=velocity.min_velocity,
+            max_velocity=velocity.max_velocity,
+            velocity=velocity.send_velocity,
+            use_scale_spn_format=scale_name_format == "SPN"
+        )
+
+        export_path = RecordedAudioPath(base_dir=output_dir, file_path=output_file_path + ".wav")
+
+        self.validate_recorded_file(export_path, recorded_path_list)
+        recorded_path_list.append(export_path)
+
+    @override
+    def post_process(self, config: AudioProcessConfig, recorded_path_list: List[RecordedAudioPath], processed_output_dir: str):
+        logger.info("Do nothing in Dry run")
