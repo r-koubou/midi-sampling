@@ -31,9 +31,6 @@ def main() -> None:
 
         sources: List[RecordedAudioPath] = RecordedAudioPath.from_directory(args.input_directory)
 
-        for i in sources:
-            print(i)
-
         process(
             config=process_config,
             recorded_files=sources,
