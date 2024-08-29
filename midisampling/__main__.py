@@ -10,7 +10,7 @@ from midisampling.sampling import ISampling, DefaultSampling, DryRunSampling
 from midisampling.appconfig.midi import MidiConfig, load as load_midi_config
 from midisampling.appconfig.sampling import SamplingConfig, load as load_samplingconfig
 from midisampling.appconfig.audioprocess import AudioProcessConfig
-from midisampling.waveprocess.processing import validate_process_config
+from midisampling.waveprocess.processing import validate_effect_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)
@@ -44,35 +44,71 @@ def main():
     init_logging_from_config(logfile_path=logfile_path, verbose=args.verbose)
     _log_system_info()
 
-    sampling_config: SamplingConfig = load_samplingconfig(args.sampling_config_path)
-    midi_config: MidiConfig = load_midi_config(args.midi_config_path)
 
-    postprocess_config: AudioProcessConfig = None
-    if args.postprocess_config_path:
-        postprocess_config = AudioProcessConfig(args.postprocess_config_path)
-        validate_process_config(postprocess_config)
+    #----------------------------------------------------------------
+    # Load config
+    #----------------------------------------------------------------
 
-    sampling: ISampling = None
-
-    if args.dry_run:
-        sampling = DryRunSampling(
-            sampling_config=sampling_config,
-            midi_config=midi_config,
-            postprocess_config=postprocess_config,
-            overwrite_recorded=args.overwrite_recorded
-        )
-    else:
-        sampling = DefaultSampling(
-            sampling_config=sampling_config,
-            midi_config=midi_config,
-            postprocess_config=postprocess_config,
-            overwrite_recorded=args.overwrite_recorded)
-
+    # Sampling config
     try:
+        logger.info(f"Load sampling config: {args.sampling_config_path}")
+        sampling_config: SamplingConfig = load_samplingconfig(args.sampling_config_path)
+
+    except Exception as e:
+        logger.error(f"Failed to load sampling config: {args.sampling_config_path}")
+        logger.error(e, exc_info=True)
+        sys.exit(1)
+
+    # MIDI config
+    try:
+        logger.info(f"Load MIDI config: {args.midi_config_path}")
+        midi_config: MidiConfig = load_midi_config(args.midi_config_path)
+
+    except Exception as e:
+        logger.faerrortal(f"Failed to load MIDI config: {args.midi_config_path}")
+        logger.error(e, exc_info=True)
+        sys.exit(1)
+
+    # Postprocess config
+    try:
+        postprocess_config: AudioProcessConfig = None
+        if args.postprocess_config_path:
+            logger.info(f"Load postprocess config: {args.postprocess_config_path}")
+            postprocess_config = AudioProcessConfig(args.postprocess_config_path)
+            validate_effect_config(postprocess_config)
+
+    except Exception as e:
+        logger.error(f"Failed to load postprocess config: {args.postprocess_config_path}")
+        logger.error(e, exc_info=True)
+        sys.exit(1)
+
+    #----------------------------------------------------------------
+    # Sampling
+    #----------------------------------------------------------------
+    try:
+        sampling: ISampling = None
+
+        if args.dry_run:
+            sampling = DryRunSampling(
+                sampling_config=sampling_config,
+                midi_config=midi_config,
+                postprocess_config=postprocess_config,
+                overwrite_recorded=args.overwrite_recorded
+            )
+        else:
+            sampling = DefaultSampling(
+                sampling_config=sampling_config,
+                midi_config=midi_config,
+                postprocess_config=postprocess_config,
+                overwrite_recorded=args.overwrite_recorded)
+
         sampling.initialize()
         sampling.execute()
+
     except Exception as e:
         logger.error(e, exc_info=True)
+        sys.exit(1)
+
     finally:
         try:
             sampling.dispose()

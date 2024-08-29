@@ -110,9 +110,9 @@ def _process_impl(config: AudioProcessConfig, process_files: List[ProcessedAudio
         logger.info(end_message)
 
 
-def validate_process_config(config: AudioProcessConfig) -> None:
+def validate_effect_config(config: AudioProcessConfig) -> None:
     """
-    Validate the process configuration values.
+    Validate individual effect configuration.
     """
 
     def validate_parameter(parameter_json: dict, schema: dict):
@@ -157,7 +157,7 @@ def main() -> None:
 
     try:
         process_config = AudioProcessConfig(args.processing_config_path)
-        validate_process_config(process_config)
+        validate_effect_config(process_config)
         logger.info("All validation passed.")
     except Exception as e:
         print(e)
