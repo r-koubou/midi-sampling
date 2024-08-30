@@ -44,6 +44,8 @@ class SdAudioDevice(IAudioDevice):
 
     @override
     def initialize(self) -> None:
+        logger.debug(f"AudioDeviceOption: {self.option}")
+
         audio_in_device_index = -1
         audio_devices = self.get_audio_devices()
 
@@ -61,7 +63,6 @@ class SdAudioDevice(IAudioDevice):
             raise ValueError(f"Audio data format is unknown. (option.data_format={self.option.data_format})")
 
         logger.debug(f"Initialize audio device: {self.option.device_name}")
-        logger.debug(self.option)
 
         sd.default.device       = [audio_in_device_index, None] # input, output. (Use input only)
         sd.default.samplerate   = self.option.sample_rate
