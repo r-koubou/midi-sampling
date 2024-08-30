@@ -87,6 +87,8 @@ def main():
             logger.info(f"Load postprocess config: {args.postprocess_config_path}")
             postprocess_config = AudioProcessConfig(args.postprocess_config_path)
             validate_effect_config(postprocess_config)
+        else:
+            logger.info("Postprocess config is not specified. Postprocess will not be performed.")
 
     except Exception as e:
         logger.error(f"Failed to load postprocess config: {args.postprocess_config_path}")

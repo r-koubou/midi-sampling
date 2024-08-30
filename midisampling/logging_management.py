@@ -87,7 +87,7 @@ def init_logging_as_stdout(verbose: bool = False, message_format: str = DEFAULT_
             }
         },
         "handlers": {
-            "console": {
+            "consoleHandler": {
                 "class": "logging.StreamHandler",
                 "level": "DEBUG" if verbose else "INFO",
                 "formatter": "simple",
@@ -96,7 +96,7 @@ def init_logging_as_stdout(verbose: bool = False, message_format: str = DEFAULT_
         },
         "loggers": {
             "": {
-                "handlers": ["console"],
+                "handlers": ["consoleHandler"],
                 "level": "DEBUG" if verbose else "INFO",
             }
         }
