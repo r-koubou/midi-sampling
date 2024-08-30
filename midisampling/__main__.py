@@ -4,7 +4,7 @@ import argparse
 import datetime
 from logging import getLogger
 
-from midisampling.logging_management import init_logging_from_config
+from midisampling.logging_management import init_logging_from_config, OutputMode
 
 from midisampling.sampling import ISampling, DefaultSampling, DryRunSampling
 from midisampling.appconfig.midi import MidiConfig, load as load_midi_config
@@ -25,25 +25,36 @@ def _log_system_info():
 def main():
 
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
-    parser.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
     parser.add_argument("sampling_config_path", help="Path to the sampling configuration file.")
     parser.add_argument("midi_config_path", help="Path to the MIDI configuration file.")
     parser.add_argument("postprocess_config_path", help="Path to the process configuration file for post processing.", default=None, nargs="?")
     parser.add_argument("-l", "--log-file", help="Path to save the log file.")
-    parser.add_argument("-rw", "--overwrite-recorded", help="Overwrite recorded file if it exists.", action="store_true", default=False)
+    parser.add_argument("--overwrite-recorded", help="Overwrite recorded file if it exists.", action="store_true", default=False)
     parser.add_argument("--dry-run", help="Dry run the sampling process.", action="store_true", default=False)
+
+    log_level_group = parser.add_mutually_exclusive_group()
+    log_level_group.add_argument("-v", "--verbose", help="Enable verbose logging.", action="store_true")
+    log_level_group.add_argument("-q", "--quiet", help="Quiet mode. Only error messages are output.", action="store_true")
 
     args = parser.parse_args()
 
+    #----------------------------------------------------------------
+    # Initialize logging
+    #----------------------------------------------------------------
     logfile_path = args.log_file
     if not logfile_path:
         timestamp    = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         logfile_dir  = os.path.dirname(os.path.abspath(args.midi_config_path))
         logfile_path = os.path.join(logfile_dir, f"midi-sampling-{timestamp}.log")
 
-    init_logging_from_config(logfile_path=logfile_path, verbose=args.verbose)
-    _log_system_info()
+    output_mode = OutputMode.Default
+    if args.verbose:
+        output_mode = OutputMode.Verbose
+    elif args.quiet:
+        output_mode = OutputMode.Quiet
 
+    init_logging_from_config(logfile_path=logfile_path, output_mode=output_mode)
+    _log_system_info()
 
     #----------------------------------------------------------------
     # Load config

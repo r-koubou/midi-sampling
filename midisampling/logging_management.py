@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 import json
 
@@ -8,7 +9,12 @@ DEFAULT_LOGGING_CONFIG_FILE = os.path.join(THIS_SCRIPT_DIR, "logging_config.json
 
 __initialized = False
 
-def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str = None, verbose: bool = False):
+class OutputMode(Enum):
+    Default = 0
+    Verbose = 1
+    Quiet = 2
+
+def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str = None, output_mode: OutputMode = OutputMode.Default):
     """
     Initialize the logging configuration.
     This function should be called before any logging is done and only once in startup.
@@ -36,9 +42,13 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
     with open(logconfig_file_path, "r") as f:
         config_json = json.load(f)
 
-    if verbose:
+    if output_mode == OutputMode.Verbose:
         for handler in config_json["handlers"].values():
             handler["level"] = "DEBUG"
+    elif output_mode == OutputMode.Quiet:
+        for handler in config_json["handlers"].values():
+            if "stream" in handler and handler["stream"] == "ext://sys.stdout":
+                handler["level"] = "ERROR"
 
     if logfile_path:
         for handler in config_json["handlers"].values():
