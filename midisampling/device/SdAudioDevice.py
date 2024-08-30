@@ -96,33 +96,9 @@ class SdAudioDevice(IAudioDevice):
     def export_audio(self, file_path: str) -> None:
         option = self.option
 
-        #---------------------------------------------------------------------------
-        # Data convert numpy.ndarray (float32) for audio format
-        # [Note] No dithering. If you want to best quality, use `32bit float` setting
-        #---------------------------------------------------------------------------
-        export_data = self.recorded
-
-        # 16bit-int
-        if option.data_format == AudioDataFormat.INT16:
-            export_data = (self.recorded * 0x7FFF).astype(np.int16)
-            logger.debug(f"as 16bit-int")
-        # 24bit-int
-        elif option.data_format == AudioDataFormat.INT24:
-            export_data = (self.recorded * 0x7FFFFF).astype(np.int32)
-            export_data = np.left_shift(export_data, 8)
-            logger.debug(f"as 24bit-int")
-        # 32bit-int
-        elif option.data_format == AudioDataFormat.INT32:
-            export_data = (self.recorded * 0x7FFFFFFF).astype(np.int32)
-            logger.debug(f"as 32bit-int")
-        # 32bit-float
-        else:
-            logger.debug(f"32bit-float (no convert)")
-
         #------------------------------------------------------
         # Sub-type check for soundfile
         #------------------------------------------------------
-
         sub_type = None
 
         if option.data_format == AudioDataFormat.INT16:
@@ -134,13 +110,11 @@ class SdAudioDevice(IAudioDevice):
         elif option.data_format == AudioDataFormat.FLOAT32:
             sub_type = "FLOAT"
 
-        logger.debug(f"export_data.dtype: {type(export_data.dtype)}")
-        logger.debug(f"self.recorded.dtype: {type(self.recorded.dtype)}")
         logger.debug(f"sub_type: {sub_type}")
 
         sf.write(
             file=file_path,
-            data=export_data,
+            data=self.recorded,
             samplerate=option.sample_rate,
             subtype=sub_type
         )
