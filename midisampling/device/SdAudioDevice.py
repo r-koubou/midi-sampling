@@ -3,6 +3,7 @@ from logging import getLogger
 
 import numpy as np
 import sounddevice as sd
+import soundfile as sf
 import wave
 
 from .audiodevice import (
@@ -39,7 +40,7 @@ class SdAudioDevice(IAudioDevice):
                     AudioDeviceInfo(sd_device["index"], sd_device["name"], hostapi_info["name"])
                 )
 
-        self.recorded: any = None
+        self.recorded: np.ndarray = None
 
     @override
     def initialize(self) -> None:
@@ -56,20 +57,13 @@ class SdAudioDevice(IAudioDevice):
         if audio_in_device_index == -1:
             raise NotFoundAudioDeviceError(self.option.device_name)
 
-        sd_type_table = {
-            AudioDataFormat.INT16: np.int16,
-            AudioDataFormat.INT32: np.int32,
-            AudioDataFormat.FLOAT32: np.float32,
-        }
-
-        if sd_type_table.get(self.option.data_format) is None:
-            raise ValueError(f"Not supported data format. (={self.option.data_format})")
+        if self.option.data_format == AudioDataFormat.UNKNOWN:
+            raise ValueError(f"Audio data format is unknown. (option.data_format={self.option.data_format})")
 
         logger.debug(f"Initialize audio device: {self.option.device_name}")
         logger.debug(self.option)
 
         sd.default.device       = [audio_in_device_index, None] # input, output. (Use input only)
-        sd.default.dtype        = sd_type_table[self.option.data_format]
         sd.default.samplerate   = self.option.sample_rate
         sd.default.channels     = self.option.channels
 
@@ -100,8 +94,52 @@ class SdAudioDevice(IAudioDevice):
     @override
     def export_audio(self, file_path: str) -> None:
         option = self.option
-        with wave.open(file_path, "wb") as f:
-            f.setnchannels(option.channels)
-            f.setsampwidth(option.data_format.bit_depth() // 8)
-            f.setframerate(option.sample_rate)
-            f.writeframes(self.recorded)
+
+        #---------------------------------------------------------------------------
+        # Data convert numpy.ndarray (float32) for audio format
+        # [Note] No dithering. If you want to best quality, use `32bit float` setting
+        #---------------------------------------------------------------------------
+        export_data = self.recorded
+
+        # 16bit-int
+        if option.data_format == AudioDataFormat.INT16:
+            export_data = (self.recorded * 0x7FFF).astype(np.int16)
+            logger.debug(f"as 16bit-int")
+        # 24bit-int
+        elif option.data_format == AudioDataFormat.INT24:
+            export_data = (self.recorded * 0x7FFFFF).astype(np.int32)
+            export_data = np.left_shift(export_data, 8)
+            logger.debug(f"as 24bit-int")
+        # 32bit-int
+        elif option.data_format == AudioDataFormat.INT32:
+            export_data = (self.recorded * 0x7FFFFFFF).astype(np.int32)
+            logger.debug(f"as 32bit-int")
+        # 32bit-float
+        else:
+            logger.debug(f"32bit-float (no convert)")
+
+        #------------------------------------------------------
+        # Sub-type check for soundfile
+        #------------------------------------------------------
+
+        sub_type = None
+
+        if option.data_format == AudioDataFormat.INT16:
+            sub_type = "PCM_16"
+        elif option.data_format == AudioDataFormat.INT24:
+            sub_type = "PCM_24"
+        elif option.data_format == AudioDataFormat.INT32:
+            sub_type = "PCM_32"
+        elif option.data_format == AudioDataFormat.FLOAT32:
+            sub_type = "FLOAT"
+
+        logger.debug(f"export_data.dtype: {type(export_data.dtype)}")
+        logger.debug(f"self.recorded.dtype: {type(self.recorded.dtype)}")
+        logger.debug(f"sub_type: {sub_type}")
+
+        sf.write(
+            file=file_path,
+            data=export_data,
+            samplerate=option.sample_rate,
+            subtype=sub_type
+        )
