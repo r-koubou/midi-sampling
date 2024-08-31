@@ -85,7 +85,7 @@
             {
                 "keep_wav_chunks": ["smpl"],
                 "format": {
-                    "bit_depth": "int24",
+                    "bit_depth": "int32",
                     "sample_rate": 48000,
                     "channels": 2
                 },
