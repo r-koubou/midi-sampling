@@ -9,7 +9,7 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_LOGGING_CONFIG_FILE = os.path.join(THIS_SCRIPT_DIR, "logging_config.json")
 
 initialized = False
-logger: Logger = None
+logger = getLogger(__name__)
 
 class OutputMode(Enum):
     Default = 0
@@ -59,7 +59,6 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
                 handler["filename"] = logfile_path
 
     logging_config.dictConfig(config_json)
-    logger = getLogger(__name__)
     __log_system_info()
     initialized = True
 
