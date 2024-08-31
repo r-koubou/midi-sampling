@@ -1,13 +1,15 @@
 from enum import Enum
 import os
+import sys
 import json
 
-from logging import getLogger, config as logging_config
+from logging import getLogger, Logger,config as logging_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_LOGGING_CONFIG_FILE = os.path.join(THIS_SCRIPT_DIR, "logging_config.json")
 
-__initialized = False
+initialized = False
+logger: Logger = None
 
 class OutputMode(Enum):
     Default = 0
@@ -31,9 +33,10 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
     verbose : bool, optional
         Enable verbose logging (default: False).
     """
-    global __initialized
+    global initialized
+    global logger
 
-    if __initialized:
+    if initialized:
         return
 
     if not logconfig_file_path:
@@ -56,7 +59,9 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
                 handler["filename"] = logfile_path
 
     logging_config.dictConfig(config_json)
-    __initialized = True
+    logger = getLogger(__name__)
+    __log_system_info()
+    initialized = True
 
 
 DEFAULT_MESSAGE_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -73,9 +78,9 @@ def init_logging_as_stdout(verbose: bool = False, message_format: str = DEFAULT_
     message_format : str, optional
         Log message format (default: "%(asctime)s [%(levelname)s] %(name)s: %(message)s").
     """
-    global __initialized
+    global initialized
 
-    if __initialized:
+    if initialized:
         return
 
     config_json = {
@@ -103,4 +108,12 @@ def init_logging_as_stdout(verbose: bool = False, message_format: str = DEFAULT_
     }
 
     logging_config.dictConfig(config_json)
-    __initialized = True
+    __log_system_info()
+    initialized = True
+
+def __log_system_info():
+    logger.debug(f"{"-"*120}")
+    logger.debug(f"Operating system: {sys.platform}")
+    logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Args: {" ".join(sys.argv[1:])}")
+    logger.debug(f"{"-"*120}")
