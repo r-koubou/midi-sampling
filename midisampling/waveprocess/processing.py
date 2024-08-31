@@ -94,18 +94,9 @@ def _process_impl(config: AudioProcessConfig, process_files: List[ProcessedAudio
         logger.info(divider)
 
         if name == "normalize":
-            normalize(
-                config=config,
-                file_list=process_files,
-                target_peak_dBFS=float(params["target_db"])
-            )
+            normalize(config=config, file_list=process_files, effect_parameters=params)
         elif name == "trim":
-            trim(
-                config=config,
-                file_list=process_files,
-                threshold_dBFS=float(params["threshold_db"]),
-                min_silence_ms=int(params["min_silence_ms"])
-            )
+            trim(config=config, file_list=process_files, effect_parameters=params)
         else:
             raise ValueError(f"Unknown processing name: {name}")
 
