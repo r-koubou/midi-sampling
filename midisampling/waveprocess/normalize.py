@@ -6,10 +6,23 @@ from logging import getLogger
 from pydub import AudioSegment
 
 from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+
+import midisampling.waveprocess.pydubutil as pydubutil
 
 logger = getLogger(__name__)
 
-def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:float =-1.0):
+PARAM_KEY_TARGET_PEAK_DBFS = "target_peak_dBFS"
+"""
+Effect parameter key for target_peak_dBFS.
+"""
+
+def __get_target_peak_dBFS(effect_parameters: dict) -> float:
+    if PARAM_KEY_TARGET_PEAK_DBFS in effect_parameters:
+        return float(effect_parameters[PARAM_KEY_TARGET_PEAK_DBFS])
+    return -1.0
+
+def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAudioPath], effect_parameters: dict):
     """
     Normalize with respect to the highest peak of the audio file(s) in the input directory.
 
@@ -18,7 +31,9 @@ def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:fl
     file_list : List[ProcessedAudioPath]
         List of ProcessedAudioPath instances.
 
-    target_peak_dBFS : float (default=-1.0)
+    effect_parameters : dict
+        Effect parameters for normalize.
+        - target_peak_dBFS : float (default=-1.0)
     """
 
     if file_list is None:
@@ -28,6 +43,13 @@ def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:fl
 
     max_peak_dBFS = None
     audio_segments = []
+    export_parameters = []
+
+    target_peak_dBFS = __get_target_peak_dBFS(effect_parameters)
+
+    pydubutil.to_export_parameters_from_config(config, export_parameters)
+    if len(export_parameters) == 0:
+        export_parameters = None
 
     # 全てのファイルの最大ピークレベルを探す
     for file in file_list:
@@ -52,7 +74,7 @@ def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:fl
 
         file.makeworkingdirs()
         normalized_audio = audio.apply_gain(change_in_dBFS)
-        normalized_audio.export(output_filepath, format="wav")
+        normalized_audio.export(output_filepath, format="wav", parameters=export_parameters)
 
         audio = None
         normalized_audio = None
@@ -61,19 +83,24 @@ def normalize_from_list(file_list: List[ProcessedAudioPath], target_peak_dBFS:fl
 
     logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 
-def normalize_from_directory(input_directory: str, output_directory: str, target_peak_dBFS:float =-1.0, overwrite: bool = False):
+def normalize_from_directory(config: AudioProcessConfig, input_directory: str, output_directory: str, effect_parameters: dict, overwrite: bool = False):
     """
     Normalize with respect to the highest peak of the audio file(s) in the input directory.
 
     Parameters
     ----------
+    config : AudioProcessConfig
+        Audio processing configuration.
+
     input_directory : str
         Input directory containing audio files (*.wav).
 
     output_directory : str
         Output directory to save normalized audio files.
 
-    target_peak_dBFS : float (default=-1.0)
+    effect_parameters : dict
+        Effect parameters for normalize.
+        - target_peak_dBFS : float (default=-1.0)
     """
 
     process_files: List[ProcessedAudioPath] = ProcessedAudioPath.from_directory(
@@ -82,4 +109,8 @@ def normalize_from_directory(input_directory: str, output_directory: str, target
         overwrite=overwrite
     )
 
-    normalize_from_list(process_files, target_peak_dBFS)
+    normalize_from_list(
+        config=config,
+        file_list=process_files,
+        effect_parameters=effect_parameters
+    )

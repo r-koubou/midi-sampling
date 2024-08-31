@@ -1,4 +1,9 @@
 {
+    "format": {
+        "bit_depth": "int32",
+        "sample_rate": 48000,
+        "channels": 2
+    },
     "effects": [
         {
             "index": 0,

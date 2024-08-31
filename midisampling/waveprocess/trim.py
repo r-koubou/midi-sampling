@@ -9,10 +9,34 @@ from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 
 from midisampling.exportpath import RecordedAudioPath, ProcessedAudioPath
+from midisampling.appconfig.audioprocess import AudioProcessConfig
+
+import midisampling.waveprocess.pydubutil as pydubutil
 
 logger = getLogger(__name__)
 
-def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence_ms:int=250):
+
+PARAM_KEY_THRESHOLD_DBFS = "threshold_dBFS"
+"""
+Effect parameter key for threshold_dBFS.
+"""
+
+PARAM_KEY_MIN_SILENCE_MS = "min_silence_ms"
+"""
+Effect parameter key for min_silence_ms.
+"""
+
+def __get_threshold_dBFS(effect_parameters: dict) -> float:
+    if PARAM_KEY_THRESHOLD_DBFS in effect_parameters:
+        return float(effect_parameters[PARAM_KEY_THRESHOLD_DBFS])
+    return -50.0
+
+def __get_min_silence_ms(effect_parameters: dict) -> int:
+    if PARAM_KEY_MIN_SILENCE_MS in effect_parameters:
+        return int(effect_parameters[PARAM_KEY_MIN_SILENCE_MS])
+    return 250
+
+def trim(config: AudioProcessConfig, input_path:str, output_path: str, effect_parameters: dict):
     """
     Trim silent segments from the audio file.
 
@@ -24,12 +48,19 @@ def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence
     output_path : str
         Output audio file path (*.wav).
 
-    threshold_dBFS : float (default=-50)
-        Silence threshold in dBFS.
-
-    min_silence_ms : int (default=250)
-        Minimum silence duration in milliseconds.
+    effect_parameters : dict
+        Effect parameters for trim.
+        - threshold_dBFS : float (default=-50.0)
+        - min_silence_ms : int (default=250)
     """
+
+    threshold_dBFS = __get_threshold_dBFS(effect_parameters)
+    min_silence_ms = __get_min_silence_ms(effect_parameters)
+
+    export_parameters = []
+    pydubutil.to_export_parameters_from_config(config, export_parameters)
+    if len(export_parameters) == 0:
+        export_parameters = None
 
     audio = AudioSegment.from_wav(input_path)
     nonsilent_ranges = detect_nonsilent(audio, min_silence_len=min_silence_ms, silence_thresh=threshold_dBFS)
@@ -37,13 +68,13 @@ def trim(input_path:str, output_path: str, threshold_dBFS:float=-50, min_silence
     if nonsilent_ranges:
         start, end = nonsilent_ranges[0][0], nonsilent_ranges[-1][1]
         trimmed_audio = audio[start:end]
-        trimmed_audio.export(output_path, format="wav")
+        trimmed_audio.export(output_path, format="wav", parameters=export_parameters)
     else:
         if input_path != output_path:
             shutil.copy(input_path, output_path)
 
 
-def trim_from_list(file_list: List[ProcessedAudioPath], threshold_dBFS:float=-50, min_silence_ms:int=250):
+def trim_from_list(config: AudioProcessConfig, file_list: List[ProcessedAudioPath], effect_parameters: dict):
     """
     Trim silent segments from all audio files in the input directory.
 
@@ -52,11 +83,10 @@ def trim_from_list(file_list: List[ProcessedAudioPath], threshold_dBFS:float=-50
     file_list : List[ProcessedAudioPath]
         List of ProcessedAudioPath instances.
 
-    threshold_dBFS : float (default=-50)
-        Silence threshold in dBFS.
-
-    min_silence_ms : int (default=250)
-        Minimum silence duration in milliseconds.
+    effect_parameters : dict
+        Effect parameters for trim.
+        - threshold_dBFS : float (default=-50.0)
+        - min_silence_ms : int (default=250)
     """
 
     if file_list is None:
@@ -68,10 +98,15 @@ def trim_from_list(file_list: List[ProcessedAudioPath], threshold_dBFS:float=-50
         input_path  = file.working_path()
         output_path = file.working_path()
         file.makeworkingdirs()
-        trim(input_path, output_path, threshold_dBFS, min_silence_ms)
+        trim(
+            config=config,
+            input_path=input_path,
+            output_path=output_path,
+            effect_parameters=effect_parameters
+        )
         logger.info(f"Trimmed: {file.file_path}")
 
-def trim_from_directory(input_directory: str, output_directory: str, threshold_dBFS:float=-50, min_silence_ms:int=250, overwrite: bool = False):
+def trim_from_directory(config: AudioProcessConfig, input_directory: str, output_directory: str, effect_parameters: dict, overwrite: bool = False):
     """
     Trim silent segments from all audio files in the input directory.
 
@@ -83,11 +118,10 @@ def trim_from_directory(input_directory: str, output_directory: str, threshold_d
     output_directory : str
         Output directory to save trimmed audio files.
 
-    threshold_dBFS : float (default=-50)
-        Silence threshold in dBFS.
-
-    min_silence_ms : int (default=250)
-        Minimum silence duration in milliseconds.
+    effect_parameters : dict
+        Effect parameters for trim.
+        - threshold_dBFS : float (default=-50.0)
+        - min_silence_ms : int (default=250)
     """
 
     process_files: List[ProcessedAudioPath] = ProcessedAudioPath.from_directory(
@@ -95,4 +129,9 @@ def trim_from_directory(input_directory: str, output_directory: str, threshold_d
         output_directory=output_directory,
         overwrite=overwrite
     )
-    trim_from_list(process_files, threshold_dBFS, min_silence_ms)
+
+    trim_from_list(
+        config=config,
+        file_list=process_files,
+        effect_parameters=effect_parameters
+    )

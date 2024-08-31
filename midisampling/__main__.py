@@ -15,13 +15,6 @@ from midisampling.waveprocess.processing import validate_effect_config
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 logger = getLogger(__name__)
 
-def _log_system_info():
-    logger.debug(f"{"-"*120}")
-    logger.debug(f"Operating system: {sys.platform}")
-    logger.debug(f"Python version: {sys.version}")
-    logger.debug(f"Args: {" ".join(sys.argv[1:])}")
-    logger.debug(f"{"-"*120}")
-
 def main():
 
     parser = argparse.ArgumentParser(prog=f"python -m {__package__}")
@@ -54,7 +47,6 @@ def main():
         output_mode = OutputMode.Quiet
 
     init_logging_from_config(logfile_path=logfile_path, output_mode=output_mode)
-    _log_system_info()
 
     #----------------------------------------------------------------
     # Load config

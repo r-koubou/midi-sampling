@@ -3,10 +3,31 @@ import os
 import json
 import jsonschema
 
+from logging import getLogger
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+logger = getLogger(__name__)
 
 with open(os.path.join(THIS_SCRIPT_DIR, "audioprocess-config.schema.json"), "r") as f:
     json_schema = json.load(f)
+
+class AudioProcessFormat:
+    def __init__(self, config: dict) -> None:
+        self.bit_depth: str = config.get("bit_depth", None)
+        self.sample_rate: int = config.get("sample_rate", None)
+        self.channels: int = config.get("channels", None)
+
+    def __str__(self) -> str:
+        return f"bit_depth={self.bit_depth}, sample_rate={self.sample_rate}, channels={self.channels}"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AudioProcessFormat):
+            return False
+        return (
+            self.bit_depth == other.bit_depth
+            and self.sample_rate == other.sample_rate
+            and self.channels == other.channels
+        )
 
 class AudioProcessInfo:
     def __init__(self, index: int, name: str, params: dict) -> None:
@@ -34,6 +55,10 @@ class AudioProcessConfig:
         config = validate(config_path)
         self.effects: List[AudioProcessInfo] = []
         self.keep_wav_chunks: List[str] = config.get("keep_wav_chunks", [])
+        self.format: AudioProcessFormat = None
+
+        if "format" in config:
+            self.format = AudioProcessFormat(config["format"])
 
         for effect in config.get("effects", []):
             self.effects.append(
