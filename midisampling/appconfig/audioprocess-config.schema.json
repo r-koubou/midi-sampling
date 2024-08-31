@@ -7,6 +7,9 @@
             "type":"object",
             "additionalProperties": false,
             "properties": {
+                "format": {
+                    "$ref": "#/definitions/def_format"
+                },
                 "keep_wav_chunks": {
                     "type":"array",
                     "description": "A list of wave chunk names to keep via the audio process. if not specified, all chunks will be kept.",
@@ -25,6 +28,26 @@
                     "items": {
                         "$ref": "#/definitions/def_effect"
                     }
+                }
+            }
+        },
+        "def_format": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Format configuration Specifying it explicitly in dependent libraries prevents auto-detection and false conversions within. However, this is not guaranteed as it depends on the library.",
+            "properties": {
+                "bit_depth": {
+                    "type": "string",
+                    "description": "The bit depth of the audio file. If not specified, the bit depth of the input file will be auto detected by dependency library.",
+                    "enum": ["int16", "int24", "int32", "float32"]
+                },
+                "sample_rate": {
+                    "type": "integer",
+                    "description": "The sample rate of the audio file. If not specified, the sample rate of the input file will be auto detected by dependency library."
+                },
+                "channels": {
+                    "type": "integer",
+                    "description": "The number of channels of the audio file. If not specified, the number of channels of the input file will be auto detected by dependency library."
                 }
             }
         },
@@ -61,6 +84,11 @@
         [
             {
                 "keep_wav_chunks": ["smpl"],
+                "format": {
+                    "bit_depth": "int24",
+                    "sample_rate": 48000,
+                    "channels": 2
+                },
                 "effects": [
                     {
                         "index": 0,

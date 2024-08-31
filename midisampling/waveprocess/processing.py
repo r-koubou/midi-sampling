@@ -95,11 +95,13 @@ def _process_impl(config: AudioProcessConfig, process_files: List[ProcessedAudio
 
         if name == "normalize":
             normalize(
+                config=config,
                 file_list=process_files,
                 target_peak_dBFS=float(params["target_db"])
             )
         elif name == "trim":
             trim(
+                config=config,
                 file_list=process_files,
                 threshold_dBFS=float(params["threshold_db"]),
                 min_silence_ms=int(params["min_silence_ms"])
