@@ -3,7 +3,10 @@ import os
 import json
 import jsonschema
 
+from logging import getLogger
+
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+logger = getLogger(__name__)
 
 with open(os.path.join(THIS_SCRIPT_DIR, "audioprocess-config.schema.json"), "r") as f:
     json_schema = json.load(f)
@@ -56,7 +59,6 @@ class AudioProcessConfig:
 
         if "format" in config:
             self.format = AudioProcessFormat(config["format"])
-        print(self.format)
 
         for effect in config.get("effects", []):
             self.effects.append(
