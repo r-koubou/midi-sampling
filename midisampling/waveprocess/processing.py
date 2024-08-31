@@ -23,9 +23,17 @@ logger = getLogger(__name__)
 
 def process(config: AudioProcessConfig, recorded_files: List[RecordedAudioPath], output_dir: str) -> None:
     if not config:
-        logger.info("Process config is not set. Skip post process.")
+        logger.info("Process config is not set. Skip process.")
         return
+    if len(recorded_files) == 0:
+        logger.info("Recorded files are not set. Skip process.")
+        return
+
     logger.debug(f"Process config: {config}")
+
+    if len(config.effects) == 0:
+        logger.info("Effect list is empty. Skip process.")
+        return
 
     with tempfile.TemporaryDirectory() as working_dir:
         logger.info("Build processed audio files path list")
