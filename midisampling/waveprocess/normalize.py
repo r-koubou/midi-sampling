@@ -12,9 +12,9 @@ import midisampling.waveprocess.pydubutil as pydubutil
 
 logger = getLogger(__name__)
 
-PARAM_KEY_TARGET_PEAK_DBFS = "target_peak_dBFS"
+PARAM_KEY_TARGET_PEAK_DBFS = "target_dBFS"
 """
-Effect parameter key for target_peak_dBFS.
+Effect parameter key for target_dBFS.
 """
 
 def __get_target_peak_dBFS(effect_parameters: dict) -> float:
@@ -33,7 +33,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
 
     effect_parameters : dict
         Effect parameters for normalize.
-        - target_peak_dBFS : float (default=-1.0)
+        - target_dBFS : float (default=-1.0)
     """
 
     if file_list is None:
@@ -45,7 +45,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
     audio_segments = []
     export_parameters = []
 
-    target_peak_dBFS = __get_target_peak_dBFS(effect_parameters)
+    target_dBFS = __get_target_peak_dBFS(effect_parameters)
 
     pydubutil.to_export_parameters_from_config(config, export_parameters)
     if len(export_parameters) == 0:
@@ -64,7 +64,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
 
         audio_segments.append((audio, output_filepath))
 
-    change_in_dBFS = target_peak_dBFS - max_peak_dBFS
+    change_in_dBFS = target_dBFS - max_peak_dBFS
 
     # 各ファイルに対して同じゲインを適用
     for file in file_list:

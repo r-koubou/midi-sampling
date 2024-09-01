@@ -5,13 +5,13 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-        "target_db": {
+        "target_dBFS": {
             "type": "number",
-            "description": "The target decibel level"
+            "description": "The target decibel level (dBFS)"
         }
     },
     "required": [
-        "target_db"
+        "target_dBFS"
     ],
     "examples": [
         {
@@ -20,7 +20,7 @@
                     "index": 0,
                     "name": "normalize",
                     "params": {
-                        "target_db": -10.0
+                        "target_dBFS": -10.0
                     }
                 }
             ]

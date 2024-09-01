@@ -5,9 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-        "threshold_db": {
+        "threshold_dBFS": {
             "type": "number",
-            "description": "Silence threshold in dB."
+            "description": "Silence threshold in dBFS."
         },
         "min_silence_ms": {
             "type": "number",
@@ -15,7 +15,7 @@
         }
     },
     "required": [
-        "threshold_db",
+        "threshold_dBFS",
         "min_silence_ms"
     ],
     "examples": [
@@ -27,7 +27,7 @@
                         "name": "trim",
                         "params":
                         {
-                            "threshold_db": -60.0,
+                            "threshold_dBFS": -60.0,
                             "min_silence_ms": 250
                         }
                     }
