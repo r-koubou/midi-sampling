@@ -41,7 +41,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
     if len(file_list) == 0:
         raise ValueError("file_list is empty")
 
-    max_peak_dBFS = 0.0
+    max_peak_dBFS = -sys.float_info.max
     audio_segments = []
     export_parameters = []
 
