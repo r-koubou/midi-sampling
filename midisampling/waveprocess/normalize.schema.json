@@ -7,7 +7,7 @@
     "properties": {
         "target_dBFS": {
             "type": "number",
-            "description": "The target decibel level (dBFS)"
+            "description": "The target level in dBFS."
         }
     },
     "required": [
