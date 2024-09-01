@@ -10,7 +10,7 @@ Describes the currently available audio processes and their parameters.
 
 ### Properties
 
-- **`target_db`** *(number, required)*: The target decibel level.
+- **`target_dBFS`** *(number, required)*: The target level in dBFS.
 ### Examples
 
   ```json
@@ -20,7 +20,7 @@ Describes the currently available audio processes and their parameters.
               "index": 0,
               "name": "normalize",
               "params": {
-                  "target_db": -10.0
+                  "target_dBFS": -10.0
               }
           }
       ]
@@ -33,7 +33,7 @@ Describes the currently available audio processes and their parameters.
 
 ### Properties
 
-- **`threshold_db`** *(number, required)*: Silence threshold in dB.
+- **`threshold_dBFS`** *(number, required)*: Silence threshold in dBFS.
 - **`min_silence_ms`** *(number, required)*: Minimum silence duration in milliseconds.
 ### Examples
 
@@ -45,7 +45,7 @@ Describes the currently available audio processes and their parameters.
                   "index": 0,
                   "name": "trim",
                   "params": {
-                      "threshold_db": -60.0,
+                      "threshold_dBFS": -60.0,
                       "min_silence_ms": 250
                   }
               }

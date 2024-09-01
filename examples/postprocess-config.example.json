@@ -9,14 +9,14 @@
             "index": 0,
             "name": "normalize",
             "params": {
-                "target_db": -10.0
+                "target_dBFS": -10.0
             }
         },
         {
             "index": 1,
             "name": "trim",
             "params": {
-                "threshold_db": -60.0,
+                "threshold_dBFS": -60.0,
                 "min_silence_ms": 250
             }
         }
