@@ -1,7 +1,7 @@
 from typing import List
 
 import os
-import pathlib
+import sys
 from logging import getLogger
 from pydub import AudioSegment
 
@@ -59,8 +59,10 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
         peak_dBFS = audio.max_dBFS
         audio = None
 
+        logger.debug(f"wip - {os.path.basename(input_filepath)}: Peak dBFS={peak_dBFS:.3f}")
         if peak_dBFS > max_peak_dBFS:
             max_peak_dBFS = peak_dBFS
+            logger.debug(f"wip - Max Peak dBFS Updated={max_peak_dBFS:.3f}")
 
         audio_segments.append((audio, output_filepath))
 
@@ -81,7 +83,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
 
         logger.info(f"Normalized: file={file.file_path}")
 
-    logger.info(f"Peak dBFS={max_peak_dBFS:.3f} dBFS")
+    logger.info(f"Max Peak dBFS={max_peak_dBFS:.3f} dBFS")
     logger.info(f"Target dBFS={target_dBFS:.3f} dBFS")
     logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 
