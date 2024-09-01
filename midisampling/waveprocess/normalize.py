@@ -41,7 +41,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
     if len(file_list) == 0:
         raise ValueError("file_list is empty")
 
-    max_peak_dBFS = None
+    max_peak_dBFS = 0.0
     audio_segments = []
     export_parameters = []
 
@@ -59,7 +59,7 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
         peak_dBFS = audio.max_dBFS
         audio = None
 
-        if max_peak_dBFS is None or peak_dBFS > max_peak_dBFS:
+        if peak_dBFS > max_peak_dBFS:
             max_peak_dBFS = peak_dBFS
 
         audio_segments.append((audio, output_filepath))
@@ -81,6 +81,8 @@ def normalize_from_list(config: AudioProcessConfig, file_list: List[ProcessedAud
 
         logger.info(f"Normalized: file={file.file_path}")
 
+    logger.info(f"Peak dBFS={max_peak_dBFS:.3f} dBFS")
+    logger.info(f"Target dBFS={target_dBFS:.3f} dBFS")
     logger.info(f"Normalize gain={change_in_dBFS:.3f} dBFS")
 
 def normalize_from_directory(config: AudioProcessConfig, input_directory: str, output_directory: str, effect_parameters: dict, overwrite: bool = False):
