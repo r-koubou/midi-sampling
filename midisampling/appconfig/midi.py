@@ -8,6 +8,9 @@ from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "midi")
 
+def __schema_path(schema_file_name: str) -> str:
+    return os.path.join(SCHEMA_FILES_DIR, schema_file_name)
+
 #-----------------------------------------
 # JSON Validator setup with schema files
 #-----------------------------------------
@@ -15,19 +18,19 @@ validator: JsonValidator = JsonValidator(
     # Main Schema
     JsonSchemaInfo.from_file(
         schema_uri="main",
-        schema_file_path=os.path.join(SCHEMA_FILES_DIR, "midi-config.schema.json")
+        schema_file_path=__schema_path("midi-config.schema.json")
     ),
     # Sub Schema
     JsonSchemaInfo.from_files([
-        ("midi-channel.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-channel.schema.json")),
-        ("integer-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "integer-range.schema.json")),
-        ("midi-message-byte.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte.schema.json")),
-        ("midi-message-byte-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte-range.schema.json")),
-        ("midi-velocity-layer.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-velocity-layer.schema.json")),
-        ("midi-velocity-layer-preset.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-velocity-layer-preset.schema.json")),
-        ("midi-program-change.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-program-change.schema.json")),
-        ("sample-zone-complex.schema.json", os.path.join(SCHEMA_FILES_DIR, "sample-zone-complex.schema.json")),
-        ("sample-zone.schema.json", os.path.join(SCHEMA_FILES_DIR, "sample-zone.schema.json")),
+        ("midi-channel.schema.json", __schema_path("midi-channel.schema.json")),
+        ("integer-range.schema.json", __schema_path("integer-range.schema.json")),
+        ("midi-message-byte.schema.json", __schema_path("midi-message-byte.schema.json")),
+        ("midi-message-byte-range.schema.json", __schema_path("midi-message-byte-range.schema.json")),
+        ("midi-velocity-layer.schema.json", __schema_path("midi-velocity-layer.schema.json")),
+        ("midi-velocity-layer-preset.schema.json", __schema_path("midi-velocity-layer-preset.schema.json")),
+        ("midi-program-change.schema.json", __schema_path("midi-program-change.schema.json")),
+        ("sample-zone-complex.schema.json", __schema_path("sample-zone-complex.schema.json")),
+        ("sample-zone.schema.json", __schema_path("sample-zone.schema.json")),
     ])
 )
 
