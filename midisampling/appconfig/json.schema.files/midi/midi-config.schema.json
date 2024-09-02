@@ -175,50 +175,13 @@
             ]
         },
         "def_midi_message_byte": {
-            "type": "integer",
-            "description": "Represents the value of the MIDI message byte (0-127)",
-            "minimum": 0,
-            "maximum": 127
+            "$ref": "midi-message-byte.schema.json"
         },
         "def_integer_range": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Represents an integer value range",
-            "properties": {
-                "from": {
-                    "type": "integer"
-                },
-                "to": {
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "from",
-                "to"
-            ],
-            "examples": [
-                { "from": 10, "to": 100 }
-            ]
+            "$ref": "integer-range.schema.json"
         },
         "def_midi_message_byte_range": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Represents the value range (0-127) of the MIDI message byte",
-            "properties": {
-                "from": {
-                    "$ref": "#/definitions/def_midi_message_byte"
-                },
-                "to": {
-                    "$ref": "#/definitions/def_midi_message_byte"
-                }
-            },
-            "required": [
-                "from",
-                "to"
-            ],
-            "examples": [
-                { "from": 10, "to": 100 }
-            ]
+            "$ref": "midi-message-byte-range.schema.json"
         },
         "def_midivelocity_layer": {
             "type": "object",

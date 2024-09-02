@@ -19,7 +19,10 @@ validator: JsonValidator = JsonValidator(
     ),
     # Sub Schema
     JsonSchemaInfo.from_files([
-        ("midi-channel.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-channel.schema.json"))
+        ("midi-channel.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-channel.schema.json")),
+        ("integer-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "integer-range.schema.json")),
+        ("midi-message-byte.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte.schema.json")),
+        ("midi-message-byte-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte-range.schema.json")),
     ])
 )
 
