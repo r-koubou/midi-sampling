@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "msb": {
+            "$ref": "midi-message-byte.schema.json",
+            "description": "MSB value for the MIDI program change."
+        },
+        "lsb": {
+            "$ref": "midi-message-byte.schema.json",
+            "description": "LSB value for the MIDI program change."
+        },
+        "program": {
+            "$ref": "midi-message-byte.schema.json",
+            "description": "Program number for the MIDI program change."
+        }
+    },
+    "required": [
+        "msb",
+        "lsb",
+        "program"
+    ],
+    "examples": [
+        {
+            "msb": 1,
+            "lsb": 23,
+            "program": 45
+        }
+    ]
+}

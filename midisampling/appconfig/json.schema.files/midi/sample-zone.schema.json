@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "A simple configuration of sample zone. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`.",
+    "properties": {
+        "keys": {
+            "description": "Root key number (note number) in the keymap.",
+            "$ref": "midi-message-byte-range.schema.json"
+        },
+        "velocity_layers": {
+            "type": "array",
+            "items": [
+                {
+                    "$ref": "midi-velocity-layer.schema.json"
+                }
+            ]
+        },
+        "velocity_layers_preset_id": {
+            "type": "integer",
+            "description": "ID of the velocity layer preset."
+        }
+    },
+    "required": [
+        "keys"
+    ],
+    "examples": [
+        {
+            "keys": { "from": 10, "to": 100 },
+            "velocity_layers": [
+                { "min": 0,  "max": 31,  "send": 31 },
+                { "min": 32, "max": 63,  "send": 63 },
+                { "min": 64, "max": 95,  "send": 95 },
+                { "min": 96, "max": 127, "send": 127 }
+            ]
+        },
+        {
+            "keys": { "from": 10, "to": 100 },
+            "velocity_layers_preset_id": 0
+        }
+    ]
+}

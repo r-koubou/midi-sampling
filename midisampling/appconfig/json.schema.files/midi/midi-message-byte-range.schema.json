@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Represents the value range (0-127) of the MIDI message byte",
+    "properties": {
+        "from": {
+            "$ref": "midi-message-byte.schema.json"
+        },
+        "to": {
+            "$ref": "midi-message-byte.schema.json"
+        }
+    },
+    "required": [
+        "from",
+        "to"
+    ],
+    "examples": [
+        { "from": 10, "to": 100 }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Represents an integer value range",
+    "properties": {
+        "from": {
+            "type": "integer"
+        },
+        "to": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "from",
+        "to"
+    ],
+    "examples": [
+        { "from": 10, "to": 100 }
+    ]
+}

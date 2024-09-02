@@ -3,10 +3,37 @@ import os
 import json
 import jsonschema
 
-THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 
-with open(os.path.join(THIS_SCRIPT_DIR, "midi-config.schema.json"), "r") as f:
-    json_schema = json.load(f)
+THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "midi")
+
+def __schema_path(schema_file_name: str) -> str:
+    return os.path.join(SCHEMA_FILES_DIR, schema_file_name)
+
+#-----------------------------------------
+# JSON Validator setup with schema files
+#-----------------------------------------
+validator: JsonValidator = JsonValidator(
+    # Main Schema
+    JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=__schema_path("midi-config.schema.json")
+    ),
+    # Sub Schema
+    JsonSchemaInfo.from_files([
+        ("midi-channel.schema.json", __schema_path("midi-channel.schema.json")),
+        ("integer-range.schema.json", __schema_path("integer-range.schema.json")),
+        ("midi-message-byte.schema.json", __schema_path("midi-message-byte.schema.json")),
+        ("midi-message-byte-range.schema.json", __schema_path("midi-message-byte-range.schema.json")),
+        ("midi-velocity-layer.schema.json", __schema_path("midi-velocity-layer.schema.json")),
+        ("midi-velocity-layer-preset.schema.json", __schema_path("midi-velocity-layer-preset.schema.json")),
+        ("midi-program-change.schema.json", __schema_path("midi-program-change.schema.json")),
+        ("sample-zone-complex.schema.json", __schema_path("sample-zone-complex.schema.json")),
+        ("sample-zone.schema.json", __schema_path("sample-zone.schema.json")),
+    ])
+)
+
 
 def _to_abs_filepath(base_dir: str, file_path: str) -> str:
     """
@@ -337,7 +364,7 @@ class MidiConfig:
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
         config_json = json.load(f)
-        jsonschema.validate(config_json, json_schema)
+        validator.validate(config_json)
     return config_json
 
 def load(config_path: str) -> MidiConfig:
