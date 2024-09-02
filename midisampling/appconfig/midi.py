@@ -23,6 +23,7 @@ validator: JsonValidator = JsonValidator(
         ("integer-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "integer-range.schema.json")),
         ("midi-message-byte.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte.schema.json")),
         ("midi-message-byte-range.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-message-byte-range.schema.json")),
+        ("midi-velocity-layer.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-velocity-layer.schema.json")),
     ])
 )
 

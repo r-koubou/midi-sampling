@@ -184,41 +184,7 @@
             "$ref": "midi-message-byte-range.schema.json"
         },
         "def_midivelocity_layer": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Velocity layer configuration",
-            "properties": {
-                "min": {
-                    "type": "integer",
-                    "description": "Minimum velocity value.",
-                    "minimum": 0,
-                    "maximum": 127
-                },
-                "max": {
-                    "type": "integer",
-                    "description": "Maximum velocity value.",
-                    "minimum": 0,
-                    "maximum": 127
-                },
-                "send": {
-                    "type": "integer",
-                    "description": "Velocity value actually sent to the MIDI device when sampling.",
-                    "minimum": 0,
-                    "maximum": 127
-                }
-            },
-            "required": [
-                "min",
-                "max",
-                "send"
-            ],
-            "examples": [
-                {
-                    "min": 0,
-                    "max": 127,
-                    "send": 127
-                }
-            ]
+            "$ref": "midi-velocity-layer.schema.json"
         },
         "def_velocity_layers_preset": {
             "type": "object",
