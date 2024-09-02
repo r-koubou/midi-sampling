@@ -4,22 +4,16 @@
     "additionalProperties": false,
     "properties": {
         "msb": {
-            "type": "integer",
-            "description": "MSB value for the MIDI program change.",
-            "minimum": 0,
-            "maximum": 127
+            "$ref": "midi-message-byte.schema.json",
+            "description": "MSB value for the MIDI program change."
         },
         "lsb": {
-            "type": "integer",
-            "description": "LSB value for the MIDI program change.",
-            "minimum": 0,
-            "maximum": 127
+            "$ref": "midi-message-byte.schema.json",
+            "description": "LSB value for the MIDI program change."
         },
         "program": {
-            "type": "integer",
-            "description": "Program number for the MIDI program change.",
-            "minimum": 0,
-            "maximum": 127
+            "$ref": "midi-message-byte.schema.json",
+            "description": "Program number for the MIDI program change."
         }
     },
     "required": [
