@@ -26,6 +26,7 @@ validator: JsonValidator = JsonValidator(
         ("midi-velocity-layer.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-velocity-layer.schema.json")),
         ("midi-velocity-layer-preset.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-velocity-layer-preset.schema.json")),
         ("sample-zone-complex.schema.json", os.path.join(SCHEMA_FILES_DIR, "sample-zone-complex.schema.json")),
+        ("sample-zone.schema.json", os.path.join(SCHEMA_FILES_DIR, "sample-zone.schema.json")),
     ])
 )
 
