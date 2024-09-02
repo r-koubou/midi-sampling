@@ -43,28 +43,7 @@
                     "type":"array",
                     "description": "List of MIDI program change (MSB, LSB, Program No) for sampling.",
                     "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                            "msb": {
-                                "type": "integer",
-                                "description": "MSB value for the MIDI program change.",
-                                "minimum": 0,
-                                "maximum": 127
-                            },
-                            "lsb": {
-                                "type": "integer",
-                                "description": "LSB value for the MIDI program change.",
-                                "minimum": 0,
-                                "maximum": 127
-                            },
-                            "program": {
-                                "type": "integer",
-                                "description": "Program number for the MIDI program change.",
-                                "minimum": 0,
-                                "maximum": 127
-                            }
-                        }
+                        "$ref": "midi-program-change.schema.json"
                     }
                 },
                 "velocity_layers_presets": {
