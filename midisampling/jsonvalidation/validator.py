@@ -52,7 +52,7 @@ class JsonSchemaInfo:
         self.schema: any = schema
 
 class JsonValidator:
-    def __init__(self, main_schema: JsonSchemaInfo, sub_schema_info_list: List[JsonSchemaInfo] = []):
+    def __init__(self, main_schema_info: JsonSchemaInfo, sub_schema_info_list: List[JsonSchemaInfo] = []):
         """
         Initialize the JsonValidator with a list of schema info.
 
@@ -64,59 +64,20 @@ class JsonValidator:
         --------
 
         ```python
-        validator = JsonValidator(
-            sub_schema_info_list = [
-                JsonSchemaInfo("schema/person", "schema/person.json"),
-                JsonSchemaInfo("schema/organization", "schema/organization.json")
-            ]
-        )
-
-        json_body = {
-            "name": "Taro Yamaada",
-            "age": 30,
-            "organization": {
-                "name": "Acme Corporation"
-            }
-        }
-        validator.validate(json_body)
-        ```
-
-        ## JSON schema examples: person.json
-        ```json
-        {
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "age": {
-                    "type": "integer"
-                },
-                "organization": {
-                    "$ref": "schema/organization"
-                }
-            }
-        }
-        ```
-
-        ## JSON schema examples: organization.json
-        ```json
-        {
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        }
+        >>> validator = JsonValidator(
+        ...     main_schema_info = JsonSchemaInfo("schema/main", "schema/main.json"),
+        ...     sub_schema_info_list = JsonSchemaInfo.from_files([
+        ...         ("schema/person", "schema/person.json"),
+        ...         ("schema/organization", "schema/organization.json")
+        ...     ])
+        ... )
         ```
         """
-        self.main_schema = main_schema
+
+        self.main_schema = main_schema_info
         self.sub_schema_info_list = sub_schema_info_list
         self.registry = Registry().with_resources([
-            (main_schema.schema_uri, Resource.from_contents(main_schema.schema))
+            (main_schema_info.schema_uri, Resource.from_contents(main_schema_info.schema))
         ])
 
         for x in self.sub_schema_info_list:
