@@ -37,10 +37,7 @@
                     "default": []
                 },
                 "midi_channel": {
-                    "type": "integer",
-                    "description": "MIDI channel number for sampling.",
-                    "minimum": 0,
-                    "maximum": 15
+                    "$ref": "midi-channel.schema.json"
                 },
                 "midi_program_change_list" : {
                     "type":"array",

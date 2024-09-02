@@ -3,10 +3,26 @@ import os
 import json
 import jsonschema
 
-THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 
-with open(os.path.join(THIS_SCRIPT_DIR, "midi-config.schema.json"), "r") as f:
-    json_schema = json.load(f)
+THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "midi")
+
+#-----------------------------------------
+# JSON Validator setup with schema files
+#-----------------------------------------
+validator: JsonValidator = JsonValidator(
+    # Main Schema
+    JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=os.path.join(SCHEMA_FILES_DIR, "midi-config.schema.json")
+    ),
+    # Sub Schema
+    JsonSchemaInfo.from_files([
+        ("midi-channel.schema.json", os.path.join(SCHEMA_FILES_DIR, "midi-channel.schema.json"))
+    ])
+)
+
 
 def _to_abs_filepath(base_dir: str, file_path: str) -> str:
     """
@@ -337,7 +353,7 @@ class MidiConfig:
 def validate(config_path: str) -> dict:
     with open(config_path, "r") as f:
         config_json = json.load(f)
-        jsonschema.validate(config_json, json_schema)
+        validator.validate(config_json)
     return config_json
 
 def load(config_path: str) -> MidiConfig:
