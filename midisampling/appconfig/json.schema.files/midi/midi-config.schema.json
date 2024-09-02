@@ -50,21 +50,21 @@
                     "type": "array",
                     "description": "List of velocity layers presets. In addition to defining individual layers with `sample_zone_complex` and `sample_zone`, you can also refer to this preset by ID.",
                     "items": {
-                        "$ref": "#/definitions/def_velocity_layers_preset"
+                        "$ref": "midi-velocity-layer-preset.schema.json"
                     }
                 },
                 "sample_zone_complex" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {
-                        "$ref": "#/definitions/def_sample_zone_complex"
+                        "$ref": "sample-zone-complex.schema.json"
                     }
                 },
                 "sample_zone" :{
                     "type":"array",
                     "description": "List of keymaps for the sampled MIDI notes.",
                     "items": {
-                        "$ref": "#/definitions/def_sample_zone"
+                        "$ref": "sample-zone.schema.json"
                     }
                 },
                 "midi_pre_wait_duration": {
@@ -152,27 +152,6 @@
                     "midi_release_duration": 1.5
                 }
             ]
-        },
-        "def_midi_message_byte": {
-            "$ref": "midi-message-byte.schema.json"
-        },
-        "def_integer_range": {
-            "$ref": "integer-range.schema.json"
-        },
-        "def_midi_message_byte_range": {
-            "$ref": "midi-message-byte-range.schema.json"
-        },
-        "def_midivelocity_layer": {
-            "$ref": "midi-velocity-layer.schema.json"
-        },
-        "def_velocity_layers_preset": {
-            "$ref": "midi-velocity-layer-preset.schema.json"
-        },
-        "def_sample_zone_complex": {
-            "$ref": "sample-zone-complex.schema.json"
-        },
-        "def_sample_zone": {
-            "$ref": "sample-zone.schema.json"
         }
     },
     "type": "object",
