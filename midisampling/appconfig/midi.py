@@ -298,9 +298,8 @@ class SampleZone:
             if "note_duration" in zone:
                 duration = zone["note_duration"]
                 note_duration = duration["note_time"]
-                release_duration = duration["release_time"]
-                print(duration)
-
+                if "release_time" in duration:
+                    release_duration = duration["release_time"]
 
             result.append(
                 SampleZone(
@@ -333,8 +332,8 @@ class SampleZone:
             if "note_duration" in zone:
                 duration = zone["note_duration"]
                 note_duration = duration["note_time"]
-                release_duration = duration["release_time"]
-                print(duration)
+                if "release_time" in duration:
+                    release_duration = duration["release_time"]
 
             for note in notes:
                 result.append(

@@ -16,8 +16,7 @@
         }
     },
     "required": [
-        "note_time",
-        "release_time"
+        "note_time"
     ],
     "examples": [
         {
