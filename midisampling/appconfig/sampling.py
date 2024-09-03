@@ -22,6 +22,7 @@ def _load_json_with_validate(file_path: str, validator: JsonValidator) -> dict:
 
 # Sub Schema list
 sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
+    ("sampling-platform.schema.json", _schema_path("sampling-platform.schema.json")),
 ])
 
 # MIDI Config file schema

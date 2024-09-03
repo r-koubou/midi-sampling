@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the input device for the sampled audio file."
+        },
+        "platform": {
+            "type": "string",
+            "description": "Platform of the input device for the sampled audio file (e.g., `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI`, `Core Audio` etc.)."
+        }
+    },
+    "required": [
+        "name",
+        "platform"
+    ]
+}
