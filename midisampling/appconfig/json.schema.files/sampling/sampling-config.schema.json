@@ -24,21 +24,7 @@
             "enum": ["int", "float"]
         },
         "audio_in_device": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Name of the input device for the sampled audio file."
-                },
-                "platform": {
-                    "type": "string",
-                    "description": "Platform of the input device for the sampled audio file (e.g., `ASIO`, `MME`, `Windows DirectSound`, `Windows WASAPI`, `Core Audio` etc.)."
-                }
-            },
-            "required": [
-                "name",
-                "platform"
-            ]
+            "$ref": "sampling-platform.schema.json"
         },
         "asio_audio_ins": {
             "type": "array",
