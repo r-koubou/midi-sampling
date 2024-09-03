@@ -5,16 +5,16 @@
     "description": "Velocity layer configuration",
     "properties": {
         "min": {
-            "$ref": "midi-message-byte.schema.json",
-            "description": "Minimum velocity value."
+            "description": "Minimum velocity value.",
+            "$ref": "midi-velocity.schema.json"
         },
         "max": {
-            "$ref": "midi-message-byte.schema.json",
-            "description": "Maximum velocity value."
+            "description": "Maximum velocity value.",
+            "$ref": "midi-velocity.schema.json"
         },
         "send": {
-            "$ref": "midi-message-byte.schema.json",
-            "description": "Velocity value actually sent to the MIDI device when sampling."
+            "description": "Velocity value actually sent to the MIDI device when sampling.",
+            "$ref": "midi-velocity.schema.json"
         }
     },
     "required": [
