@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Represents the value of the MIDI note on duration",
+    "properties": {
+        "note_time": {
+            "type": "number",
+            "description": "The duration of the `MIDI note on` in seconds when sampling.",
+            "minimum": 0.0
+        },
+        "release_time": {
+            "type": "number",
+            "description": "The release time since the `MIDI note off` when sampling.",
+            "minimum": 0.0
+        }
+    },
+    "required": [
+        "note_time"
+    ],
+    "examples": [
+        {
+            "note_time": 2.5,
+            "release_time": 2.0
+        }
+    ]
+}

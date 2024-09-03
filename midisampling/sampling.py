@@ -363,8 +363,20 @@ class DefaultSampling(SamplingBase):
         scale_name_format     = self.midi_config.scale_name_format
         output_dir            = self.midi_config.output_dir
 
+        # Override note duration if note_duration is defined in zone
+        if zone.note_duration >= 0:
+            midi_note_duration = zone.note_duration
+            logger.debug(f"Note duration override from zone: {midi_note_duration}")
+        if zone.release_duration >= 0:
+            midi_release_duration = zone.release_duration
+            logger.debug(f"Release duration override from zone: {midi_release_duration}")
+
         # Record Audio
-        record_duration = math.floor(midi_pre_duration + midi_note_duration + midi_release_duration)
+        record_duration = math.ceil(midi_pre_duration + midi_note_duration + midi_release_duration)
+        logger.debug(f"Pre wait duration: {midi_pre_duration}")
+        logger.debug(f"Note duration: {midi_note_duration}")
+        logger.debug(f"Release duration: {midi_release_duration}")
+        logger.debug(f"Record duration(*ceiling ): {record_duration}")
 
         self.audio_device.start_recording(record_duration)
         time.sleep(midi_pre_duration)
