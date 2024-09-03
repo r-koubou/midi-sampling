@@ -7,22 +7,16 @@
             "additionalProperties": false,
             "properties": {
                 "key_low": {
-                    "type": "integer",
                     "description": "Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
-                    "minimum": 0,
-                    "maximum": 127
+                    "$ref": "midi-notenumber.schema.json"
                 },
                 "key_high": {
-                    "type": "integer",
                     "description": "Highest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
-                    "minimum": 0,
-                    "maximum": 127
+                    "$ref": "midi-notenumber.schema.json"
                 },
                 "key_root": {
-                    "type": "integer",
                     "description": "Root key number (note number) in the keymap. This value is intended to be used as information for mapping note-on messages sent to MIDI devices and third-party sampler software when sampling.",
-                    "minimum": 0,
-                    "maximum": 127
+                    "$ref": "midi-notenumber.schema.json"
                 },
                 "velocity_layers": {
                     "type": "array",
