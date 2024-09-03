@@ -26,6 +26,7 @@ def _load_json_with_validate(file_path: str, validator: JsonValidator) -> dict:
 # Sub Schema list
 sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
     ("audio-format.schema.json", _schema_path("audio-format.schema.json")),
+    ("audio-effect.schema.json", _schema_path("audio-effect.schema.json")),
 ])
 
 # MIDI Config file schema
