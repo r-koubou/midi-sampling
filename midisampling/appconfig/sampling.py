@@ -4,8 +4,9 @@ import json
 import jsonschema
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "sampling")
 
-with open(os.path.join(THIS_SCRIPT_DIR, "sampling-config.schema.json"), "r") as f:
+with open(os.path.join(SCHEMA_FILES_DIR, "sampling-config.schema.json"), "r") as f:
     json_schema = json.load(f)
 
 class SamplingConfig:
