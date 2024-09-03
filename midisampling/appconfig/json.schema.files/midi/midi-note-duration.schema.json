@@ -15,6 +15,10 @@
             "minimum": 0.0
         }
     },
+    "required": [
+        "note_time",
+        "release_time"
+    ],
     "examples": [
         {
             "note_time": 2.5,

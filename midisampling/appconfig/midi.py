@@ -231,11 +231,13 @@ class SampleZone:
     """
     Represents the smallest unit of sample zone data
     """
-    def __init__(self, key_root: int, key_low: int, key_high: int, velocity_layers: List[VelocityLayer]) -> None:
+    def __init__(self, key_root: int, key_low: int, key_high: int, velocity_layers: List[VelocityLayer], note_duration: float = -1, release_duration: float = -1) -> None:
         self.key_root: int  = key_root
         self.key_low: int   = key_low
         self.key_high: int  = key_high
         self.velocity_layers: List[VelocityLayer] = velocity_layers
+        self.note_duration: float = note_duration
+        self.release_duration: float = release_duration
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SampleZone):
@@ -290,10 +292,22 @@ class SampleZone:
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
 
+            note_duration    = -1
+            release_duration = -1
+
+            if "note_duration" in zone:
+                duration = zone["note_duration"]
+                note_duration = duration["note_time"]
+                release_duration = duration["release_time"]
+                print(duration)
+
+
             result.append(
                 SampleZone(
                     key_root=key_root, key_low=key_low, key_high=key_high,
-                    velocity_layers=velocity_layers
+                    velocity_layers=velocity_layers,
+                    note_duration=note_duration,
+                    release_duration=release_duration
                 )
             )
 
@@ -313,11 +327,22 @@ class SampleZone:
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
 
+            note_duration    = -1
+            release_duration = -1
+
+            if "note_duration" in zone:
+                duration = zone["note_duration"]
+                note_duration = duration["note_time"]
+                release_duration = duration["release_time"]
+                print(duration)
+
             for note in notes:
                 result.append(
                     SampleZone(
                         key_root=note, key_low=note, key_high=note,
-                        velocity_layers=velocity_layers
+                        velocity_layers=velocity_layers,
+                        note_duration=note_duration,
+                        release_duration=release_duration
                     )
                 )
 
