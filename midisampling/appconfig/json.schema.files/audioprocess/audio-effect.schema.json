@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Effect configuration",
+    "properties": {
+        "index": {
+            "type": "integer",
+            "description": "The index of the effect in the chain"
+        },
+        "name": {
+            "type": "string",
+            "description": "A effect name"
+        },
+        "params": {
+            "type": "object",
+            "description": "A dictionary of parameters for the effect",
+            "additionalProperties": true
+        }
+    },
+    "required": [
+        "index",
+        "name",
+        "params"
+    ],
+    "examples": [
+        {
+            "index": 0,
+            "name": "normalize",
+            "params": {
+                "target_dBFS": -10
+            }
+        }
+    ]
+}

@@ -45,7 +45,6 @@ def main() -> None:
         elif args.command == "validate-audioprocess":
             process_conf.validate(args.input)
             print("Validation OK")
-            print("Deserialization...")
             process_conf.AudioProcessConfig(args.input)
             print("Deserialization OK")
 

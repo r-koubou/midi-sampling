@@ -1,15 +1,42 @@
 from typing import List
 import os
 import json
-import jsonschema
 
+from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 from logging import getLogger
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "audioprocess")
+
 logger = getLogger(__name__)
 
-with open(os.path.join(THIS_SCRIPT_DIR, "audioprocess-config.schema.json"), "r") as f:
-    json_schema = json.load(f)
+def _schema_path(schema_file_name: str) -> str:
+    return os.path.join(SCHEMA_FILES_DIR, schema_file_name)
+
+def _load_json_with_validate(file_path: str, validator: JsonValidator) -> dict:
+    with open(file_path, "r") as f:
+        json_body = json.load(f)
+        validator.validate(json_body)
+    return json_body
+
+#-----------------------------------------
+# JSON Validator setup with schema files
+#-----------------------------------------
+
+# Sub Schema list
+sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
+    ("audio-format.schema.json", _schema_path("audio-format.schema.json")),
+    ("audio-effect.schema.json", _schema_path("audio-effect.schema.json"))
+])
+
+# MIDI Config file schema
+config_file_validator: JsonValidator = JsonValidator(
+    main_schema_info=JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=_schema_path("audioprocess-config.schema.json")
+    ),
+    sub_schema_info_list=sub_schemas
+)
 
 class AudioProcessFormat:
     def __init__(self, config: dict) -> None:
@@ -86,10 +113,7 @@ class AudioProcessConfig:
         return result
 
 def validate(config_path: str) -> dict:
-    with open(config_path, "r") as f:
-        config_json = json.load(f)
-        jsonschema.validate(config_json, json_schema)
-    return config_json
+    return _load_json_with_validate(config_path, config_file_validator)
 
 def load(config_path: str) -> AudioProcessConfig:
     return AudioProcessConfig(config_path)
