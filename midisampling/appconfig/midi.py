@@ -8,32 +8,49 @@ from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_FILES_DIR = os.path.join(THIS_SCRIPT_DIR, "json.schema.files", "midi")
 
-def __schema_path(schema_file_name: str) -> str:
+def _schema_path(schema_file_name: str) -> str:
     return os.path.join(SCHEMA_FILES_DIR, schema_file_name)
+
+def _load_json_with_validate(file_path: str, validator: JsonValidator) -> dict:
+    with open(file_path, "r") as f:
+        json_body = json.load(f)
+        validator.validate(json_body)
+    return json_body
 
 #-----------------------------------------
 # JSON Validator setup with schema files
 #-----------------------------------------
-validator: JsonValidator = JsonValidator(
-    # Main Schema
-    JsonSchemaInfo.from_file(
+
+# Sub Schema list
+sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
+        ("midi-channel.schema.json", _schema_path("midi-channel.schema.json")),
+        ("integer-range.schema.json", _schema_path("integer-range.schema.json")),
+        ("midi-message-byte.schema.json", _schema_path("midi-message-byte.schema.json")),
+        ("midi-message-byte-range.schema.json", _schema_path("midi-message-byte-range.schema.json")),
+        ("midi-velocity-layer.schema.json", _schema_path("midi-velocity-layer.schema.json")),
+        ("midi-velocity-layer-preset.schema.json", _schema_path("midi-velocity-layer-preset.schema.json")),
+        ("midi-program-change.schema.json", _schema_path("midi-program-change.schema.json")),
+        ("sample-zone-complex.schema.json", _schema_path("sample-zone-complex.schema.json")),
+        ("sample-zone.schema.json", _schema_path("sample-zone.schema.json")),
+])
+
+# MIDI Config file schema
+config_file_validator: JsonValidator = JsonValidator(
+    main_schema_info=JsonSchemaInfo.from_file(
         schema_uri="main",
-        schema_file_path=__schema_path("midi-config.schema.json")
+        schema_file_path=_schema_path("midi-config.schema.json")
     ),
-    # Sub Schema
-    JsonSchemaInfo.from_files([
-        ("midi-channel.schema.json", __schema_path("midi-channel.schema.json")),
-        ("integer-range.schema.json", __schema_path("integer-range.schema.json")),
-        ("midi-message-byte.schema.json", __schema_path("midi-message-byte.schema.json")),
-        ("midi-message-byte-range.schema.json", __schema_path("midi-message-byte-range.schema.json")),
-        ("midi-velocity-layer.schema.json", __schema_path("midi-velocity-layer.schema.json")),
-        ("midi-velocity-layer-preset.schema.json", __schema_path("midi-velocity-layer-preset.schema.json")),
-        ("midi-program-change.schema.json", __schema_path("midi-program-change.schema.json")),
-        ("sample-zone-complex.schema.json", __schema_path("sample-zone-complex.schema.json")),
-        ("sample-zone.schema.json", __schema_path("sample-zone.schema.json")),
-    ])
+    sub_schema_info_list=sub_schemas
 )
 
+# MIDI Velocity Layer file schema
+velocity_layer_file_validator: JsonValidator = JsonValidator(
+    main_schema_info=JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=_schema_path("midi-velocity-layers-file.schema.json")
+    ),
+    sub_schema_info_list=sub_schemas
+)
 
 def _to_abs_filepath(base_dir: str, file_path: str) -> str:
     """
@@ -148,12 +165,19 @@ class VelocityLayer:
         return f"min={self.min_velocity}, max={self.max_velocity}, send={self.send_velocity}"
 
 class VelocityLayerPreset:
-    def __init__(self, velocity_layer_preset: dict) -> None:
+    def __init__(self, config_dir: str, velocity_layer_preset: dict) -> None:
         self.id: int = int(velocity_layer_preset["id"])
         self.layers: List[VelocityLayer] = []
 
-        for x in velocity_layer_preset["velocities"]:
-            self.layers.append(VelocityLayer(x))
+        if "file" in velocity_layer_preset:
+            file_path  = _to_abs_filepath(config_dir, velocity_layer_preset["file"])
+            velocities = _load_json_with_validate(file_path, velocity_layer_file_validator)
+            for x in velocities:
+                self.layers.append(VelocityLayer(x))
+
+        if "velocities" in velocity_layer_preset:
+            for x in velocity_layer_preset["velocities"]:
+                self.layers.append(VelocityLayer(x))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, VelocityLayerPreset):
@@ -170,14 +194,14 @@ class VelocityLayerPreset:
         return f"id={self.id}, layers[{len(self.layers)}]=[{[f"[{x}]" for x in self.layers]}]"
 
     @classmethod
-    def from_json(cls, velocity_layer_presets: dict) -> List['VelocityLayerPreset']:
+    def from_json(cls, config_dir: str, velocity_layer_presets: dict) -> List['VelocityLayerPreset']:
         """
         Create VelocityLayerPreset list from json data
         """
         result: List['VelocityLayerPreset'] = []
 
         for x in velocity_layer_presets:
-            result.append(VelocityLayerPreset(x))
+            result.append(VelocityLayerPreset(config_dir, x))
 
         return result
 
@@ -348,7 +372,7 @@ class MidiConfig:
 
         # Velocity Layer Preset
         if "velocity_layers_presets" in config_json:
-            self.velocity_layer_presets = VelocityLayerPreset.from_json(config_json["velocity_layers_presets"])
+            self.velocity_layer_presets = VelocityLayerPreset.from_json(self.config_dir, config_json["velocity_layers_presets"])
 
         # Convert to a path starting from the directory where the config file is located
         self.output_dir = _to_abs_filepath(self.config_dir, self.output_dir)
@@ -362,10 +386,7 @@ class MidiConfig:
         self.sample_zone = SampleZone.from_json(config_json, self.velocity_layer_presets)
 
 def validate(config_path: str) -> dict:
-    with open(config_path, "r") as f:
-        config_json = json.load(f)
-        validator.validate(config_json)
-    return config_json
+    return _load_json_with_validate(config_path, config_file_validator)
 
 def load(config_path: str) -> MidiConfig:
     return MidiConfig(config_path)

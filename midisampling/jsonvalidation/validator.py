@@ -10,7 +10,7 @@ logger = getLogger(__name__)
 class JsonSchemaInfo:
 
     @classmethod
-    def from_content(cls, schema_uri: str, schema_content: any) -> "JsonSchemaInfo":
+    def from_content(cls, schema_uri: str, schema_content: dict) -> "JsonSchemaInfo":
         return cls(schema_uri, schema_content)
 
     @classmethod
@@ -47,9 +47,9 @@ class JsonSchemaInfo:
 
         return result
 
-    def __init__(self, schema_uri: str, schema: any):
+    def __init__(self, schema_uri: str, schema: dict):
         self.schema_uri: str = schema_uri
-        self.schema: any = schema
+        self.schema: dict = schema
 
 class JsonValidator:
     def __init__(self, main_schema_info: JsonSchemaInfo, sub_schema_info_list: List[JsonSchemaInfo] = []):
@@ -85,7 +85,7 @@ class JsonValidator:
                 (x.schema_uri, Resource.from_contents(x.schema))
             ])
 
-    def validate(self, json_body) -> bool:
+    def validate(self, json_body: dict) -> bool:
         json_validate(
             instance=json_body,
             schema=self.main_schema.schema,
