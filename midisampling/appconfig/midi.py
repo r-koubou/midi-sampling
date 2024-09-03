@@ -28,6 +28,7 @@ sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
         ("midi-message-byte-range.schema.json", _schema_path("midi-message-byte-range.schema.json")),
         ("midi-notenumber.schema.json", _schema_path("midi-notenumber.schema.json")),
         ("midi-notenumber-range.schema.json", _schema_path("midi-notenumber-range.schema.json")),
+        ("midi-note-duration.schema.json", _schema_path("midi-note-duration.schema.json")),
         ("midi-velocity.schema.json", _schema_path("midi-velocity.schema.json")),
         ("midi-velocity-layer.schema.json", _schema_path("midi-velocity-layer.schema.json")),
         ("midi-velocity-layer-preset.schema.json", _schema_path("midi-velocity-layer-preset.schema.json")),

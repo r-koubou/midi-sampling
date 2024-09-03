@@ -25,6 +25,9 @@
                             "$ref": "midi-velocity-layer.schema.json"
                         }
                     ]
+                },
+                "note_duration": {
+                    "$ref": "midi-note-duration.schema.json"
                 }
             },
             "required": [
@@ -65,6 +68,9 @@
                 "velocity_layers_preset_id": {
                     "type": "integer",
                     "description": "ID of the velocity layer preset."
+                },
+                "note_duration": {
+                    "$ref": "midi-note-duration.schema.json"
                 }
             },
             "required": [
