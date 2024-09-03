@@ -1,7 +1,6 @@
 from typing import List
 import os
 import json
-import jsonschema
 
 from midisampling.jsonvalidation.validator import JsonSchemaInfo, JsonValidator
 
@@ -34,7 +33,7 @@ sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
         ("midi-velocity-layer-preset.schema.json", _schema_path("midi-velocity-layer-preset.schema.json")),
         ("midi-program-change.schema.json", _schema_path("midi-program-change.schema.json")),
         ("sample-zone-complex.schema.json", _schema_path("sample-zone-complex.schema.json")),
-        ("sample-zone.schema.json", _schema_path("sample-zone.schema.json")),
+        ("sample-zone.schema.json", _schema_path("sample-zone.schema.json"))
 ])
 
 # MIDI Config file schema
