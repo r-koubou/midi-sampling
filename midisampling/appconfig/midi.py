@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import os
 import json
 
@@ -34,7 +34,8 @@ sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
         ("midi-velocity-layer-preset.schema.json", _schema_path("midi-velocity-layer-preset.schema.json")),
         ("midi-program-change.schema.json", _schema_path("midi-program-change.schema.json")),
         ("sample-zone-complex.schema.json", _schema_path("sample-zone-complex.schema.json")),
-        ("sample-zone.schema.json", _schema_path("sample-zone.schema.json"))
+        ("sample-zone.schema.json", _schema_path("sample-zone.schema.json")),
+        ("sample-zone-note-duration.schema.json", _schema_path("sample-zone-note-duration.schema.json"))
 ])
 
 # MIDI Config file schema
@@ -323,19 +324,30 @@ class SampleZone:
             notes = _parse_midi_byte_range(zone["keys"])
             velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
+            min_note = min(notes)
+            max_note = max(notes)
+
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
 
-            note_duration    = -1
-            release_duration = -1
+            note_durations: Dict[int, float] = {}
+            note_relese_durations: Dict[int, float] = {}
 
-            if "note_duration" in zone:
-                duration = zone["note_duration"]
-                note_duration = duration["note_time"]
-                if "release_time" in duration:
-                    release_duration = duration["release_time"]
+            if "note_durations" in zone:
+                for duration in zone["note_durations"]:
+                    for duration_note in duration["notes"]:
+                        # Note is out of range in this Zone
+                        if min_note > duration_note or duration_note > max_note:
+                            raise ValueError(f"note_duration: note is out of range in this Zone. from={min_note}, to={max_note}, note={duration_note}")
+                        if "note_time" in duration["duration"]:
+                            note_durations[duration_note] = duration["duration"]["note_time"]
+                        if "release_time" in duration["duration"]:
+                            note_relese_durations[duration_note] = duration["duration"]["release_time"]
 
             for note in notes:
+                note_duration    = note_durations.get(note, -1)
+                release_duration = note_relese_durations.get(note, -1)
+
                 result.append(
                     SampleZone(
                         key_root=note, key_low=note, key_high=note,

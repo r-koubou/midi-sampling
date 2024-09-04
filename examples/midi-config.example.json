@@ -58,8 +58,16 @@
             ]
         },
         {
-            "keys": {"from": 41, "to": 41},
-            "velocity_layers_preset_id": 1
+            "keys": {"from": 41, "to": 45},
+            "velocity_layers_preset_id": 1,
+            "note_durations": [
+                {
+                    "notes": [42],
+                    "duration": {
+                        "note_time": 5.0
+                    }
+                }
+            ]
         }
     ],
     "midi_pre_wait_duration": 0.6,
