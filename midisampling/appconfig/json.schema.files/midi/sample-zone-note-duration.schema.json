@@ -16,7 +16,8 @@
         }
     },
     "required": [
-        "notes"
+        "notes",
+        "duration"
     ],
     "examples": [
         {
