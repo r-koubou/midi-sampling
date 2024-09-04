@@ -324,6 +324,9 @@ class SampleZone:
             notes = _parse_midi_byte_range(zone["keys"])
             velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
+            min_note = min(notes)
+            max_note = max(notes)
+
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
 
@@ -333,6 +336,9 @@ class SampleZone:
             if "note_durations" in zone:
                 for duration in zone["note_durations"]:
                     for duration_note in duration["notes"]:
+                        # Note is out of range in this Zone
+                        if min_note > duration_note or duration_note > max_note:
+                            raise ValueError(f"note_duration: note is out of range in this Zone. from={min_note}, to={max_note}, note={duration_note}")
                         if "note_time" in duration["duration"]:
                             note_durations[duration_note] = duration["duration"]["note_time"]
                         if "release_time" in duration["duration"]:
