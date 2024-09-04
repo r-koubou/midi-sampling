@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import os
 import json
 
@@ -327,16 +327,21 @@ class SampleZone:
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
 
-            note_duration    = -1
-            release_duration = -1
+            note_durations: Dict[int, float] = {}
+            note_relese_durations: Dict[int, float] = {}
 
-            if "note_duration" in zone:
-                duration = zone["note_duration"]
-                note_duration = duration["note_time"]
-                if "release_time" in duration:
-                    release_duration = duration["release_time"]
+            if "note_durations" in zone:
+                for duration in zone["note_durations"]:
+                    for duration_note in duration["notes"]:
+                        if "note_time" in duration["duration"]:
+                            note_durations[duration_note] = duration["duration"]["note_time"]
+                        if "release_time" in duration["duration"]:
+                            note_relese_durations[duration_note] = duration["duration"]["release_time"]
 
             for note in notes:
+                note_duration    = note_durations.get(note, -1)
+                release_duration = note_relese_durations.get(note, -1)
+
                 result.append(
                     SampleZone(
                         key_root=note, key_low=note, key_high=note,
