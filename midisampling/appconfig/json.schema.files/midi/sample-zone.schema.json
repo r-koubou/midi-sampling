@@ -18,8 +18,12 @@
                         }
                     ]
                 },
-                "note_duration": {
-                    "$ref": "midi-note-duration.schema.json"
+                "note_durations": {
+                    "description": "The list of MIDI notes and their duration.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "sample-zone-note-duration.schema.json"
+                    }
                 }
             },
             "required": [
@@ -34,6 +38,15 @@
                         { "min": 32, "max": 63,  "send": 63 },
                         { "min": 64, "max": 95,  "send": 95 },
                         { "min": 96, "max": 127, "send": 127 }
+                    ],
+                    "note_durations": [
+                        {
+                            "notes": [40, 41, 42],
+                            "duration": {
+                                "note_time": 10,
+                                "release_time": 2.0
+                            }
+                        }
                     ]
                 }
             ]
@@ -49,8 +62,12 @@
                     "type": "integer",
                     "description": "ID of the velocity layer preset."
                 },
-                "note_duration": {
-                    "$ref": "midi-note-duration.schema.json"
+                "note_durations": {
+                    "description": "The list of MIDI notes and their duration.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "sample-zone-note-duration.schema.json"
+                    }
                 }
             },
             "required": [
@@ -60,7 +77,16 @@
             "examples": [
                 {
                     "keys": { "from": 10, "to": 100 },
-                    "velocity_layers_preset_id": 0
+                    "velocity_layers_preset_id": 0,
+                    "note_durations": [
+                        {
+                            "notes": [40, 41, 42],
+                            "duration": {
+                                "note_time": 10,
+                                "release_time": 2.0
+                            }
+                        }
+                    ]
                 }
             ]
         }

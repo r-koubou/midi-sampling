@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Represents the value of sample zone note duration in sampling",
+    "properties": {
+        "notes": {
+            "type": "array",
+            "description": "The list of MIDI notes",
+            "items": {
+                "$ref": "midi-notenumber.schema.json"
+            }
+        },
+        "duration": {
+            "$ref": "midi-note-duration.schema.json"
+        }
+    },
+    "required": [
+        "notes"
+    ],
+    "examples": [
+        {
+            "notes": [40, 41, 42],
+            "duration": {
+                "note_time": 10,
+                "release_time": 2.0
+            }
+        }
+    ]
+}
