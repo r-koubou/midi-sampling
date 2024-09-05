@@ -4,6 +4,7 @@
     "description": "A simple configuration of sample zone. Unlike the complex version, only the root key can be specified, and individual values of `key_range` are applied as `root key`, `low key` and `high key`.",
     "oneOf": [
         {
+            "description": "Define with individual parameters",
             "additionalProperties": false,
             "properties": {
                 "keys": {
@@ -52,6 +53,7 @@
             ]
         },
         {
+            "description": "Define with velocity layers preset ID",
             "additionalProperties": false,
             "properties": {
                 "keys": {
@@ -78,6 +80,46 @@
                 {
                     "keys": { "from": 10, "to": 100 },
                     "velocity_layers_preset_id": 0,
+                    "note_durations": [
+                        {
+                            "notes": [40, 41, 42],
+                            "duration": {
+                                "note_time": 10,
+                                "release_time": 2.0
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "Define with velocity layers file",
+            "additionalProperties": false,
+            "properties": {
+                "keys": {
+                    "description": "Root key number (note number) in the keymap.",
+                    "$ref": "midi-notenumber-range.schema.json"
+                },
+                "velocity_layers_file": {
+                    "type": "string",
+                    "description": "File path of the velocity layers definition file."
+                },
+                "note_durations": {
+                    "description": "The list of MIDI notes and their duration.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "sample-zone-note-duration.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "keys",
+                "velocity_layers_file"
+            ],
+            "examples": [
+                {
+                    "keys": { "from": 10, "to": 100 },
+                    "velocity_layers_file": "velocity_layers.json",
                     "note_durations": [
                         {
                             "notes": [40, 41, 42],
