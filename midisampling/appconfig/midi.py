@@ -295,29 +295,29 @@ class SampleZone:
         return result
 
     @classmethod
-    def __parse_sample_zone_complex_file(cls, config_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __parse_sample_zone_complex_file(cls, base_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Parse sample zone complex data from external file
         """
-        file_path = _to_abs_filepath(config_dir, file_path)
+        file_path = _to_abs_filepath(base_dir, file_path)
         zone_complex_json = _load_json_with_validate(file_path, sample_zone_complex_file_validator)
 
         return SampleZone.__from_zone_complex_json(
-            config_dir=config_dir,
+            config_dir=base_dir,
             zone_complex=zone_complex_json,
             velocity_layers_presets=velocity_layers_presets
         )
 
     @classmethod
-    def __parse_sample_zone_file(cls, config_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __parse_sample_zone_file(cls, base_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Parse sample zone data from external file
         """
-        file_path = _to_abs_filepath(config_dir, file_path)
+        file_path = _to_abs_filepath(base_dir, file_path)
         zone_json = _load_json_with_validate(file_path, sample_zone_file_validator)
 
         return SampleZone.__from_sample_simple_json(
-            config_dir=config_dir,
+            config_dir=base_dir,
             zone_simple=zone_json,
             velocity_layers_presets=velocity_layers_presets
         )
@@ -332,9 +332,11 @@ class SampleZone:
         for zone in zone_complex:
 
             if "file" in zone:
+                file_path = _to_abs_filepath(config_dir, zone["file"])
+                base_dir = os.path.dirname(file_path)
                 result.extend(SampleZone.__parse_sample_zone_complex_file(
-                    config_dir=config_dir,
-                    file_path=zone["file"],
+                    base_dir=base_dir,
+                    file_path=file_path,
                     velocity_layers_presets=velocity_layers_presets
                 ))
                 continue
@@ -379,8 +381,9 @@ class SampleZone:
 
             if "file" in zone:
                 file_path  = _to_abs_filepath(config_dir, zone["file"])
+                base_dir   = os.path.dirname(file_path)
                 result.extend(SampleZone.__parse_sample_zone_file(
-                    config_dir=config_dir,
+                    base_dir=base_dir,
                     file_path=file_path,
                     velocity_layers_presets=velocity_layers_presets
                 ))
