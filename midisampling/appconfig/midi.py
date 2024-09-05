@@ -499,7 +499,6 @@ class MidiConfig:
 
         # Zone
         self.sample_zone = SampleZone.from_json(self.config_dir,config_json, self.velocity_layer_presets)
-        print(f"sample_zone={[str(x) for x in self.sample_zone]}")
 
 def validate(config_path: str) -> dict:
     return _load_json_with_validate(config_path, config_file_validator)
