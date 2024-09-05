@@ -56,6 +56,24 @@ velocity_layer_file_validator: JsonValidator = JsonValidator(
     sub_schema_info_list=sub_schemas
 )
 
+# Sample Zone file schema
+sample_zone_file_validator: JsonValidator = JsonValidator(
+    main_schema_info=JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=_schema_path("sample-zone-file.schema.json")
+    ),
+    sub_schema_info_list=sub_schemas
+)
+
+# Sample Zone Complex file schema
+sample_zone_complex_file_validator: JsonValidator = JsonValidator(
+    main_schema_info=JsonSchemaInfo.from_file(
+        schema_uri="main",
+        schema_file_path=_schema_path("sample-zone-complex-file.schema.json")
+    ),
+    sub_schema_info_list=sub_schemas
+)
+
 def _to_abs_filepath(base_dir: str, file_path: str) -> str:
     """
     Returns the absolute path of file_path starting from base_dir
@@ -277,6 +295,20 @@ class SampleZone:
         return result
 
     @classmethod
+    def __parse_sample_zone_file(cls, config_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+        """
+        Parse sample zone data from external file
+        """
+        file_path = _to_abs_filepath(config_dir, file_path)
+        zone_json = _load_json_with_validate(file_path, sample_zone_file_validator)
+
+        return SampleZone.__from_sample_simple_json(
+            config_dir=config_dir,
+            zone_simple=zone_json,
+            velocity_layers_presets=velocity_layers_presets
+        )
+
+    @classmethod
     def __from_zone_complex_json(cls, zone_complex: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone_complex)
@@ -314,13 +346,22 @@ class SampleZone:
         return result
 
     @classmethod
-    def __from_sample_simple_json(cls, zone_simple: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __from_sample_simple_json(cls, config_dir: str, zone_simple: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone)
         """
         result: List['SampleZone'] = []
 
         for zone in zone_simple:
+
+            if "file" in zone:
+                file_path  = _to_abs_filepath(config_dir, zone["file"])
+                return SampleZone.__parse_sample_zone_file(
+                    config_dir=config_dir,
+                    file_path=file_path,
+                    velocity_layers_presets=velocity_layers_presets
+                )
+
             notes = _parse_midi_byte_range(zone["keys"])
             velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
@@ -360,7 +401,7 @@ class SampleZone:
         return result
 
     @classmethod
-    def from_json(cls, config_json: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def from_json(cls, config_dir: str, config_json: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data
         """
@@ -368,7 +409,11 @@ class SampleZone:
         if "sample_zone_complex" in config_json:
             result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"], velocity_layers_presets))
         if "sample_zone" in config_json:
-            result.extend(SampleZone.__from_sample_simple_json(config_json["sample_zone"], velocity_layers_presets))
+            result.extend(SampleZone.__from_sample_simple_json(
+                config_dir=config_dir,
+                zone_simple=config_json["sample_zone"],
+                velocity_layers_presets=velocity_layers_presets
+            ))
 
         return result
 
@@ -422,7 +467,7 @@ class MidiConfig:
             raise ValueError(f"processed_output_dir must be outside of output_dir.\n\toutput_dir={self.output_dir}\n\tprocessed_output_dir={self.processed_output_dir})")
 
         # Zone
-        self.sample_zone = SampleZone.from_json(config_json, self.velocity_layer_presets)
+        self.sample_zone = SampleZone.from_json(self.config_dir,config_json, self.velocity_layer_presets)
 
 def validate(config_path: str) -> dict:
     return _load_json_with_validate(config_path, config_file_validator)

@@ -68,6 +68,9 @@
                     }
                 }
             ]
+        },
+        {
+            "file": "sample_zone_example.json"
         }
     ],
     "midi_pre_wait_duration": 0.6,
