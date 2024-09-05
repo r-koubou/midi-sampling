@@ -366,7 +366,15 @@ class SampleZone:
             key_low  = zone["key_low"]
             key_high = zone["key_high"]
 
-            velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
+            velocity_layers: List[VelocityLayer] = []
+
+            if "velocity_layers_file" in zone:
+                file_path = _to_abs_filepath(config_dir, zone["velocity_layers_file"])
+                base_dir = os.path.dirname(file_path)
+                velocity_layers = VelocityLayer.parse_velocity_layers_file(file_path)
+            else:
+                velocity_layers = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
+
 
             if len(velocity_layers) == 0:
                 raise ValueError(f"velocity layers is empty.")
@@ -417,7 +425,6 @@ class SampleZone:
                 file_path = _to_abs_filepath(config_dir, zone["velocity_layers_file"])
                 base_dir = os.path.dirname(file_path)
                 velocity_layers = VelocityLayer.parse_velocity_layers_file(file_path)
-                print(f"velocity_layers={[str(x) for x in velocity_layers]}")
             else:
                 velocity_layers = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
