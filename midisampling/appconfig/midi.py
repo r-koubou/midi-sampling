@@ -186,6 +186,29 @@ class VelocityLayer:
     def __str__(self) -> str:
         return f"min={self.min_velocity}, max={self.max_velocity}, send={self.send_velocity}"
 
+    @classmethod
+    def parse_velocity_layers_file(cls, file_path: str) -> List['VelocityLayer']:
+        """
+        Parse velocity layers from definition file
+
+        Parameters
+        ----------
+        file_path : str
+            File path of the velocity layers definition file
+
+        Returns
+        -------
+        List[VelocityLayer]
+            List of VelocityLayer
+        """
+        velocities = _load_json_with_validate(file_path, velocity_layer_file_validator)
+        result: List[VelocityLayer] = []
+
+        for x in velocities:
+            result.append(VelocityLayer(x))
+
+        return result
+
 class VelocityLayerPreset:
     def __init__(self, config_dir: str, velocity_layer_preset: dict) -> None:
         self.id: int = int(velocity_layer_preset["id"])
@@ -193,9 +216,7 @@ class VelocityLayerPreset:
 
         if "file" in velocity_layer_preset:
             file_path  = _to_abs_filepath(config_dir, velocity_layer_preset["file"])
-            velocities = _load_json_with_validate(file_path, velocity_layer_file_validator)
-            for x in velocities:
-                self.layers.append(VelocityLayer(x))
+            self.layers.extend(VelocityLayer.parse_velocity_layers_file(file_path))
 
         if "velocities" in velocity_layer_preset:
             for x in velocity_layer_preset["velocities"]:
@@ -390,7 +411,15 @@ class SampleZone:
                 continue
 
             notes = _parse_midi_byte_range(zone["keys"])
-            velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
+            velocity_layers: List[VelocityLayer] = []
+
+            if "velocity_layers_file" in zone:
+                file_path = _to_abs_filepath(config_dir, zone["velocity_layers_file"])
+                base_dir = os.path.dirname(file_path)
+                velocity_layers = VelocityLayer.parse_velocity_layers_file(file_path)
+                print(f"velocity_layers={[str(x) for x in velocity_layers]}")
+            else:
+                velocity_layers = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
 
             min_note = min(notes)
             max_note = max(notes)
