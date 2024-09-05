@@ -379,11 +379,12 @@ class SampleZone:
 
             if "file" in zone:
                 file_path  = _to_abs_filepath(config_dir, zone["file"])
-                return SampleZone.__parse_sample_zone_file(
+                result.extend(SampleZone.__parse_sample_zone_file(
                     config_dir=config_dir,
                     file_path=file_path,
                     velocity_layers_presets=velocity_layers_presets
-                )
+                ))
+                continue
 
             notes = _parse_midi_byte_range(zone["keys"])
             velocity_layers: List[VelocityLayer] = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
@@ -495,6 +496,7 @@ class MidiConfig:
 
         # Zone
         self.sample_zone = SampleZone.from_json(self.config_dir,config_json, self.velocity_layer_presets)
+        print(f"sample_zone={[str(x) for x in self.sample_zone]}")
 
 def validate(config_path: str) -> dict:
     return _load_json_with_validate(config_path, config_file_validator)
