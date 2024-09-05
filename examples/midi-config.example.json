@@ -45,6 +45,9 @@
             "key_high": 64,
             "key_root": 48,
             "velocity_layers_preset_id": 0
+        },
+        {
+            "file": "sample_zone_complex_example.json"
         }
     ],
     "sample_zone": [

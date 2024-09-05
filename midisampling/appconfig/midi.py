@@ -309,13 +309,36 @@ class SampleZone:
         )
 
     @classmethod
-    def __from_zone_complex_json(cls, zone_complex: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __parse_sample_zone_complex_file(cls, config_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+        """
+        Parse sample zone complex data from external file
+        """
+        file_path = _to_abs_filepath(config_dir, file_path)
+        zone_complex_json = _load_json_with_validate(file_path, sample_zone_complex_file_validator)
+
+        return SampleZone.__from_zone_complex_json(
+            config_dir=config_dir,
+            zone_complex=zone_complex_json,
+            velocity_layers_presets=velocity_layers_presets
+        )
+
+    @classmethod
+    def __from_zone_complex_json(cls, config_dir: str, zone_complex: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone_complex)
         """
         result: List['SampleZone'] = []
 
         for zone in zone_complex:
+
+            if "file" in zone:
+                result.extend(SampleZone.__parse_sample_zone_complex_file(
+                    config_dir=config_dir,
+                    file_path=zone["file"],
+                    velocity_layers_presets=velocity_layers_presets
+                ))
+                continue
+
             key_root = zone["key_root"]
             key_low  = zone["key_low"]
             key_high = zone["key_high"]
@@ -407,7 +430,11 @@ class SampleZone:
         """
         result: List['SampleZone'] = []
         if "sample_zone_complex" in config_json:
-            result.extend(SampleZone.__from_zone_complex_json(config_json["sample_zone_complex"], velocity_layers_presets))
+            result.extend(SampleZone.__from_zone_complex_json(
+                config_dir=config_dir,
+                zone_complex=config_json["sample_zone_complex"],
+                velocity_layers_presets=velocity_layers_presets
+            ))
         if "sample_zone" in config_json:
             result.extend(SampleZone.__from_sample_simple_json(
                 config_dir=config_dir,
