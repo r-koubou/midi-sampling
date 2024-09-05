@@ -43,13 +43,6 @@
                 "$ref": "midi-program-change.schema.json"
             }
         },
-        "velocity_layers_presets": {
-            "type": "array",
-            "description": "List of velocity layers presets. In addition to defining individual layers with `sample_zone_complex` and `sample_zone`, you can also refer to this preset by ID.",
-            "items": {
-                "$ref": "midi-velocity-layer-preset.schema.json"
-            }
-        },
         "sample_zone_complex" :{
             "type":"array",
             "description": "List of keymaps for the sampled MIDI notes.",

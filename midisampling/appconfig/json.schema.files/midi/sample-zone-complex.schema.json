@@ -52,45 +52,6 @@
             ]
         },
         {
-            "description": "Define with velocity layers preset ID",
-            "additionalProperties": false,
-            "properties": {
-                "key_low": {
-                    "description": "Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
-                    "$ref": "midi-notenumber.schema.json"
-                },
-                "key_high": {
-                    "description": "Highest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
-                    "$ref": "midi-notenumber.schema.json"
-                },
-                "key_root": {
-                    "description": "Root key number (note number) in the keymap. This value is intended to be used as information for mapping note-on messages sent to MIDI devices and third-party sampler software when sampling.",
-                    "$ref": "midi-notenumber.schema.json"
-                },
-                "velocity_layers_preset_id": {
-                    "type": "integer",
-                    "description": "ID of the velocity layer preset."
-                },
-                "note_duration": {
-                    "$ref": "midi-note-duration.schema.json"
-                }
-            },
-            "required": [
-                "key_low",
-                "key_high",
-                "key_root",
-                "velocity_layers_preset_id"
-            ],
-            "examples": [
-                {
-                    "key_low": 0,
-                    "key_high": 32,
-                    "key_root": 16,
-                    "velocity_layers_preset_id": 0
-                }
-            ]
-        },
-        {
             "description": "Define with velocity layers file",
             "additionalProperties": false,
             "properties": {
