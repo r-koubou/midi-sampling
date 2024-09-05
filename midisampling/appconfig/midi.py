@@ -31,7 +31,6 @@ sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
         ("midi-note-duration.schema.json", _schema_path("midi-note-duration.schema.json")),
         ("midi-velocity.schema.json", _schema_path("midi-velocity.schema.json")),
         ("midi-velocity-layer.schema.json", _schema_path("midi-velocity-layer.schema.json")),
-        ("midi-velocity-layer-preset.schema.json", _schema_path("midi-velocity-layer-preset.schema.json")),
         ("midi-program-change.schema.json", _schema_path("midi-program-change.schema.json")),
         ("sample-zone-complex.schema.json", _schema_path("sample-zone-complex.schema.json")),
         ("sample-zone.schema.json", _schema_path("sample-zone.schema.json")),
@@ -209,64 +208,6 @@ class VelocityLayer:
 
         return result
 
-class VelocityLayerPreset:
-    def __init__(self, config_dir: str, velocity_layer_preset: dict) -> None:
-        self.id: int = int(velocity_layer_preset["id"])
-        self.layers: List[VelocityLayer] = []
-
-        if "file" in velocity_layer_preset:
-            file_path  = _to_abs_filepath(config_dir, velocity_layer_preset["file"])
-            self.layers.extend(VelocityLayer.parse_velocity_layers_file(file_path))
-
-        if "velocities" in velocity_layer_preset:
-            for x in velocity_layer_preset["velocities"]:
-                self.layers.append(VelocityLayer(x))
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, VelocityLayerPreset):
-            return False
-        return (
-            self.id == other.id
-            and self.layers == other.layers
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.id, self.layers))
-
-    def __str__(self) -> str:
-        return f"id={self.id}, layers[{len(self.layers)}]=[{[f"[{x}]" for x in self.layers]}]"
-
-    @classmethod
-    def from_json(cls, config_dir: str, velocity_layer_presets: dict) -> List['VelocityLayerPreset']:
-        """
-        Create VelocityLayerPreset list from json data
-        """
-        result: List['VelocityLayerPreset'] = []
-
-        for x in velocity_layer_presets:
-            result.append(VelocityLayerPreset(config_dir, x))
-
-        return result
-
-    @classmethod
-    def get_velocity_layer_preset(cls, velocity_layer_presets: List['VelocityLayerPreset'], id: int) -> 'VelocityLayerPreset':
-        """
-        Get VelocityLayerPreset by id
-
-        Parameters
-        ----------
-        velocity_layer_presets : List['VelocityLayerPreset']
-            List of VelocityLayerPreset
-
-        id : int
-            ID to search
-        """
-        for x in velocity_layer_presets:
-            if x.id == id:
-                return x
-
-        raise ValueError(f"VelocityLayerPreset not found. id={id}")
-
 class SampleZone:
     """
     Represents the smallest unit of sample zone data
@@ -294,26 +235,6 @@ class SampleZone:
 
     def __str__(self) -> str:
         return f"key_root={self.key_root}, key_low={self.key_low}, key_high={self.key_high}, velocity_layers[{len(self.velocity_layers)}]=[{[f"[{x}]" for x in self.velocity_layers]}]"
-
-    @classmethod
-    def __parse_velocity_layer(cls, zone: dict, presets: List[VelocityLayerPreset] ) -> List[VelocityLayer]:
-        """
-        Parse velocity layer data to list
-        """
-
-        result: List[VelocityLayer] = []
-
-        if "velocity_layers_preset_id" in zone:
-            id = int(zone["velocity_layers_preset_id"])
-            preset: VelocityLayerPreset = VelocityLayerPreset.get_velocity_layer_preset(presets, id)
-            for preset_data in preset.layers:
-                result.append(preset_data)
-
-        if "velocity_layers" in zone:
-            for x in zone["velocity_layers"]:
-                result.append(VelocityLayer(x))
-
-        return result
 
     @classmethod
     def __parse_sample_zone_complex_file(cls, base_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
