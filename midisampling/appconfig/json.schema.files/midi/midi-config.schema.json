@@ -54,14 +54,50 @@
             "type":"array",
             "description": "List of keymaps for the sampled MIDI notes.",
             "items": {
-                "$ref": "sample-zone-complex.schema.json"
+                "oneOf": [
+                    {
+
+                        "$ref": "sample-zone-complex.schema.json"
+                    },
+                    {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "file": {
+                                "type": "string",
+                                "description": "Path to the JSON file containing the sample zone complex definition."
+                            }
+                        },
+                        "required": [
+                            "file"
+                        ]
+                    }
+                ]
             }
         },
         "sample_zone" :{
             "type":"array",
             "description": "List of keymaps for the sampled MIDI notes.",
             "items": {
-                "$ref": "sample-zone.schema.json"
+                "oneOf": [
+                    {
+
+                        "$ref": "sample-zone.schema.json"
+                    },
+                    {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "file": {
+                                "type": "string",
+                                "description": "Path to the JSON file containing the sample zone definition."
+                            }
+                        },
+                        "required": [
+                            "file"
+                        ]
+                    }
+                ]
             }
         },
         "midi_pre_wait_duration": {

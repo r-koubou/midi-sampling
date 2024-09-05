@@ -1,0 +1,8 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "description": "The definition of sample zone in external file.",
+    "items": {
+        "$ref": "sample-zone.schema.json"
+    }
+}
