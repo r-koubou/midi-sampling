@@ -262,7 +262,7 @@ class SampleZone:
         return f"key_root={self.key_root}, key_low={self.key_low}, key_high={self.key_high}, velocity_layers[{len(self.velocity_layers)}]=[{[f"[{x}]" for x in self.velocity_layers]}]"
 
     @classmethod
-    def __parse_sample_zone_complex_file(cls, base_dir: str, file_path: str, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __parse_sample_zone_complex_file(cls, base_dir: str, file_path: str) -> List['SampleZone']:
         """
         Parse sample zone complex data from external file
         """
@@ -271,8 +271,7 @@ class SampleZone:
 
         return SampleZone.__from_zone_complex_json(
             config_dir=base_dir,
-            zone_complex=zone_complex_json,
-            velocity_layers_presets=velocity_layers_presets
+            zone_complex=zone_complex_json
         )
 
     @classmethod
@@ -289,7 +288,7 @@ class SampleZone:
         )
 
     @classmethod
-    def __from_zone_complex_json(cls, config_dir: str, zone_complex: dict, velocity_layers_presets: List[VelocityLayerPreset]) -> List['SampleZone']:
+    def __from_zone_complex_json(cls, config_dir: str, zone_complex: dict,) -> List['SampleZone']:
         """
         Create SampleZone list from json data (sample_zone_complex)
         """
@@ -302,8 +301,7 @@ class SampleZone:
                 base_dir = os.path.dirname(file_path)
                 result.extend(SampleZone.__parse_sample_zone_complex_file(
                     base_dir=base_dir,
-                    file_path=file_path,
-                    velocity_layers_presets=velocity_layers_presets
+                    file_path=file_path
                 ))
                 continue
 
@@ -317,8 +315,10 @@ class SampleZone:
                 file_path = _to_abs_filepath(config_dir, zone["velocity_layers_file"])
                 base_dir = os.path.dirname(file_path)
                 velocity_layers = VelocityLayer.parse_velocity_layers_file(file_path)
+            elif "velocity_layers" in zone:
+                velocity_layers = VelocityLayer.parse_velocity_layers_json_array(zone["velocity_layers"])
             else:
-                velocity_layers = SampleZone.__parse_velocity_layer(zone, velocity_layers_presets)
+                raise ValueError(f"`velocity_layers` is not defined.")
 
 
             if len(velocity_layers) == 0:
@@ -418,8 +418,7 @@ class SampleZone:
         if "sample_zone_complex" in config_json:
             result.extend(SampleZone.__from_zone_complex_json(
                 config_dir=config_dir,
-                zone_complex=config_json["sample_zone_complex"],
-                velocity_layers_presets=velocity_layers_presets
+                zone_complex=config_json["sample_zone_complex"]
             ))
         if "sample_zone" in config_json:
             result.extend(SampleZone.__from_sample_simple_json(
