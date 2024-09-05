@@ -47,6 +47,12 @@
             "velocity_layers_preset_id": 0
         },
         {
+            "key_low": 32,
+            "key_high": 64,
+            "key_root": 48,
+            "velocity_layers_file": "velocity_layers_example.json"
+        },
+        {
             "file": "sample_zone_complex_example.json"
         }
     ],
@@ -71,6 +77,10 @@
                     }
                 }
             ]
+        },
+        {
+            "keys": {"from": 50, "to": 50},
+            "velocity_layers_file": "velocity_layers_example.json"
         },
         {
             "file": "sample_zone_example.json"
