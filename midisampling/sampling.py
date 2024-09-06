@@ -379,12 +379,15 @@ class DefaultSampling(SamplingBase):
         logger.debug(f"Record duration(*ceiling ): {record_duration}")
 
         self.audio_device.start_recording(record_duration)
-        time.sleep(midi_pre_duration)
+
+        if midi_pre_duration > 0:
+            time.sleep(midi_pre_duration)
 
         # Play MIDI
         self.midi_device.play_note(midi_channel, zone.key_root, velocity.send_velocity, midi_note_duration)
 
-        time.sleep(midi_release_duration)
+        if midi_release_duration > 0:
+            time.sleep(midi_release_duration)
 
         self.audio_device.stop_recording()
 
