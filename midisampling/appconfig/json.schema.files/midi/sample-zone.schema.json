@@ -53,46 +53,6 @@
             ]
         },
         {
-            "description": "Define with velocity layers preset ID",
-            "additionalProperties": false,
-            "properties": {
-                "keys": {
-                    "description": "Root key number (note number) in the keymap.",
-                    "$ref": "midi-notenumber-range.schema.json"
-                },
-                "velocity_layers_preset_id": {
-                    "type": "integer",
-                    "description": "ID of the velocity layer preset."
-                },
-                "note_durations": {
-                    "description": "The list of MIDI notes and their duration.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "sample-zone-note-duration.schema.json"
-                    }
-                }
-            },
-            "required": [
-                "keys",
-                "velocity_layers_preset_id"
-            ],
-            "examples": [
-                {
-                    "keys": { "from": 10, "to": 100 },
-                    "velocity_layers_preset_id": 0,
-                    "note_durations": [
-                        {
-                            "notes": [40, 41, 42],
-                            "duration": {
-                                "note_time": 10,
-                                "release_time": 2.0
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "description": "Define with velocity layers file",
             "additionalProperties": false,
             "properties": {
