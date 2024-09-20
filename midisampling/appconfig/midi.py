@@ -22,6 +22,8 @@ def _load_json_with_validate(file_path: str, validator: JsonValidator) -> dict:
 
 # Sub Schema list
 sub_schemas: List[JsonSchemaInfo] = JsonSchemaInfo.from_files([
+        ("comment.schema.json", _schema_path("comment.schema.json")),
+        ("comments.schema.json", _schema_path("comments.schema.json")),
         ("midi-channel.schema.json", _schema_path("midi-channel.schema.json")),
         ("integer-range.schema.json", _schema_path("integer-range.schema.json")),
         ("midi-message-byte.schema.json", _schema_path("midi-message-byte.schema.json")),

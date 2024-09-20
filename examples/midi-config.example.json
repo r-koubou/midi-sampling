@@ -12,6 +12,11 @@
     ],
     "sample_zone_complex": [
         {
+            "$comment": "Sample zone complex configuration",
+            "$comments": [
+                "Sample zone complex configuration",
+                "Sample zone complex configuration"
+            ],
             "key_low": 0,
             "key_high": 32,
             "key_root": 16,
@@ -37,6 +42,11 @@
     ],
     "sample_zone": [
         {
+            "$comment": "Sample zone configuration",
+            "$comments": [
+                "Sample zone configuration",
+                "Sample zone configuration"
+            ],
             "keys": {"from": 40, "to": 40},
             "velocity_layers": [
                 {"min": 0,  "max": 31,  "send": 31},
