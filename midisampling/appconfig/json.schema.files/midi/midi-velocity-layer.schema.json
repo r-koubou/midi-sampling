@@ -4,6 +4,12 @@
     "additionalProperties": false,
     "description": "Velocity layer configuration",
     "properties": {
+        "$comment": {
+            "$ref": "comment.schema.json"
+        },
+        "$comments": {
+            "$ref": "comments.schema.json"
+        },
         "min": {
             "description": "Minimum velocity value.",
             "$ref": "midi-velocity.schema.json"

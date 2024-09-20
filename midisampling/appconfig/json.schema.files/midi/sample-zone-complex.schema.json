@@ -7,6 +7,12 @@
             "description": "Define with individual parameters",
             "additionalProperties": false,
             "properties": {
+                "$comment": {
+                    "$ref": "comment.schema.json"
+                },
+                "$comments": {
+                    "$ref": "comments.schema.json"
+                },
                 "key_low": {
                     "description": "Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
                     "$ref": "midi-notenumber.schema.json"
@@ -55,6 +61,12 @@
             "description": "Define with velocity layers file",
             "additionalProperties": false,
             "properties": {
+                "$comment": {
+                    "$ref": "comment.schema.json"
+                },
+                "$comments": {
+                    "$ref": "comments.schema.json"
+                },
                 "key_low": {
                     "description": "Lowest key number (note number) in the keymap. This value is intended to be used as information for mapping with third-party sampler software.",
                     "$ref": "midi-notenumber.schema.json"

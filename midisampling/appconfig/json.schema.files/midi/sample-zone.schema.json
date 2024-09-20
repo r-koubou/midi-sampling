@@ -7,6 +7,12 @@
             "description": "Define with individual parameters",
             "additionalProperties": false,
             "properties": {
+                "$comment": {
+                    "$ref": "comment.schema.json"
+                },
+                "$comments": {
+                    "$ref": "comments.schema.json"
+                },
                 "keys": {
                     "description": "Root key number (note number) in the keymap.",
                     "$ref": "midi-notenumber-range.schema.json"
@@ -56,6 +62,12 @@
             "description": "Define with velocity layers file",
             "additionalProperties": false,
             "properties": {
+                "$comment": {
+                    "$ref": "comment.schema.json"
+                },
+                "$comments": {
+                    "$ref": "comments.schema.json"
+                },
                 "keys": {
                     "description": "Root key number (note number) in the keymap.",
                     "$ref": "midi-notenumber-range.schema.json"
