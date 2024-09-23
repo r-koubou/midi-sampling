@@ -68,7 +68,7 @@ def main():
         midi_config: MidiConfig = load_midi_config(args.midi_config_path)
 
     except Exception as e:
-        logger.faerrortal(f"Failed to load MIDI config: {args.midi_config_path}")
+        logger.error(f"Failed to load MIDI config: {args.midi_config_path}")
         logger.error(e, exc_info=True)
         sys.exit(1)
 
