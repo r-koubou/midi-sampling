@@ -1,0 +1,83 @@
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12"]
+build-backend = "uv_build"
+
+[project]
+name = "sample-loop-detector"
+version = "0.1.0"
+description = "Automatic sustain loop point detector for sampled instrument WAV files"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = "MIT"
+authors = [
+    { name = "R-Koubou" }
+]
+dependencies = [
+    "numpy>=2.0,<3",
+    "scipy>=1.14,<2",
+    "librosa>=0.11,<0.12",
+    "soundfile>=0.13,<0.14",
+    "typer>=0.16,<1",
+]
+
+[project.scripts]
+sample-loop-detector = "sample_loop_detector.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=6,<8",
+    "ruff>=0.12,<1",
+    "mypy>=1.16,<2",
+]
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+    "SIM",
+    "RUF",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["sample_loop_detector"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["sample_loop_detector"]
+
+[[tool.mypy.overrides]]
+module = [
+    "librosa.*",
+    "scipy.*",
+    "soundfile",
+]
+ignore_missing_imports = true

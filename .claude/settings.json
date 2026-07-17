@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny":
+    [
+        "Bash(uv run *)",
+        "Bash(rm -rf *)",
+        "Bash(sudo *)",
+        "Bash(* --force)",
+        "Bash(del /q *)",
+        "Bash(rmdir /s *)"
+    ]
+  }
+}
