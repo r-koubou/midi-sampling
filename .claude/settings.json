@@ -1,8 +1,12 @@
 {
   "permissions": {
+    "allow":
+    [
+        "Bash(uv --version)",
+        "Bash(uv run *)"
+    ],
     "deny":
     [
-        "Bash(uv run *)",
         "Bash(rm -rf *)",
         "Bash(sudo *)",
         "Bash(* --force)",
