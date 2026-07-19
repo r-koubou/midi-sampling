@@ -1,0 +1,6 @@
+device_name: "Yamaha Steinberg USB ASIO"
+device_platform: "ASIO"
+input_ports: [2, 3]
+channels: 2
+sample_rate: 48000
+data_format: "int32"
