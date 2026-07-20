@@ -6,7 +6,6 @@ import json
 from logging import getLogger, Logger,config as logging_config
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-DEFAULT_LOGGING_CONFIG_FILE = os.path.join(THIS_SCRIPT_DIR, "default_logging_config.json")
 
 initialized = False
 logger = getLogger()
@@ -38,9 +37,6 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
 
     if initialized:
         return
-
-    if not logconfig_file_path:
-        logconfig_file_path = DEFAULT_LOGGING_CONFIG_FILE
 
     with open(logconfig_file_path, "r") as f:
         config_json = json.load(f)

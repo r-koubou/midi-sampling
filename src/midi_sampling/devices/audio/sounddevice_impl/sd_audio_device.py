@@ -109,12 +109,11 @@ class SdAudioDevice(AudioDevice):
 
 if __name__ == "__main__":
     import typer
-    from midi_sampling.logging_management import init_logging_from_config
-    from midi_sampling.logging_management import init_logging_from_config
+    from midi_sampling.logging_management import init_logging_as_stdout
 
     def main(audio_information_file_path: str):
 
-        init_logging_from_config()
+        init_logging_as_stdout()
 
         audio_device = SdAudioDevice(audio_information_file_path)
         audio_device.initialize()
