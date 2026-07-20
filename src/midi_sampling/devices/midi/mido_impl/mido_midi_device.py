@@ -7,11 +7,12 @@ from logging import getLogger
 import mido
 
 from midi_sampling.devices.midi.abstractions.midi_device import MidiDevice
-from midi_sampling.devices.midi.abstractions.midi_device_information import (
-    MidiDeviceInformation,
-)
 from midi_sampling.devices.midi.abstractions.not_found_midi_device_error import (
     NotFoundMidiDeviceError,
+)
+
+from midi_sampling.devices.midi.mido_impl.mido_midi_device_information_loader import (
+    MidoMidiDeviceInformationLoader,
 )
 
 logger = getLogger(__name__)
@@ -22,12 +23,14 @@ class MidoMidiDevice(MidiDevice):
     Implementation of the MidiDevice interface using the mido library.
     """
 
-    def __init__(self, midi_device_information: MidiDeviceInformation) -> None:
+    def __init__(self, midi_device_information_file_path: str) -> None:
         """
         Args:
-            midi_device_information: MIDI device information.
+            midi_device_information_file_path: Path to the MIDI device information file.
         """
-        self.midi_device_information = midi_device_information
+        self.midi_device_information = MidoMidiDeviceInformationLoader().load(
+            midi_device_information_file_path
+        )
         self.midiout = None
 
     @classmethod

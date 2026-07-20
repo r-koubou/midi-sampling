@@ -4,14 +4,10 @@ import typer
 from midi_sampling.logging_management import init_logging_as_stdout
 
 from midi_sampling.devices.midi.abstractions import (
-    MidiDeviceInformation,
-    MidiDeviceInformationLoader
+    MidiDevice,
 )
 
-from midi_sampling.devices.midi.mido_impl import (
-    MidoMidiDevice,
-    MidoMidiDeviceInformationLoader,
-)
+from midi_sampling.devices.midi.mido_impl import MidoMidiDevice
 
 logger = getLogger(__name__)
 
@@ -19,11 +15,8 @@ logger = getLogger(__name__)
 def main(midi_device_info_file_path: str):
     init_logging_as_stdout()
 
-    loader: MidiDeviceInformationLoader = MidoMidiDeviceInformationLoader()
-    info: MidiDeviceInformation = loader.load(midi_device_info_file_path)
-
     try:
-        midi_out = MidoMidiDevice(info)
+        midi_out: MidiDevice = MidoMidiDevice(midi_device_info_file_path)
 
         logger.info("=" * 80)
         logger.info("Available MIDI device names")
