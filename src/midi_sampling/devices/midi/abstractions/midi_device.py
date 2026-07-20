@@ -1,11 +1,6 @@
 from typing import List
 import abc
 
-from midi_sampling.devices.midi.abstractions.midi_device_information import (
-    MidiDeviceInformation,
-)
-
-
 class MidiDevice(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def dispose(self) -> None:

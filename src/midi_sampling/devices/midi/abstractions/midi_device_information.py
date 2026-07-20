@@ -1,4 +1,3 @@
-from typing import Protocol
 
 class MidiDeviceInformation:
     def __init__(self, name: str):
@@ -11,10 +10,3 @@ class MidiDeviceInformation:
         return self.__str__()
 
 
-class MidiDeviceInformationLoader(Protocol):
-    """
-    Load MidiDeviceInformation from a file or other source.
-    """
-
-    def load(self, file_path: str) -> MidiDeviceInformation:
-        ...

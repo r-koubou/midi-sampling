@@ -3,17 +3,13 @@ import typer
 
 from midi_sampling.logging_management import init_logging_as_stdout
 
-from midi_sampling.devices.midi.abstractions.midi_device_information import (
-    MidiDeviceInformationLoader,
+from midi_sampling.devices.midi.abstractions import (
     MidiDeviceInformation,
+    MidiDeviceInformationLoader
 )
 
-from midi_sampling.devices.midi.mido_impl.mido_midi_device import (
+from midi_sampling.devices.midi.mido_impl import (
     MidoMidiDevice,
-    MidiDeviceInformation
-)
-
-from midi_sampling.devices.midi.mido_impl.mido_midi_device_information_loader import (
     MidoMidiDeviceInformationLoader,
 )
 

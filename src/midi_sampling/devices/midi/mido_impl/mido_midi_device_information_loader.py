@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 import yaml
 
-from midi_sampling.devices.midi.abstractions.midi_device_information import (
-    MidiDeviceInformationLoader,
+from midi_sampling.devices.midi.abstractions import (
     MidiDeviceInformation,
+    MidiDeviceInformationLoader
 )
 
 
