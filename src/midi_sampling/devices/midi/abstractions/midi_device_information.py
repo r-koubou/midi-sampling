@@ -1,4 +1,3 @@
-
 class MidiDeviceInformation:
     def __init__(self, name: str):
         self.name = name
@@ -8,5 +7,3 @@ class MidiDeviceInformation:
 
     def __repr__(self):
         return self.__str__()
-
-
