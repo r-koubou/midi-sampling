@@ -4,8 +4,9 @@ import os.path
 
 from logging import getLogger
 
-from midi_sampling.devices.audio.abstractions.audio_device import AudioDevice
-from midi_sampling.devices.audio.sounddevice_impl.sd_audio_device import SdAudioDevice
+from midi_sampling.devices.audio.abstractions import AudioDevice
+
+from midi_sampling.devices.audio.sounddevice_impl import SdAudioDevice
 from midi_sampling.logging_management import init_logging_as_stdout
 
 logger = getLogger(__name__)

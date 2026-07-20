@@ -2,13 +2,11 @@ from pydantic import BaseModel
 from typing import List, Literal
 import yaml
 
-from midi_sampling.devices.audio.abstractions.audio_device_information import (
-    AudioDeviceInformationLoader,
+from midi_sampling.devices.audio.abstractions import (
     AudioDeviceInformation,
+    AudioDataFormat,
+    AudioDeviceInformationLoader
 )
-
-from midi_sampling.devices.audio.abstractions.audio_data_format import AudioDataFormat
-
 
 class _AudioDeviceInformationModel(BaseModel):
     device_name: str

@@ -2,24 +2,18 @@ import os
 
 # Enable ASIO support if available
 os.environ["SD_ENABLE_ASIO"] = "1"
-print("*"*100)
 
 import logging
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-from midi_sampling.devices.audio.abstractions.not_found_audio_device_error import (
+from midi_sampling.devices.audio.abstractions import (
     NotFoundAudioDeviceError,
-)
-
-from midi_sampling.devices.audio.abstractions.audio_data_format import (
     AudioDataFormat,
-)
-
-from midi_sampling.devices.audio.abstractions.audio_device import (
     AudioDevice,
 )
+
 
 from midi_sampling.devices.audio.sounddevice_impl.sd_audio_device_information_loader import (
     SdAudioDeviceInformationLoader,
