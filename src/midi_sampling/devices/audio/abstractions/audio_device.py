@@ -1,9 +1,13 @@
-from typing import List
 import abc
 
-from midi_sampling.devices.audio.abstractions.audio_device_information import AudioDeviceInformation
-
 class AudioDevice(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def initialize(self) -> None:
+        """
+        Initialize the Audio device.
+        """
+        pass
+
     @abc.abstractmethod
     def dispose(self) -> None:
         """
@@ -13,9 +17,9 @@ class AudioDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def initialize(self) -> None:
+    def get_device_names(self) -> list[str]:
         """
-        Initialize the Audio device.
+        Get the names of available audio devices.
         """
         pass
 
