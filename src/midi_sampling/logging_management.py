@@ -20,17 +20,16 @@ def init_logging_from_config(logconfig_file_path: str = None, logfile_path: str 
     Initialize the logging configuration.
     This function should be called before any logging is done and only once in startup.
 
-    Parameters
-    ----------
-    logconfig_file_path : str, optional
-        Path to the logging configuration file (default: None).
+    Args:
+        logconfig_file_path : str, optional
+            Path to the logging configuration file (default: None).
 
-    logfile_path : str, optional
-        Overrides the log file path in the configuration file.
-        Note: Override `filename` in the all handlers in the configuration file.
+        logfile_path : str, optional
+            Overrides the log file path in the configuration file.
+            Note: Override `filename` in the all handlers in the configuration file.
 
-    verbose : bool, optional
-        Enable verbose logging (default: False).
+        output_mode : OutputMode, optional
+            Set the output mode for logging (default: OutputMode.Default).
     """
     global initialized
     global logger
@@ -66,12 +65,11 @@ def init_logging_as_stdout(verbose: bool = False, message_format: str = DEFAULT_
     Initialize the logging configuration to output to stdout.
     This function should be called before any logging is done and only once in startup.
 
-    Parameters
-    ----------
-    verbose : bool, optional
-        Enable verbose logging (default: False).
-    message_format : str, optional
-        Log message format (default: "%(asctime)s [%(levelname)s] %(name)s: %(message)s").
+    Args:
+        verbose : bool, optional
+            Enable verbose logging (default: False).
+        message_format : str, optional
+            Log message format (default: "%(asctime)s [%(levelname)s] %(name)s: %(message)s").
     """
     global initialized
 

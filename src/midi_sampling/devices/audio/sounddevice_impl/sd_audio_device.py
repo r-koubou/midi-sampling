@@ -34,8 +34,7 @@ class SdAudioDevice(AudioDevice):
 
     def __init__(self, audio_information_file_path: str) -> None:
         """
-        Parameters
-        ----------
+        Args:
             audio_information_file_path:
                 Path to the YAML file containing AudioDeviceInformation.
         """
