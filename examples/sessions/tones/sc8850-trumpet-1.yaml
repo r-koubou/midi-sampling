@@ -1,0 +1,49 @@
+# 音色サンプリング定義(インライン定義版)
+#
+# ゾーンとベロシティレイヤーは外部ファイル参照の代わりに
+# インラインでも記述できる(file とインラインの併記は禁止)。
+
+schema_version: 1
+kind: sampling_definition
+
+id: sc8850-trumpet-1
+name: Trumpet 1
+
+midi_program:
+  bank_msb: 0
+  bank_lsb: 0
+  program: 56
+
+# ゾーンをインラインで定義
+zone_layout:
+  zones:
+    - low: 52
+      root: 54
+      high: 56
+
+    - low: 57
+      root: 59
+      high: 61
+
+    - low: 62
+      root: 64
+      high: 66
+
+    - low: 67
+      root: 69
+      high: 71
+
+# ベロシティレイヤーをインラインで定義
+velocity_profile:
+  layers:
+    - low: 1
+      high: 63
+      send: 48
+
+    - low: 64
+      high: 127
+      send: 112
+
+timing:
+  note_on: 2.0
+  release_capture: 2.0

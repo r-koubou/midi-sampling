@@ -24,9 +24,10 @@ class AudioDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def start_recording(self, duration: int) -> None:
+    def start_recording(self, duration: float) -> None:
         """
-        Start recording audio. This function should be non-blocking.
+        Start recording audio for the given duration in seconds.
+        This function should be non-blocking.
         """
         pass
 

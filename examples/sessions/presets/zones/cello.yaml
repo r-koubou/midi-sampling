@@ -1,0 +1,47 @@
+# ゾーンレイアウト定義(外部プリセット)
+#
+# - low / root / high は MIDIノート番号(0〜127)
+# - low <= root <= high を満たすこと
+# - ゾーン同士の重複は禁止(ゾーン間の空白は許可)
+# - root のノートを実際に発音・録音し、low〜high の鍵盤範囲へ割り当てる
+
+schema_version: 1
+kind: zone_layout
+
+zones:
+  # C2 を中心に B1〜C#2 をカバー
+  - low: 35
+    root: 36
+    high: 37
+
+  - low: 38
+    root: 39
+    high: 40
+
+  - low: 41
+    root: 42
+    high: 43
+
+  - low: 44
+    root: 45
+    high: 46
+
+  - low: 47
+    root: 48
+    high: 49
+
+  - low: 50
+    root: 51
+    high: 52
+
+  - low: 53
+    root: 54
+    high: 55
+
+  - low: 56
+    root: 57
+    high: 58
+
+  - low: 59
+    root: 60
+    high: 61

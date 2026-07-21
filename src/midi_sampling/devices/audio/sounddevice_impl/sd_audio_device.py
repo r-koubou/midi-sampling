@@ -110,7 +110,8 @@ class SdAudioDevice(AudioDevice):
         return result
 
     def start_recording(self, duration):
-        self.recorded = sd.rec(duration * sd.default.samplerate)
+        # Convert seconds to frames immediately before recording.
+        self.recorded = sd.rec(round(duration * sd.default.samplerate))
 
     def stop_recording(self):
         sd.wait()

@@ -1,0 +1,158 @@
+from logging import getLogger
+from pathlib import Path
+from typing import TYPE_CHECKING, Annotated
+
+if TYPE_CHECKING:
+    from midi_sampling.sampling.resolving import ResolvedSession
+
+import typer
+
+from midi_sampling import logging_management
+from midi_sampling.sampling.audit import (
+    AuditService,
+    SessionAuditResult,
+    ToneAuditStatus,
+)
+from midi_sampling.sampling.exceptions import SamplingError
+from midi_sampling.sampling.planning import SamplingPlan, SamplingPlanBuilder
+
+logger = getLogger(__name__)
+
+app = typer.Typer(
+    help="Automated MIDI sound module sampler.",
+    no_args_is_help=True,
+    pretty_exceptions_show_locals=False,
+)
+
+EXIT_OK = 0
+EXIT_RESAMPLING_REQUIRED = 1
+EXIT_EXECUTION_FAILED = 1
+EXIT_DEFINITION_ERROR = 2
+
+SessionFileArgument = Annotated[
+    Path,
+    typer.Argument(
+        help="Path to a sampling session definition file (kind: sampling_session).",
+        show_default=False,
+    ),
+]
+
+VerboseOption = Annotated[
+    bool,
+    typer.Option("--verbose", "-v", help="Enable debug logging."),
+]
+
+
+def _init_logging(verbose: bool) -> None:
+    logging_management.init_logging_as_stdout(verbose=verbose)
+
+
+def _build_plan(session_file: Path) -> "tuple[SamplingPlan, ResolvedSession]":
+    """
+    Resolve the session file and build a validated sampling plan.
+    Raises SamplingError subclasses on any definition problem.
+    """
+    from midi_sampling.devices.audio.sounddevice_impl.sd_audio_device_information_loader import (
+        SdAudioDeviceInformationLoader,
+    )
+    from midi_sampling.sampling.resolving import DefinitionResolver
+
+    resolver = DefinitionResolver(SdAudioDeviceInformationLoader())
+    session = resolver.resolve(session_file)
+    return SamplingPlanBuilder().build(session), session
+
+
+@app.command()
+def run(session_file: SessionFileArgument, verbose: VerboseOption = False) -> None:
+    """
+    Record all samples defined by a sampling session.
+    """
+    _init_logging(verbose)
+
+    try:
+        plan, session = _build_plan(session_file)
+    except SamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_DEFINITION_ERROR)
+
+    from midi_sampling.devices.audio.sounddevice_impl.sd_audio_device import (
+        SdAudioDevice,
+    )
+    from midi_sampling.devices.midi.mido_impl.mido_midi_device import MidoMidiDevice
+    from midi_sampling.sampling import SamplingExecutor
+
+    audio_device = SdAudioDevice(str(session.audio_device_file))
+    midi_device = MidoMidiDevice(str(session.midi_device_file))
+
+    executor = SamplingExecutor(
+        audio_device=audio_device,
+        midi_device=midi_device,
+        progress=typer.echo,
+    )
+
+    try:
+        executor.execute(plan)
+    except SamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_EXECUTION_FAILED)
+
+    total_samples = sum(len(tone.targets) for tone in plan.tones)
+    typer.echo(
+        f"Completed: {len(plan.tones)} tones, {total_samples} samples "
+        f"-> {plan.output_root}"
+    )
+
+
+@app.command()
+def audit(session_file: SessionFileArgument, verbose: VerboseOption = False) -> None:
+    """
+    Check existing sampling outputs against the current definitions.
+    Read-only: never opens devices and never modifies any file.
+    """
+    _init_logging(verbose)
+
+    try:
+        plan, _session = _build_plan(session_file)
+        result = AuditService().audit(plan)
+    except SamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_DEFINITION_ERROR)
+
+    _print_audit_report(result)
+
+    raise typer.Exit(
+        EXIT_OK if result.all_up_to_date else EXIT_RESAMPLING_REQUIRED
+    )
+
+
+def _print_audit_report(result: SessionAuditResult) -> None:
+    typer.echo("Sampling audit")
+
+    for tone in result.tones:
+        typer.echo("")
+        if tone.status is ToneAuditStatus.UP_TO_DATE:
+            typer.echo(f"[UP TO DATE] {tone.definition_id}")
+            typer.echo(f"  samples: {tone.planned_sample_count}")
+            continue
+
+        typer.echo(f"[RESAMPLE] {tone.definition_id}")
+        typer.echo(f"  reason: {tone.status.value}")
+
+        if tone.status is ToneAuditStatus.DEFINITION_CHANGED:
+            typer.echo(f"  existing hash: {tone.existing_hash}")
+            typer.echo(f"  current hash:  {tone.current_hash}")
+        elif tone.status is ToneAuditStatus.MISSING_SAMPLES:
+            typer.echo("  missing:")
+            for file_name in tone.missing_files:
+                typer.echo(f"    {file_name}")
+        elif tone.detail is not None:
+            typer.echo(f"  detail: {tone.detail}")
+
+    typer.echo("")
+    typer.echo("Summary:")
+    typer.echo(f"  up to date: {result.up_to_date_count}")
+    typer.echo(f"  resampling required: {result.resampling_required_count}")
+
+
+if __name__ == "__main__":
+    app()
