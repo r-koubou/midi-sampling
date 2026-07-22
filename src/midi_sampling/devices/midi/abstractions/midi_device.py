@@ -18,13 +18,6 @@ class MidiDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_midi_device_names(self) -> List[str]:
-        """
-        Get a list of MIDI device names.
-        """
-        pass
-
-    @abc.abstractmethod
     def play_note(
         self, channel: int, note: int, velocity: int, duration: float
     ) -> None:

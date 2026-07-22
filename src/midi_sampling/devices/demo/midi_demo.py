@@ -21,7 +21,7 @@ def main(midi_device_info_file_path: str):
         logger.info("=" * 80)
         logger.info("Available MIDI device names")
         logger.info("=" * 80)
-        for name in midi_out.get_midi_device_names():
+        for name in MidoMidiDevice.get_device_names():
             logger.info(name)
         logger.info("=" * 80)
 

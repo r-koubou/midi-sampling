@@ -97,7 +97,8 @@ class SdAudioDevice(AudioDevice):
         finally:
             pass
 
-    def get_device_names(self) -> list[str]:
+    @classmethod
+    def get_device_names(cls) -> list[str]:
         result = []
 
         for device in sd.query_devices():

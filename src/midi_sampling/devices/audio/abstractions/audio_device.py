@@ -17,13 +17,6 @@ class AudioDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_device_names(self) -> list[str]:
-        """
-        Get the names of available audio devices.
-        """
-        pass
-
-    @abc.abstractmethod
     def start_recording(self, duration: float) -> None:
         """
         Start recording audio for the given duration in seconds.

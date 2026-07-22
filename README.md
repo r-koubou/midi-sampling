@@ -17,6 +17,9 @@ uv sync
 ## 使い方
 
 ```bash
+# 定義ファイルに記述するためのデバイス名をリストアップ
+uv run list-devices
+
 # サンプリング実行
 uv run midi-sampling run <session.yaml>
 

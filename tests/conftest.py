@@ -57,9 +57,6 @@ class FakeAudioDevice(AudioDevice):
     def dispose(self) -> None:
         self.events.append(("audio.dispose",))
 
-    def get_device_names(self) -> list[str]:
-        return ["Fake Audio Device"]
-
     def start_recording(self, duration: float) -> None:
         self.events.append(("audio.start_recording", duration))
 
@@ -87,9 +84,6 @@ class FakeMidiDevice(MidiDevice):
 
     def dispose(self) -> None:
         self.events.append(("midi.dispose",))
-
-    def get_midi_device_names(self) -> list[str]:
-        return ["Fake MIDI Device"]
 
     def play_note(self, channel: int, note: int, velocity: int, duration: float) -> None:
         self.events.append(("midi.play_note", channel, note, velocity, duration))

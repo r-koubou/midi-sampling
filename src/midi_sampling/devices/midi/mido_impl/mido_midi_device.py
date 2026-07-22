@@ -92,11 +92,11 @@ class MidoMidiDevice(MidiDevice):
         except:
             pass
 
-    @override
-    def get_midi_device_names(self) -> list[str]:
+    @classmethod
+    def get_device_names(cls) -> list[str]:
         result: list[str] = []
         for name in mido.get_output_names():
-            trimed_name, device_index = self._extract_device_name_and_index(name)
+            trimed_name, device_index = cls._extract_device_name_and_index(name)
             if trimed_name not in result and device_index is not None:
                 result.append(trimed_name)
         return result

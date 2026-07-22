@@ -20,7 +20,7 @@ def main(audio_information_file_path: str):
     logger.info("=" * 80)
     logger.info("Available audio devices:")
     logger.info("=" * 80)
-    for name in audio_device.get_device_names():
+    for name in SdAudioDevice.get_device_names():
         logger.info(name)
     logger.info("=" * 80)
 
