@@ -1,4 +1,4 @@
-# 現在の状態(2026-07-21 15:00 更新)
+# 現在の状態(2026-07-22 13:25 更新)
 
 ## 現状
 - `.agents/specs/midi-sampling/sampling_implementation.md` の初期実装が完了
@@ -10,7 +10,7 @@
 - `AudioDevice.start_recording` の引数を秒数 float に変更し、SdAudioDevice 側で `round(duration * sample_rate)` でフレーム変換(仕様 §8.5)
 
 ## 未完了
-- 実デバイスでの動作確認(SC-8850 等での実録音)は未実施
+- (現時点でなし)
 
 ## 重要な判断・制約(なぜそうなっているか)
 - 既存出力チェック(§12.3/§16.5)は SamplingExecutor.execute の先頭で実施。AuditService はプランのみ受け取り読み取り専用のため builder には置かない
@@ -19,7 +19,13 @@
 - ハッシュは正規化 dict → canonical JSON(sort_keys, separators, ensure_ascii=False, allow_nan=False)→ SHA-256。時間値は全て float 化して表現を統一
 
 ## 次回やること
-1. 実デバイスでの `run` 動作確認
+1. (未定。仕様 §23 の将来対応項目から選定)
+
+## 実デバイス検証(2026-07-22)
+- SC-8850 + Yamaha Steinberg USB ASIO で `run` 実録音成功(cello 1ゾーン×2レイヤー、8.0s×2本、PCM_24/48kHz/2ch、無音でないことをRMSで確認)、audit も up_to_date / exit 0
+- 修正: SdAudioDevice.export_audio に `format="WAV"` を明示指定
+  (一時ファイル `*.wav.part` は拡張子からフォーマット推定できず TypeError になっていた)。
+  リグレッションテスト tests/test_sd_audio_device_export.py 追加(計134件成功)
 
 ## 補足
 - examples/sessions/ に定義サンプル一式を追加済み(audit で解決確認済み。2音色26サンプル)

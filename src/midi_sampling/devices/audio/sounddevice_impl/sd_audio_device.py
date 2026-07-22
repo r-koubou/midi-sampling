@@ -135,9 +135,12 @@ class SdAudioDevice(AudioDevice):
 
         logger.debug(f"sub_type: {sub_type}")
 
+        # The format cannot be inferred from the file extension because
+        # recordings are first written to a temporary "*.wav.part" file.
         sf.write(
             file=file_path,
             data=self.recorded,
             samplerate=info.sample_rate,
             subtype=sub_type,
+            format="WAV",
         )
