@@ -17,5 +17,19 @@ dependencies = [
     "typer>=0.27.0",
 ]
 
-[project.gui-scripts]
+[project.scripts]
 midi-sampling = "midi_sampling.cli:app"
+list-devices = "midi_sampling.devices.device_list_cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

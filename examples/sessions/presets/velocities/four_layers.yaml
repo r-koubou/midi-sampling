@@ -1,0 +1,21 @@
+# ベロシティプロファイル定義(外部プリセット・4レイヤー版)
+
+schema_version: 1
+kind: velocity_profile
+
+layers:
+  - low: 1
+    high: 31
+    send: 24
+
+  - low: 32
+    high: 63
+    send: 48
+
+  - low: 64
+    high: 95
+    send: 80
+
+  - low: 96
+    high: 127
+    send: 112

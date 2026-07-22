@@ -1,0 +1,53 @@
+# サンプリングセッション定義
+#
+# 実行方法:
+#   midi-sampling run   examples/sessions/session.yaml
+#   midi-sampling audit examples/sessions/session.yaml
+#
+# - 相対パスはこのファイルの所在ディレクトリが基準
+# - 絶対パス・URL・`~`・環境変数・glob は使用不可
+
+schema_version: 1
+kind: sampling_session
+
+audio_device:
+  file: devices/audio_device.yaml
+
+midi_device:
+  file: devices/midi_device.yaml
+
+midi:
+  # MIDIチャンネル(0〜15)。セッション内の全音色で共通
+  channel: 0
+  # セッション開始時に一度だけ、記述順に送信する初期化SMF(空配列も可)
+  initialization_files:
+    - midi/gs_reset.mid
+
+# セッション共通タイミング(秒)
+timing:
+  # Bank Select / Program Change 送信後、録音へ進むまでの待機秒数
+  program_change_settle: 0.5
+  # 録音開始後、Note On 送信までの録音秒数(先頭ノイズフロア測定用の余白)
+  pre_roll: 1.0
+  # 録音完了後、次のサンプルへ進むまでの非録音待機秒数
+  inter_sample_wait: 0.5
+
+output:
+  # 出力先。音色 id ごとのサブディレクトリに WAV と manifest.yaml が生成される
+  directory: recorded
+
+  # ファイル名テンプレートを上書きする場合は naming.sample_filename を指定する。
+  # 省略時は標準テンプレート:
+  #   r{root_note:03d}__k{key_low:03d}-{key_high:03d}__v{velocity_low:03d}-{velocity_high:03d}__s{send_velocity:03d}
+  #
+  # 使用可能なプレースホルダー:
+  #   definition_id, bank_msb, bank_lsb, program, root_note,
+  #   key_low, key_high, velocity_low, velocity_high, send_velocity, sample_index
+  #
+  # naming:
+  #   sample_filename: >-
+  #     {definition_id}__r{root_note:03d}__v{send_velocity:03d}
+
+definitions:
+  - file: tones/sc8850-cello-1.yaml
+  - file: tones/sc8850-trumpet-1.yaml

@@ -97,7 +97,8 @@ class SdAudioDevice(AudioDevice):
         finally:
             pass
 
-    def get_device_names(self) -> list[str]:
+    @classmethod
+    def get_device_names(cls) -> list[str]:
         result = []
 
         for device in sd.query_devices():
@@ -110,7 +111,8 @@ class SdAudioDevice(AudioDevice):
         return result
 
     def start_recording(self, duration):
-        self.recorded = sd.rec(duration * sd.default.samplerate)
+        # Convert seconds to frames immediately before recording.
+        self.recorded = sd.rec(round(duration * sd.default.samplerate))
 
     def stop_recording(self):
         sd.wait()
@@ -134,9 +136,12 @@ class SdAudioDevice(AudioDevice):
 
         logger.debug(f"sub_type: {sub_type}")
 
+        # The format cannot be inferred from the file extension because
+        # recordings are first written to a temporary "*.wav.part" file.
         sf.write(
             file=file_path,
             data=self.recorded,
             samplerate=info.sample_rate,
             subtype=sub_type,
+            format="WAV",
         )

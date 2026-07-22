@@ -1,17 +1,21 @@
 {
   "permissions": {
-    "allow":
-    [
-        "Bash(uv --version)",
-        "Bash(uv run *)"
+    "allow": [
+      "Bash(uv --version)",
+      "Bash(uv run *)",
+      "Bash(uv sync *)",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(PYTHONPATH=src uv run python -m midi_sampling.cli audit examples/sessions/session.yaml)",
+      "Bash(read d *)",
+      "Bash([ -f \"$d/__init__.py\" ])",
+      "Bash(echo \"audit exit code: $?\")"
     ],
-    "deny":
-    [
-        "Bash(rm -rf *)",
-        "Bash(sudo *)",
-        "Bash(* --force)",
-        "Bash(del /q *)",
-        "Bash(rmdir /s *)"
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(* --force)",
+      "Bash(del /q *)",
+      "Bash(rmdir /s *)"
     ]
   }
 }

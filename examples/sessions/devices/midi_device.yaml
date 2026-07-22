@@ -1,0 +1,5 @@
+# MIDIデバイス定義(既存形式を継続利用)
+#
+# device_name は mido が認識する MIDI Out ポート名(末尾のポート番号は不要)
+
+device_name: "Roland SC-8850 PART A"

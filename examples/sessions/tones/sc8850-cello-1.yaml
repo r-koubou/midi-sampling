@@ -1,0 +1,33 @@
+# 音色サンプリング定義(外部プリセット参照版)
+#
+# - id は出力ディレクトリ名に使用される(^[a-z0-9][a-z0-9_-]*$)
+# - name は表示専用(日本語・空白可)。出力パスには使用されない
+# - 相対パスはこのファイルの所在ディレクトリが基準
+
+schema_version: 1
+kind: sampling_definition
+
+id: sc8850-cello-1
+name: Cello 1
+
+# Bank Select MSB / LSB / Program Change(すべて0〜127、省略不可)
+# 値は0始まり。例: GSの Cello(PC#43)は program: 42
+midi_program:
+  bank_msb: 0
+  bank_lsb: 0
+  program: 42
+
+# ゾーンは外部プリセットを参照
+zone_layout:
+  file: ../presets/zones/cello.yaml
+
+# ベロシティレイヤーも外部プリセットを参照
+velocity_profile:
+  file: ../presets/velocities/two_layers.yaml
+
+# 音色固有タイミング(秒)
+timing:
+  # Note On から Note Off までの秒数
+  note_on: 4.0
+  # Note Off 後に録音を継続する秒数(リリース・残響+ノイズフロア測定用の余白)
+  release_capture: 3.0

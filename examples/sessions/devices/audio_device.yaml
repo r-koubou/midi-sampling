@@ -1,0 +1,12 @@
+# オーディオデバイス定義(既存形式を継続利用)
+#
+# - device_name / device_platform は `sounddevice` が認識する名称
+# - input_ports は ASIO の入力チャンネルセレクター
+# - data_format: int16 / int24 / int32 / float32
+
+device_name: "Yamaha Steinberg USB ASIO"
+device_platform: "ASIO"
+input_ports: [2, 3]
+channels: 2
+sample_rate: 48000
+data_format: "int24"

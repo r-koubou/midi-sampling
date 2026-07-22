@@ -17,16 +17,10 @@ class AudioDevice(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_device_names(self) -> list[str]:
+    def start_recording(self, duration: float) -> None:
         """
-        Get the names of available audio devices.
-        """
-        pass
-
-    @abc.abstractmethod
-    def start_recording(self, duration: int) -> None:
-        """
-        Start recording audio. This function should be non-blocking.
+        Start recording audio for the given duration in seconds.
+        This function should be non-blocking.
         """
         pass
 
