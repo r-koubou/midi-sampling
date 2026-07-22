@@ -11,7 +11,10 @@ sessions/
 │  ├─ audio_device.yaml            オーディオデバイス定義(既存形式)
 │  └─ midi_device.yaml             MIDIデバイス定義(既存形式)
 ├─ midi/
-│  └─ gs_reset.mid                 初期化SMF(GS Reset)
+│  ├─ GM_RESET.mid                      初期化SMF(GM Reset)
+│  ├─ GS_RESET.mid                      初期化SMF(GS Reset)
+│  ├─ XG_RESET.mid                      初期化SMF(XG Reset)
+│  └─ Reverb_Chorus_Delay_Set_0.mid     初期化SMF(Reverb/Chorus/Delay Set 0)
 ├─ presets/
 │  ├─ zones/
 │  │  └─ cello.yaml                ゾーンレイアウト定義(kind: zone_layout)
