@@ -1,36 +1,55 @@
-# 現在の状態(2026-07-22 13:25 更新)
+# 現在の状態(2026-07-26 更新)
 
 ## 現状
-- `.agents/specs/midi-sampling/sampling_implementation.md` の初期実装が完了
-- `src/midi_sampling/sampling/` 以下に仕様書 §18 のモジュール構成どおり実装済み
-  - definitions(Pydantic DTO)/ loading / resolving / validation / planning / naming / hashing / manifest / audit / sampling_executor / exceptions
-- CLI `src/midi_sampling/cli.py` に `run` / `audit` サブコマンドを実装(pyproject の `midi_sampling.cli:app` と接続)
-- `tests/` に単体・結合テスト一式(Fakeデバイス使用、実デバイス不使用)133件、全て成功
-- pyproject に `[dependency-groups] dev = pytest` と `[tool.pytest.ini_options]`(pythonpath=src)を追加
-- `AudioDevice.start_recording` の引数を秒数 float に変更し、SdAudioDevice 側で `round(duration * sample_rate)` でフレーム変換(仕様 §8.5)
+- `sampling_implementation.md` 実装完了(CLI `run` / `audit`)。詳細は `archives/2026-07-22-sampling-initial.md`
+- `postprocess_implementation.md` 実装完了(`src/midi_sampling/postprocess/`、CLI `postprocess`)
+  - `sampling_implementation.md` §23 の「ポストプロセス後の派生マニフェスト」「トリミング・ループ処理とのマニフェスト統合」を解消
+  - 実装プランは `.agents/plans/postprocess.md`
+- `tests/` 221 件、全て成功(実デバイス不使用)
 
 ## 未完了
-- (現時点でなし)
+- `export`(KONTAKT `*.nki` / SFZ / UVI Falcon `*.uvip` 生成) — 未着手。置き場所も未決定
+- `audit` のポストプロセスステージ対応 — 派生マニフェストは3種ハッシュを持つので判定は実装可能な状態
 
 ## 重要な判断・制約(なぜそうなっているか)
-- 既存出力チェック(§12.3/§16.5)は SamplingExecutor.execute の先頭で実施。AuditService はプランのみ受け取り読み取り専用のため builder には置かない
-- DefinitionResolver は AudioDeviceInformationLoader を注入する設計(テストでは Fake、CLI では SdAudioDeviceInformationLoader)。ハッシュにオーディオ形式を含めるため resolver がオーディオ定義を読む
-- ファイル名テンプレートは str.format を直接使わず、string.Formatter.parse による限定フォーマッター(属性/インデックス/変換/入れ子拒否)
-- ハッシュは正規化 dict → canonical JSON(sort_keys, separators, ensure_ascii=False, allow_nan=False)→ SHA-256。時間値は全て float 化して表現を統一
+- 波形処理は取り込まず、別リポジトリの汎用WAVライブラリへ optional extra で依存する。境界は「サンプリング vs ポストプロセス」ではなく「純粋DSPライブラリ vs ワークフロー」。DSP側の単体リリースと独自品質ゲート(loop-detector は mypy strict / coverage 85%)を保つため
+  - `wav-silence-trimmer`(../sample-trimmer)、`sample-loop-detector`(../sample-loop-detector)
+- **中間ファイルに `.wav.part` を使わない**。`.work/` 配下に置き必ず `.wav` 拡張子とする
+  - libsndfile は書込時に拡張子でフォーマット推定するため。サンプリング側で実際に踏んだ罠を設計で回避する
+  - `.part.wav` も不可。残骸が通常のWAVとして glob に拾われ §14 の意図を壊す
+  - `StageContext.validate()` が入出力パスの `.wav` を強制し、テストでも検証
+- DSPパッケージの import は `postprocess/stages/` 配下の**関数内**に限定。未導入時は `PostprocessDependencyError` で `pip install 'midi-sampling[postprocess]'` を案内
+- ステージ設定は明示フィールドで写経し `dict` 素通しをしない。未知キーがサイレントに無視されるのを防ぐため
+- `midi_unity_note: from_manifest` が統合の核。`mapping.root_note` が既知なので音高推定のオクターブ誤りが構造的に起きない
+- 派生マニフェストは3種ハッシュを持つ: `source_manifest_sha256` / `resolved_definition_sha256` / `postprocess_settings_sha256`。将来の audit が `source_changed` と `settings_changed` を判別できる
+- `mapping` は source からコピーしファイル名から逆解析しない。パッチ生成が派生マニフェスト1枚で完結する
+- `source` ディレクトリは読むだけ。resolver / executor いずれも書き込まない(テストでバイト列比較して検証)
+- `MidiSamplingError` を全体の基底とし `SamplingError` / `PostprocessError` をその派生に。CLI は `MidiSamplingError` を捕捉
+- アトミック YAML 読み書きは `YamlDocumentRepository` へ汎用化し、sample / postprocess 両マニフェストで共有
 
-## 次回やること
-1. (未定。仕様 §23 の将来対応項目から選定)
+## Python バージョン・依存の制約(2026-07-26)
+- `requires-python` を `>=3.14` → **`>=3.12,<3.14`** へ降格。`.python-version` も 3.13 へ
+  - `sample-loop-detector` が librosa/numba 経由で `<3.14` を要求し積集合が空だったため
+  - `src/` に 3.14 固有構文は無し。3.13.9 で既存134件が全て成功することを確認済み
+- `soundfile` は3プロジェクトとも **`>=0.14`** に統一済み(2026-07-26)
+  - 当初 loop-detector が `>=0.13,<0.14` を要求し解決不能だったが、DSP側の上限を外して解消した
+- 2パッケージとも PyPI 未公開のため `[tool.uv.sources]` で兄弟ディレクトリをパス参照している。**公開したらこのセクションを削除すること**(現状、他者が clone しても解決できない)
+- **`[tool.uv.sources]` は取得元を教えるだけで、インストールはしない。** optional extra なので明示指定が必要:
+  - `uv sync --extra postprocess`(素の `uv sync` は extra を入れず、既に入っていれば**削除**する)
+  - 単発なら `uv run --extra postprocess midi-sampling postprocess <yaml>`
+  - uv 0.11.32 時点で `[tool.uv] default-extras` は未対応(`default-groups` のみ)。extra を dependency-group へ移せば自動化できるが、group は PEP 735 の開発用メタデータでビルド成果物に入らず `pip install 'midi-sampling[postprocess]'` が成立しなくなるため採用しない
 
-## 実デバイス検証(2026-07-22)
-- SC-8850 + Yamaha Steinberg USB ASIO で `run` 実録音成功(cello 1ゾーン×2レイヤー、8.0s×2本、PCM_24/48kHz/2ch、無音でないことをRMSで確認)、audit も up_to_date / exit 0
-- 修正: SdAudioDevice.export_audio に `format="WAV"` を明示指定
-  (一時ファイル `*.wav.part` は拡張子からフォーマット推定できず TypeError になっていた)。
-  リグレッションテスト tests/test_sd_audio_device_export.py 追加(計134件成功)
+## postprocess end-to-end 検証(2026-07-26)
+実WAV(正弦波 + 前後無音、PCM_24/48kHz/2ch)を録音成果物として生成し CLI で検証:
+- trim → loop を4サンプルへ適用し exit 0
+- 生成WAVの `smpl` チャンクの unity note が `mapping.root_note` と一致(38 / 43)
+- PCM_24 / 48kHz / 2ch が保持され、`.work/` は成功時に削除される
+- `recorded/` 全ファイルのSHA-256が実行前後で不変
+- 2回目の実行は `ExistingOutputError` で停止し3種ハッシュの比較を表示して exit 1
 
 ## 補足
-- examples/sessions/ に定義サンプル一式を追加済み(audit で解決確認済み。2音色26サンプル)
-- 初期化SMF examples/sessions/midi/gs_reset.mid は mido で生成した GS Reset sysex 入りSMF
-- pyproject に `[build-system]`(uv_build)を追加しパッケージ化。`uv run midi-sampling run/audit` で実行可能
-  - `[project.gui-scripts]` は `[project.scripts]` へ変更(gui-scripts だとWindowsで pythonw 起動になりコンソール出力が出ないため)
-  - uv_build の要件で src/midi_sampling ほか欠けていた `__init__.py` を追加、readme 宣言に対応する README.md を新規作成
-  - CLI終了コード実測: audit 未録音=1、定義エラー=2、--help=0
+- `examples/sessions/postprocess.yaml` にポストプロセス定義サンプル
+- DSP結合テスト(tests/test_postprocess_stages_integration.py)は `pytest.importorskip` でガード。librosa 解析のため約70秒かかる
+
+## 次回やること
+1. (未定。`export` ステージ、または `audit` のステージ対応)

@@ -237,3 +237,125 @@ def session_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def plan(session_path: Path) -> SamplingPlan:
     return build_plan(session_path)
+
+
+# ---------------------------------------------------------------------------
+# Postprocess helpers
+# ---------------------------------------------------------------------------
+
+DEFAULT_POSTPROCESS_SESSION_YAML = """\
+schema_version: 1
+kind: postprocess_session
+
+source:
+  directory: recorded
+
+output:
+  directory: processed
+
+stages:
+  - kind: trim
+"""
+
+
+def make_recorded_output(root: Path) -> Path:
+    """
+    Produce a real, completed sampling output tree under `root/recorded`
+    using the fake devices, and return the recorded root.
+
+    Going through SamplingExecutor rather than hand-writing a manifest
+    keeps the postprocess tests honest about the actual contract between
+    the two stages.
+    """
+    from midi_sampling.sampling import SamplingExecutor
+
+    session = make_session(root)
+    sampling_plan = build_plan(session)
+
+    SamplingExecutor(
+        audio_device=FakeAudioDevice(),
+        midi_device=FakeMidiDevice(),
+        sleep=lambda seconds: None,
+    ).execute(sampling_plan)
+
+    return sampling_plan.output_root
+
+
+def make_postprocess_session(
+    root: Path, session_yaml: str = DEFAULT_POSTPROCESS_SESSION_YAML
+) -> Path:
+    path = root / "postprocess.yaml"
+    path.write_text(session_yaml, encoding="utf-8")
+    return path
+
+
+class FakeStage:
+    """
+    PostprocessStage implementation that records its calls and copies the
+    input to the output, so the executor can be tested without the
+    optional DSP packages installed.
+    """
+
+    def __init__(
+        self,
+        kind: str = "trim",
+        *,
+        marker: str = "default",
+        output_written: bool = True,
+        fail_on_sample_index: int | None = None,
+    ) -> None:
+        self.kind = kind
+        self.marker = marker
+        self.output_written = output_written
+        self.fail_on_sample_index = fail_on_sample_index
+        self.calls: list[tuple[Path, Path, int]] = []
+
+    def settings_payload(self) -> dict:
+        return {"marker": self.marker}
+
+    def apply(self, context):
+        from midi_sampling.postprocess.exceptions import PostprocessStageError
+        from midi_sampling.postprocess.manifest import ManifestLoop, ManifestTrim
+        from midi_sampling.postprocess.stages import StageOutcome
+
+        context.validate()
+        self.calls.append(
+            (context.input_path, context.output_path, context.root_note)
+        )
+
+        if (
+            self.fail_on_sample_index is not None
+            and len(self.calls) - 1 == self.fail_on_sample_index
+        ):
+            raise PostprocessStageError(f"{self.kind} stage failed on purpose")
+
+        if self.output_written:
+            context.output_path.parent.mkdir(parents=True, exist_ok=True)
+            context.output_path.write_bytes(context.input_path.read_bytes())
+
+        if self.kind == "loop":
+            block = ManifestLoop(
+                applied=self.output_written,
+                status="success" if self.output_written else "not_found",
+                midi_unity_note=context.root_note if self.output_written else None,
+                smpl_chunk_written=self.output_written,
+            )
+        else:
+            block = ManifestTrim(applied=self.output_written, start_sample=0)
+
+        return StageOutcome(manifest_block=block, output_written=self.output_written)
+
+
+def build_postprocess_plan(session_path: Path, stages=None):
+    """
+    Resolve and plan a postprocess session with injectable stages, so
+    that planning works without the optional DSP packages.
+    """
+    from midi_sampling.postprocess.planning import PostprocessPlanBuilder
+    from midi_sampling.postprocess.resolving import PostprocessResolver
+
+    if stages is None:
+        stages = (FakeStage(),)
+
+    session = PostprocessResolver().resolve(session_path)
+    return PostprocessPlanBuilder().build(session, stages=tuple(stages))
