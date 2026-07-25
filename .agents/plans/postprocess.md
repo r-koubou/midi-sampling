@@ -48,13 +48,13 @@
 | ファイル | 役割 | 内容 |
 |---|---|---|
 | `.agents/plans/postprocess.md` | **実装プラン** | 本ドキュメントをそのまま保管する。判断の経緯（なぜ統合するか、なぜ別リポジトリ維持か、Python 降格の理由、`.wav.part` を採らない理由）と作業手順・検証手順 |
-| `.agents/specs/midi-sampling/postprocess_implementation.md` | **確定仕様** | §2〜§8 を仕様として整形したもの。経緯は書かず、実装が従うべき規則のみ |
+| `.agents/specs/postprocess_implementation.md` | **確定仕様** | §2〜§8 を仕様として整形したもの。経緯は書かず、実装が従うべき規則のみ |
 
 `.agents/plans/postprocess.md` は着手前に配置する（`.agents/plans/` は作成済み・空）。
 
 ## 1. 仕様書の新規作成
 
-`.agents/specs/midi-sampling/postprocess_implementation.md` を新規作成する。`sampling_implementation.md` の章立て（目的 / 技術選定 / アーキテクチャ / 定義ファイル / 計画 / 出力 / フェイルセーフ / 実行シーケンス / マニフェスト / ハッシュ / CLI / モジュール構成 / 例外 / ロギング / テスト要件 / 受入条件 / 対象外 / 禁止事項）に倣い、以下 §2〜§8 の内容を確定仕様として記述する。
+`.agents/specs/postprocess_implementation.md` を新規作成する。`sampling_implementation.md` の章立て（目的 / 技術選定 / アーキテクチャ / 定義ファイル / 計画 / 出力 / フェイルセーフ / 実行シーケンス / マニフェスト / ハッシュ / CLI / モジュール構成 / 例外 / ロギング / テスト要件 / 受入条件 / 対象外 / 禁止事項）に倣い、以下 §2〜§8 の内容を確定仕様として記述する。
 
 `sampling_implementation.md` は変更しない（§23 の該当項目が実装されたことは progress.md 側に記録する）。
 
