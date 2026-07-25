@@ -392,7 +392,7 @@ dev = [
 requires-dist = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "scipy", specifier = ">=1.14" },
-    { name = "soundfile", specifier = ">=0.13" },
+    { name = "soundfile", specifier = ">=0.14" },
 ]
 
 [package.metadata.requires-dev]
