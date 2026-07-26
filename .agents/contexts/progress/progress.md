@@ -33,7 +33,13 @@
   - `src/` に 3.14 固有構文は無し。3.13.9 で既存134件が全て成功することを確認済み
 - `soundfile` は3プロジェクトとも **`>=0.14`** に統一済み(2026-07-26)
   - 当初 loop-detector が `>=0.13,<0.14` を要求し解決不能だったが、DSP側の上限を外して解消した
-- 2パッケージとも PyPI 未公開のため `[tool.uv.sources]` で兄弟ディレクトリをパス参照している。**公開したらこのセクションを削除すること**(現状、他者が clone しても解決できない)
+- 2パッケージとも PyPI 未公開のため `[tool.uv.sources]` で兄弟ディレクトリを**相対パス参照**している。**公開したらこのセクションを削除すること**
+  - 他者が clone しただけでは解決できないため、README のセットアップに DSP リポジトリの clone 手順と相対パス編集の必要性を明記した
+  - `wav-silence-trimmer` の clone 先ディレクトリ名は `sample-trimmer`(パッケージ名と不一致)
+  - 検討したが採用しなかった代替案(2026-07-26):
+    - **git submodule**: 固定コミットが submodule と `uv.lock` の二重管理になる。`git submodule update --init` の手順も増える
+    - **uv の git ソース**(`{ git = "...", branch = "main" }`): 検証済みで動作し `uv.lock` が sha を固定する(`#ec8c3c9` / `#c58708d`)。clone 直後に動く利点があるが、DSP側を uv キャッシュへ clone するため **editable なローカル編集ができなくなる**。3プロジェクトを並行開発する現状を優先して見送り
+    - 将来 git ソースへ移行する場合、DSP側に `v0.1.0` 等のタグを切って `tag = ` で参照するのが望ましい
 - **`[tool.uv.sources]` は取得元を教えるだけで、インストールはしない。** optional extra なので明示指定が必要:
   - `uv sync --extra postprocess`(素の `uv sync` は extra を入れず、既に入っていれば**削除**する)
   - 単発なら `uv run --extra postprocess midi-sampling postprocess <yaml>`
