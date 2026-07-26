@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 import typer
 
 from midi_sampling import logging_management
+from midi_sampling.exceptions import MidiSamplingError
 from midi_sampling.sampling.audit import (
     AuditService,
     SessionAuditResult,
@@ -33,6 +34,17 @@ SessionFileArgument = Annotated[
     Path,
     typer.Argument(
         help="Path to a sampling session definition file (kind: sampling_session).",
+        show_default=False,
+    ),
+]
+
+PostprocessSessionFileArgument = Annotated[
+    Path,
+    typer.Argument(
+        help=(
+            "Path to a postprocess session definition file "
+            "(kind: postprocess_session)."
+        ),
         show_default=False,
     ),
 ]
@@ -122,6 +134,44 @@ def audit(session_file: SessionFileArgument, verbose: VerboseOption = False) -> 
 
     raise typer.Exit(
         EXIT_OK if result.all_up_to_date else EXIT_RESAMPLING_REQUIRED
+    )
+
+
+@app.command()
+def postprocess(
+    session_file: PostprocessSessionFileArgument, verbose: VerboseOption = False
+) -> None:
+    """
+    Trim and loop existing sampling output into a derived sample set.
+
+    Never modifies the recorded output: results and a derived manifest
+    are written to a separate directory.
+    """
+    _init_logging(verbose)
+
+    from midi_sampling.postprocess.planning import PostprocessPlanBuilder
+    from midi_sampling.postprocess.resolving import PostprocessResolver
+
+    try:
+        session = PostprocessResolver().resolve(session_file)
+        plan = PostprocessPlanBuilder().build(session)
+    except MidiSamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_DEFINITION_ERROR)
+
+    from midi_sampling.postprocess import PostprocessExecutor
+
+    executor = PostprocessExecutor(progress=typer.echo)
+
+    try:
+        executor.execute(plan)
+    except MidiSamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_EXECUTION_FAILED)
+
+    typer.echo(
+        f"Completed: {len(plan.tones)} tones, {plan.total_sample_count} samples "
+        f"-> {plan.output_root}"
     )
 
 

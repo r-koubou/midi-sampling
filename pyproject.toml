@@ -7,14 +7,28 @@ authors = [
     { name = "R-Koubou" }
 ]
 readme = "README.md"
-requires-python = ">=3.14"
+# Upper bound comes from the optional `postprocess` extra: sample-loop-detector
+# depends on librosa/numba, which do not support 3.14 yet. Raise this once they do.
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "mido[ports-rtmidi]>=1.3.3",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
     "sounddevice>=0.5.5",
-    "soundfile>=0.14.0",
+    # Keep in step with the `postprocess` extra: sample-loop-detector and
+    # wav-silence-trimmer also require soundfile>=0.14, and all three must stay
+    # co-installable.
+    "soundfile>=0.14",
     "typer>=0.27.0",
+]
+
+[project.optional-dependencies]
+# Waveform post-processing. Kept as separate, general purpose WAV libraries that
+# know nothing about midi-sampling; only src/midi_sampling/postprocess/stages/
+# imports them.
+postprocess = [
+    "sample-loop-detector>=0.1.0",
+    "wav-silence-trimmer>=0.1.0",
 ]
 
 [project.scripts]
@@ -29,6 +43,18 @@ build-backend = "uv_build"
 dev = [
     "pytest>=8.0",
 ]
+
+# Neither post-processing package is published to PyPI yet, so the `postprocess`
+# extra is resolved from the sibling checkouts during development. Remove this
+# section once both are on PyPI. `tool.uv.sources` is development-only metadata
+# and is not written into built distributions.
+#
+# These sources only tell uv WHERE to get the packages; they are still optional
+# dependencies, so the extra has to be requested explicitly:
+#   uv sync --extra postprocess
+[tool.uv.sources]
+sample-loop-detector = { path = "../sample-loop-detector", editable = true }
+wav-silence-trimmer = { path = "../sample-trimmer", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

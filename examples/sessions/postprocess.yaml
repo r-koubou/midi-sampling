@@ -1,0 +1,67 @@
+# ポストプロセスセッション定義
+#
+# 実行方法:
+#   midi-sampling postprocess examples/sessions/postprocess.yaml
+#
+# 前提: `midi-sampling run examples/sessions/session.yaml` が完了していること
+#
+# - 相対パスはこのファイルの所在ディレクトリが基準
+# - 絶対パス・URL・`~`・環境変数・glob は使用不可
+# - source ディレクトリは読むだけで、決して書き換えない
+#
+# 波形処理そのものは以下の独立したパッケージが担当する
+# (`pip install 'midi-sampling[postprocess]'` で導入):
+#   - wav-silence-trimmer   : 無音トリミング
+#   - sample-loop-detector  : サステインループ検出と smpl チャンク埋め込み
+
+schema_version: 1
+kind: postprocess_session
+
+source:
+  # サンプリングセッションの output.directory と同じ場所
+  directory: recorded
+
+output:
+  # 派生成果物の出力先。source.directory と同一にはできない
+  directory: processed
+
+# 記述順に適用する。同じ kind は一度だけ記述できる。
+# 各 settings は省略可能で、省略したフィールドはライブラリ既定値が使われる。
+stages:
+  - kind: trim
+    settings:
+      # 立ち上がり / 立ち下がり判定のヒステリシス(dB)
+      on_margin_db: 15.0
+      off_margin_db: 8.0
+      # 検出境界の前後に残す余白(ms)
+      pre_roll_ms: 8.0
+      post_roll_ms: 40.0
+      # 端点のクリック防止フェード(ms)
+      fade_in_ms: 1.0
+      fade_out_ms: 5.0
+
+  - kind: loop
+    # ループが見つからない場合の扱い
+    #   skip  : WAV はそのまま出力し、manifest の loop.status に記録して継続(既定)
+    #   error : セッション全体を停止する
+    # 打楽器や完全減衰音では「ループなし」が正常な結果になるため既定は skip
+    on_failure: skip
+    settings:
+      min_loop: 0.3
+      max_loop: 8.0
+      quality_threshold: 0.35
+      crossfade_lengths_ms: [20.0, 50.0, 100.0, 200.0]
+      # smpl チャンクのユニティノートの決め方
+      #   from_manifest : source マニフェストの mapping.root_note を使う(既定)
+      #   auto          : 音高推定に委ねる
+      #   0〜127        : 固定値
+      #
+      # 収録時に送信したノート番号がマニフェストに記録されているため、
+      # from_manifest なら音高推定のオクターブ誤りが構造的に起こらない
+      midi_unity_note: from_manifest
+      replace_existing_loop: false
+
+# 対象音色。省略すると source.directory 配下の全音色が対象になる
+#
+# tones:
+#   - sc8850-cello-1

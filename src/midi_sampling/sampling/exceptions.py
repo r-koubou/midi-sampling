@@ -1,4 +1,7 @@
-class SamplingError(Exception):
+from midi_sampling.exceptions import MidiSamplingError
+
+
+class SamplingError(MidiSamplingError):
     """
     Base class for all application errors raised by the sampling package.
     """
