@@ -77,6 +77,7 @@ Sforzando での読み込み確認後、3件のフィードバックを反映:
 - `envelope`(パッチ全体の既定アンプエンベロープ)を定義ファイルへ追加。**単位は秒 float**(既存 timing 系と統一、SFZ/Falcon は秒ネイティブ、msec 系へは各エクスポータが変換する方針で合意)。省略時 attack: 0.0 / release: 0.3。SFZ では `<global>` の `ampeg_attack=`/`ampeg_release=` に出力
 - 出力レイアウトを `<出力ルート>/<フォーマット名>/<パッチ名>/` に変更(`--output` はルート指定。既定 `patches/sfz/<name>/`)。フォーマット別ディレクトリ名は `InstrumentPatchWriter.directory_name` が返す(既定実装は `format_id`)
 - `InstrumentPatchWriter` を Protocol から**抽象基底クラス**へ変更。Protocol は実装側の継承が文法上不要で、継承関係から「インターフェースを実装しているか」を判別できないため。`SfzPatchWriter` は明示継承に変更
+- 同じ方針で既存の Protocol も全て ABC へ統一: `PostprocessStage`(`TrimStage` / `LoopStage` / conftest `FakeStage` が明示継承)、`AudioDeviceInformationLoader` / `MidiDeviceInformationLoader`(具象は元々明示継承済み。conftest `FakeAudioInformationLoader` に継承を追加)。**本プロジェクトのインターフェース定義は今後も Protocol ではなく ABC を使う**
 - サンプルディレクトリ名は `Samples/`(大文字。ユーザーが SAMPLES_DIRECTORY_NAME を変更)
 
 ## 補足
