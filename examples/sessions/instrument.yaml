@@ -1,0 +1,58 @@
+# 楽器定義（エクスポート用の第3レイヤー）
+#
+# 実行方法:
+#   midi-sampling export examples/sessions/instrument.yaml
+#   midi-sampling export examples/sessions/instrument.yaml --format sfz --output patches/my-patch
+#
+# 前提: `midi-sampling postprocess examples/sessions/postprocess.yaml` が完了していること
+#       (エクスポートは postprocess 済みマニフェストのみを参照する)
+#
+# - 相対パスはこのファイルの所在ディレクトリが基準
+# - 絶対パス・URL・`~`・環境変数・glob は使用不可
+# - recorded/ / processed/ は読むだけで、決して書き換えない
+# - 出力先は <出力ルート>/<フォーマット名>/<name>/ (既定ルート: このファイルの隣の patches/)。
+#   sfz なら patches/sfz/<name>/ になる。空でない場合はエラーになる
+
+schema_version: 1
+kind: instrument_definition
+
+# パッチ名。出力ファイル名(<name>.sfz)と既定の出力ディレクトリ名に使われる
+name: sc8850-cello
+
+# エクスポートするオーディオ形式(省略時: wav)
+#   wav  : バイト単位のコピー。smpl ループチャンクもそのまま保持される
+#   flac : ロスレス再エンコード。ループはパッチ側の opcode で表現される
+# bit_depth (16 | 24) は flac のみ指定可。int16/int24 ソースは省略で無劣化パススルー、
+# int32/float32 ソースはビット深度削減の明示指定が必須
+audio:
+  format: wav
+
+# パッチ全体の既定アンプエンベロープ(秒)。省略時は attack: 0.0 / release: 0.3
+# (sfz では <global> の ampeg_attack= / ampeg_release= に変換される)
+envelope:
+  attack: 0.0
+  release: 0.3
+
+# エクスポート対象の音色。postprocess 済みマニフェストを参照する
+sources:
+  - tone: sc8850-cello-1
+    manifest: processed/sc8850-cello-1/manifest.yaml
+
+# 排他(choke)グループ。同一グループの発音は互いに停止し合う
+# (SFZ では group= / off_by= / off_mode=fast に変換される)
+# root_note を省略するとその音色の全 region がメンバーになる
+#
+# exclusive_groups:
+#   - name: hihat
+#     members:
+#       - { tone: sc8850-drums-1, root_note: 42 }   # closed
+#       - { tone: sc8850-drums-1, root_note: 44 }   # pedal
+#       - { tone: sc8850-drums-1, root_note: 46 }   # open
+#
+# リリーストリガー。trigger_of の音色のノートオフで plays の音色が発音される
+# (plays に指定した音色はリリース専用となり、通常の region としては出力されない)
+#
+# release_triggers:
+#   - trigger_of: { tone: gtr-sustain }
+#     plays:      { tone: gtr-fret-noise }
+#     rt_decay: 6.0   # 省略可。キーを離すまでの時間に応じた減衰(dB/秒)

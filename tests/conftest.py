@@ -258,7 +258,11 @@ stages:
 """
 
 
-def make_recorded_output(root: Path) -> Path:
+def make_recorded_output(
+    root: Path,
+    session_yaml: str = DEFAULT_SESSION_YAML,
+    extra_files: dict[str, str] | None = None,
+) -> Path:
     """
     Produce a real, completed sampling output tree under `root/recorded`
     using the fake devices, and return the recorded root.
@@ -269,7 +273,7 @@ def make_recorded_output(root: Path) -> Path:
     """
     from midi_sampling.sampling import SamplingExecutor
 
-    session = make_session(root)
+    session = make_session(root, session_yaml=session_yaml, extra_files=extra_files)
     sampling_plan = build_plan(session)
 
     SamplingExecutor(
@@ -359,3 +363,48 @@ def build_postprocess_plan(session_path: Path, stages=None):
 
     session = PostprocessResolver().resolve(session_path)
     return PostprocessPlanBuilder().build(session, stages=tuple(stages))
+
+
+# ---------------------------------------------------------------------------
+# Export helpers
+# ---------------------------------------------------------------------------
+
+DEFAULT_INSTRUMENT_YAML = """\
+schema_version: 1
+kind: instrument_definition
+
+name: test-instrument
+
+sources:
+  - tone: tone-1
+    manifest: processed/tone-1/manifest.yaml
+"""
+
+
+def make_processed_output(
+    root: Path,
+    session_yaml: str = DEFAULT_SESSION_YAML,
+    extra_files: dict[str, str] | None = None,
+) -> Path:
+    """
+    Run the real sampling and postprocess pipelines (with fake devices
+    and fake stages) and return the processed root, so that export tests
+    consume exactly what the earlier stages produce.
+    """
+    from midi_sampling.postprocess import PostprocessExecutor
+
+    make_recorded_output(root, session_yaml=session_yaml, extra_files=extra_files)
+    postprocess_session = make_postprocess_session(root)
+    postprocess_plan = build_postprocess_plan(
+        postprocess_session, stages=(FakeStage("trim"), FakeStage("loop"))
+    )
+    PostprocessExecutor().execute(postprocess_plan)
+    return postprocess_plan.output_root
+
+
+def make_instrument_definition(
+    root: Path, instrument_yaml: str = DEFAULT_INSTRUMENT_YAML
+) -> Path:
+    path = root / "instrument.yaml"
+    path.write_text(instrument_yaml, encoding="utf-8")
+    return path

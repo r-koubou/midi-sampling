@@ -1,14 +1,17 @@
-# 現在の状態(2026-07-26 更新)
+# 現在の状態(2026-07-28 更新)
 
 ## 現状
 - `sampling_implementation.md` 実装完了(CLI `run` / `audit`)。詳細は `archives/2026-07-22-sampling-initial.md`
 - `postprocess_implementation.md` 実装完了(`src/midi_sampling/postprocess/`、CLI `postprocess`)
   - `sampling_implementation.md` §23 の「ポストプロセス後の派生マニフェスト」「トリミング・ループ処理とのマニフェスト統合」を解消
   - 実装プランは `.agents/plans/postprocess.md`
-- `tests/` 221 件、全て成功(実デバイス不使用)
+- `export_implementation.md` 実装完了(`src/midi_sampling/export/`、CLI `export`)。SFZ のみ対応
+  - 実装プランは `.agents/plans/2026-0728-sfz-instrument-export.md`
+  - 実データでのエクスポートと Sforzando での読み込みを人間が確認済み(2026-07-28)
+- `tests/` 286 件、全て成功(実デバイス不使用)
 
 ## 未完了
-- `export`(KONTAKT `*.nki` / SFZ / UVI Falcon `*.uvip` 生成) — 未着手。置き場所も未決定
+- `export` の UVI Falcon `*.uvip` / KONTAKT 1 `*.nki` 対応 — `abstractions/` の中間表現を共有し `<format>_impl/` と `create_patch_writer` の分岐を足す構造は用意済み
 - `audit` のポストプロセスステージ対応 — 派生マニフェストは3種ハッシュを持つので判定は実装可能な状態
 
 ## 重要な判断・制約(なぜそうなっているか)
@@ -53,9 +56,32 @@
 - `recorded/` 全ファイルのSHA-256が実行前後で不変
 - 2回目の実行は `ExistingOutputError` で停止し3種ハッシュの比較を表示して exit 1
 
+## export 実装(2026-07-28)
+ディスカッション `.agents/discussions/2026-0727-exclusive-groups-release-trigger.md` の「第3レイヤー」案を実装。仕様は `.agents/specs/export_implementation.md`。
+
+- 人間が手書きする `instrument_definition`(instrument.yaml)が `processed/<tone>/manifest.yaml` を参照し、排他グループ・リリーストリガーを宣言する。**既存マニフェストには一切書き込まない**(ハッシュ連鎖保護)
+- `sources` は postprocess_manifest **のみ**参照可(ユーザー決定)。recorded/ を使いたい場合は trim/loop なしの postprocess を一度通す
+- 成果物は自己完結型: `<output>/<name>.sfz` + `samples/<tone-id>/*.wav|.flac`(tone-id サブディレクトリでファイル名衝突回避)。出力先が空でなければ `ExportExistingOutputError`
+- FLAC エクスポート対応(ユーザー要望)。libsndfile 1.2.2 の FLAC は **16/24bit のみ**(実測確認)
+  - int16/int24 は無劣化パススルー(int32 dtype 経由でビット単位一致、テストで検証)
+  - int32/float32/float64 は `audio.bit_depth` の明示指定必須。暗黙のビット深度削減はしない
+  - smpl チャンクは FLAC に引き継がれないが、ループは SFZ の `loop_start=`/`loop_end=` opcode で表現するため実害なし。エンコード後にフレーム数一致を検証(ループフレームの有効性保証)
+- `loop_start`/`loop_end` はマニフェストの `start_frame`/`end_frame` をそのまま使用(smpl と SFZ はともにループ終端を「含む」)
+- 排他グループは定義順に 1 始まりの整数を割当て、`group=N off_by=N off_mode=fast` に変換。`plays` 指定の音色はリリース専用(`trigger=release` + `rt_decay=`)になる
+- 構造は既存規約を踏襲: `definitions/`(pydantic, extra=forbid) → `resolving/`(frozen dataclass) → `planning/` → `export_executor`、形式選択は `create_patch_writer` の明示ファクトリ、`soundfile` は関数内 lazy import
+- スコープ外(仕様 §1.1): 生 opcode エスケープハッチ、連鎖トリガー、`tune=`/`volume=`、音色・サンプル単位のエンベロープ
+- `examples/sessions/instrument.yaml` に楽器定義サンプル
+
+### 実機確認後のフィードバック対応(2026-07-28)
+Sforzando での読み込み確認後、3件のフィードバックを反映:
+- `envelope`(パッチ全体の既定アンプエンベロープ)を定義ファイルへ追加。**単位は秒 float**(既存 timing 系と統一、SFZ/Falcon は秒ネイティブ、msec 系へは各エクスポータが変換する方針で合意)。省略時 attack: 0.0 / release: 0.3。SFZ では `<global>` の `ampeg_attack=`/`ampeg_release=` に出力
+- 出力レイアウトを `<出力ルート>/<フォーマット名>/<パッチ名>/` に変更(`--output` はルート指定。既定 `patches/sfz/<name>/`)。フォーマット別ディレクトリ名は `InstrumentPatchWriter.directory_name` が返す(既定実装は `format_id`)
+- `InstrumentPatchWriter` を Protocol から**抽象基底クラス**へ変更。Protocol は実装側の継承が文法上不要で、継承関係から「インターフェースを実装しているか」を判別できないため。`SfzPatchWriter` は明示継承に変更
+- サンプルディレクトリ名は `Samples/`(大文字。ユーザーが SAMPLES_DIRECTORY_NAME を変更)
+
 ## 補足
 - `examples/sessions/postprocess.yaml` にポストプロセス定義サンプル
 - DSP結合テスト(tests/test_postprocess_stages_integration.py)は `pytest.importorskip` でガード。librosa 解析のため約70秒かかる
 
 ## 次回やること
-1. (未定。`export` ステージ、または `audit` のステージ対応)
+1. (未定。Falcon/KONTAKT 対応、または `audit` のステージ対応)
