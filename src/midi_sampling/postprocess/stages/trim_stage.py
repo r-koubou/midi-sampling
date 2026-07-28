@@ -11,7 +11,11 @@ from midi_sampling.postprocess.exceptions import (
     PostprocessStageError,
 )
 from midi_sampling.postprocess.manifest.postprocess_manifest import ManifestTrim
-from midi_sampling.postprocess.stages.stage import StageContext, StageOutcome
+from midi_sampling.postprocess.stages.stage import (
+    PostprocessStage,
+    StageContext,
+    StageOutcome,
+)
 
 if TYPE_CHECKING:
     from wav_silence_trimmer.models import TrimConfig
@@ -40,7 +44,7 @@ def _import_trimmer() -> Any:
 
 
 @dataclass(frozen=True)
-class TrimStage:
+class TrimStage(PostprocessStage):
     """
     Leading and trailing silence trimming via `wav-silence-trimmer`.
 

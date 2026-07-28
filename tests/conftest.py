@@ -6,13 +6,15 @@ from midi_sampling.devices.audio.abstractions import (
     AudioDataFormat,
     AudioDevice,
     AudioDeviceInformation,
+    AudioDeviceInformationLoader,
 )
 from midi_sampling.devices.midi.abstractions import MidiDevice
+from midi_sampling.postprocess.stages import PostprocessStage
 from midi_sampling.sampling.planning import SamplingPlan, SamplingPlanBuilder
 from midi_sampling.sampling.resolving import DefinitionResolver, ResolvedSession
 
 
-class FakeAudioInformationLoader:
+class FakeAudioInformationLoader(AudioDeviceInformationLoader):
     """
     AudioDeviceInformationLoader that returns fixed information without
     depending on the sounddevice implementation.
@@ -293,7 +295,7 @@ def make_postprocess_session(
     return path
 
 
-class FakeStage:
+class FakeStage(PostprocessStage):
     """
     PostprocessStage implementation that records its calls and copies the
     input to the output, so the executor can be tested without the
