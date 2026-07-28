@@ -15,7 +15,11 @@ from midi_sampling.postprocess.exceptions import (
     PostprocessStageError,
 )
 from midi_sampling.postprocess.manifest.postprocess_manifest import ManifestLoop
-from midi_sampling.postprocess.stages.stage import StageContext, StageOutcome
+from midi_sampling.postprocess.stages.stage import (
+    PostprocessStage,
+    StageContext,
+    StageOutcome,
+)
 
 if TYPE_CHECKING:
     from sample_loop_detector.config import DetectionSettings
@@ -62,7 +66,7 @@ def _import_detector() -> Any:
 
 
 @dataclass(frozen=True)
-class LoopStage:
+class LoopStage(PostprocessStage):
     """
     Sustain loop detection and `smpl` chunk embedding via
     `sample-loop-detector`.

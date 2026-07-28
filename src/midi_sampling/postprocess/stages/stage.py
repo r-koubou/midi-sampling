@@ -1,6 +1,6 @@
+import abc
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
@@ -58,18 +58,23 @@ class StageOutcome:
     output_written: bool
 
 
-@runtime_checkable
-class PostprocessStage(Protocol):
+class PostprocessStage(metaclass=abc.ABCMeta):
     """
     Adapter over one external DSP package.
 
     Implementations are the only place in this project allowed to import
     `wav_silence_trimmer` or `sample_loop_detector`, and they must do so
     lazily inside functions.
+
+    An abstract base class (not a Protocol) on purpose: implementing a
+    stage must be visible as explicit inheritance, so that a class that
+    merely happens to have an `apply` method is never mistaken for a
+    stage.
     """
 
     kind: str
 
+    @abc.abstractmethod
     def settings_payload(self) -> dict:
         """
         Effective settings in canonical form, used for the settings hash.
@@ -78,6 +83,7 @@ class PostprocessStage(Protocol):
         """
         ...
 
+    @abc.abstractmethod
     def apply(self, context: StageContext) -> StageOutcome:
         """
         Process one sample. Must not modify `context.input_path`.
