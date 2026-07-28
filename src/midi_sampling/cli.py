@@ -49,6 +49,35 @@ PostprocessSessionFileArgument = Annotated[
     ),
 ]
 
+InstrumentFileArgument = Annotated[
+    Path,
+    typer.Argument(
+        help=(
+            "Path to an instrument definition file "
+            "(kind: instrument_definition)."
+        ),
+        show_default=False,
+    ),
+]
+
+PatchFormatOption = Annotated[
+    str,
+    typer.Option("--format", help="Patch format to generate."),
+]
+
+OutputDirectoryOption = Annotated[
+    Path | None,
+    typer.Option(
+        "--output",
+        "-o",
+        help=(
+            "Output root; the patch is written to <output>/<format>/<name>. "
+            "Defaults to patches/ next to the instrument definition file."
+        ),
+        show_default=False,
+    ),
+]
+
 VerboseOption = Annotated[
     bool,
     typer.Option("--verbose", "-v", help="Enable debug logging."),
@@ -172,6 +201,62 @@ def postprocess(
     typer.echo(
         f"Completed: {len(plan.tones)} tones, {plan.total_sample_count} samples "
         f"-> {plan.output_root}"
+    )
+
+
+@app.command()
+def export(
+    instrument_file: InstrumentFileArgument,
+    patch_format: PatchFormatOption = "sfz",
+    output: OutputDirectoryOption = None,
+    verbose: VerboseOption = False,
+) -> None:
+    """
+    Generate a sampler patch from postprocessed sampling output.
+
+    Reads an instrument definition, copies (or encodes) the processed
+    samples into a self-contained output directory and writes the patch
+    file next to them. Never modifies the recorded or processed trees.
+    """
+    _init_logging(verbose)
+
+    from midi_sampling.export import create_patch_writer
+    from midi_sampling.export.planning import ExportPlanBuilder
+    from midi_sampling.export.resolving import ExportResolver
+
+    try:
+        writer = create_patch_writer(patch_format)
+        resolved = ExportResolver().resolve(instrument_file)
+        plan = ExportPlanBuilder().build(resolved)
+    except MidiSamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_DEFINITION_ERROR)
+
+    output_root = (
+        output if output is not None else resolved.definition_path.parent / "patches"
+    )
+    output_directory = output_root / writer.directory_name / plan.instrument.name
+
+    from midi_sampling.export.audio import AudioExporter
+    from midi_sampling.export.export_executor import ExportExecutor
+
+    executor = ExportExecutor(
+        writer=writer,
+        audio_exporter=AudioExporter(
+            audio_format=plan.audio_format, bit_depth=plan.bit_depth
+        ),
+        progress=typer.echo,
+    )
+
+    try:
+        patch_path = executor.execute(plan, output_directory)
+    except MidiSamplingError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(EXIT_EXECUTION_FAILED)
+
+    typer.echo(
+        f"Completed: {len(resolved.tones)} tones, "
+        f"{len(plan.instrument.regions)} regions -> {patch_path}"
     )
 
 
