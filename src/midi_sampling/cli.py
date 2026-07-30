@@ -227,7 +227,9 @@ def export(
     try:
         writer = create_patch_writer(patch_format)
         resolved = ExportResolver().resolve(instrument_file)
-        plan = ExportPlanBuilder().build(resolved)
+        plan = ExportPlanBuilder().build(
+            resolved, supported_audio_formats=writer.supported_audio_formats
+        )
     except MidiSamplingError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(EXIT_DEFINITION_ERROR)

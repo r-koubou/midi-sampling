@@ -28,10 +28,26 @@ def processed(tmp_path: Path) -> Path:
     return make_processed_output(tmp_path)
 
 
-def build(tmp_path: Path, instrument_yaml: str):
+def build(
+    tmp_path: Path,
+    instrument_yaml: str,
+    supported_audio_formats: tuple[str, ...] | None = None,
+):
     path = make_instrument_definition(tmp_path, instrument_yaml)
     resolved = ExportResolver().resolve(path)
-    return ExportPlanBuilder().build(resolved)
+    return ExportPlanBuilder().build(
+        resolved, supported_audio_formats=supported_audio_formats
+    )
+
+
+FLAC_INSTRUMENT_YAML = (
+    "schema_version: 1\n"
+    "kind: instrument_definition\n"
+    "name: test-instrument\n"
+    "audio: { format: flac }\n"
+    "sources:\n"
+    "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n"
+)
 
 
 class TestExportPlanBuilder:
@@ -165,6 +181,34 @@ class TestExclusiveGroupAssignment:
                 "      - { tone: tone-1 }\n"
                 "      - { tone: tone-1, root_note: 43 }\n",
             )
+
+
+class TestAudioFormatFallback:
+    def test_unsupported_format_falls_back_with_warning(
+        self, tmp_path: Path, processed: Path, caplog
+    ):
+        plan = build(
+            tmp_path, FLAC_INSTRUMENT_YAML, supported_audio_formats=("wav",)
+        )
+
+        assert plan.audio_format == "wav"
+        assert all(
+            region.sample_path.endswith(".wav")
+            for region in plan.instrument.regions
+        )
+        assert "'flac' is not supported" in caplog.text
+
+    def test_supported_format_is_kept(
+        self, tmp_path: Path, processed: Path, caplog
+    ):
+        plan = build(
+            tmp_path,
+            FLAC_INSTRUMENT_YAML,
+            supported_audio_formats=("wav", "flac"),
+        )
+
+        assert plan.audio_format == "flac"
+        assert "not supported" not in caplog.text
 
 
 class TestReleaseTriggerAssignment:

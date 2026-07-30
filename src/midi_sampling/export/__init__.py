@@ -1,7 +1,7 @@
 from midi_sampling.export.abstractions import InstrumentPatchWriter
 from midi_sampling.export.exceptions import ExportDefinitionError
 
-SUPPORTED_PATCH_FORMATS = ("sfz",)
+SUPPORTED_PATCH_FORMATS = ("sfz", "nki")
 
 
 def create_patch_writer(format_id: str) -> InstrumentPatchWriter:
@@ -14,6 +14,10 @@ def create_patch_writer(format_id: str) -> InstrumentPatchWriter:
         from midi_sampling.export.sfz_impl import SfzPatchWriter
 
         return SfzPatchWriter()
+    if format_id == "nki":
+        from midi_sampling.export.nki_impl import NkiPatchWriter
+
+        return NkiPatchWriter()
     raise ExportDefinitionError(
         f"unknown patch format: {format_id!r} "
         f"(supported: {', '.join(SUPPORTED_PATCH_FORMATS)})"

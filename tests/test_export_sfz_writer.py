@@ -39,6 +39,7 @@ class TestSfzPatchWriter:
         assert isinstance(writer, InstrumentPatchWriter)
         assert writer.format_id == "sfz"
         assert writer.directory_name == "sfz"
+        assert writer.supported_audio_formats is None
 
     def test_renders_all_opcodes(self, tmp_path: Path):
         instrument = InstrumentModel(

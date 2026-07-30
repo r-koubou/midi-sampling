@@ -3,7 +3,11 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from conftest import make_instrument_definition, make_processed_output
+from conftest import (
+    make_instrument_definition,
+    make_processed_output,
+    replace_with_real_wavs,
+)
 from midi_sampling import cli
 
 runner = CliRunner()
@@ -77,7 +81,7 @@ class TestExportCli:
         self, tmp_path: Path, instrument_file: Path
     ):
         result = runner.invoke(
-            cli.app, ["export", str(instrument_file), "--format", "nki"]
+            cli.app, ["export", str(instrument_file), "--format", "uvip"]
         )
         assert result.exit_code == 2
         assert "unknown patch format" in result.output
@@ -86,3 +90,56 @@ class TestExportCli:
         result = runner.invoke(cli.app, ["export", str(tmp_path / "missing.yaml")])
         assert result.exit_code == 2
         assert "Error:" in result.output
+
+
+class TestNkiExportCli:
+    @pytest.fixture
+    def instrument_file(self, tmp_path: Path) -> Path:
+        make_processed_output(tmp_path)
+        # The fake devices write unparseable WAV bytes; the NKI writer
+        # reads the exported samples, so they must be real files.
+        replace_with_real_wavs(tmp_path / "processed")
+        return make_instrument_definition(tmp_path)
+
+    def test_exports_self_contained_nki_patch(
+        self, tmp_path: Path, instrument_file: Path
+    ):
+        result = runner.invoke(
+            cli.app, ["export", str(instrument_file), "--format", "nki"]
+        )
+
+        assert result.exit_code == 0, result.output
+        patch_dir = tmp_path / "patches" / "nki" / "test-instrument"
+        patch_path = patch_dir / "test-instrument.nki"
+        assert patch_path.is_file()
+        assert len(list((patch_dir / "Samples" / "tone-1").glob("*.wav"))) == 4
+
+        import zlib
+
+        raw = patch_path.read_bytes()
+        assert raw[:4] == b"\x5e\xe5\x6e\xb3"
+        xml_text = zlib.decompress(raw[0x24:]).decode("utf-8")
+        assert 'name="test-instrument"' in xml_text
+        assert xml_text.count("<NiSS_Zone ") == 4
+
+    def test_flac_definition_falls_back_to_wav(
+        self, tmp_path: Path, instrument_file: Path
+    ):
+        instrument_file = make_instrument_definition(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            "audio: { format: flac }\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+        result = runner.invoke(
+            cli.app, ["export", str(instrument_file), "--format", "nki"]
+        )
+
+        assert result.exit_code == 0, result.output
+        samples = tmp_path / "patches" / "nki" / "test-instrument" / "Samples"
+        assert len(list(samples.rglob("*.wav"))) == 4
+        assert list(samples.rglob("*.flac")) == []

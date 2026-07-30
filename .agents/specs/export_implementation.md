@@ -10,7 +10,8 @@
 
 ポストプロセス済みのサンプリング成果物（`processed/<tone-id>/manifest.yaml` と処理済み WAV）を、サンプラーソフトウェア向けパッチとしてエクスポートする。
 
-- 初版の対応形式は **SFZ（Sforzando / ARIA）のみ**。UVI Falcon (*.uvip) / KONTAKT 1 (*.nki) は将来対応とし、抽象と具象を分離した構造だけを先に用意する。
+- 初版の対応形式は **SFZ（Sforzando / ARIA）のみ**。UVI Falcon (*.uvip) は将来対応とし、抽象と具象を分離した構造だけを先に用意する。
+- KONTAKT 1 (*.nki) は 2026-07-30 に対応済み。形式固有の仕様は `.agents/specs/kontakt1_nki_export.md` を参照。
 - サンプル間の関係（排他グループ・リリーストリガー）は、人間が手書きする**第3レイヤー定義ファイル `instrument_definition`** で表現する。
 
 ### 1.1 スコープ外（初版）
@@ -98,6 +99,7 @@ src/midi_sampling/export/
 │                            InstrumentPatchWriter (抽象基底クラス)
 ├── audio/                   AudioExporter (WAVコピー / FLACエンコード)
 ├── sfz_impl/                SfzPatchWriter
+├── nki_impl/                NkiPatchWriter（KONTAKT 1。仕様は kontakt1_nki_export.md）
 └── export_executor.py       ExportExecutor（オーディオ出力 → パッチ書き出し）
 ```
 
@@ -105,6 +107,7 @@ src/midi_sampling/export/
 - `InstrumentPatchWriter` は Protocol ではなく**抽象基底クラス**とする。Python の Protocol は実装側の継承が文法上不要なため、「インターフェースを実装しているか」を継承関係で判別できない。形式の実装は明示的な継承で表明する。
   - 抽象プロパティ `format_id`（CLI `--format` / ファクトリの識別子）と抽象メソッド `write()` を持つ。
   - プロパティ `directory_name` は出力レイアウト `<出力ルート>/<directory_name>/<パッチ名>/` のフォーマット別サブディレクトリ名を返す。既定実装は `format_id` を返し、慣習的なディレクトリ名が識別子と異なるフォーマットのみオーバーライドする。
+  - プロパティ `supported_audio_formats` は対象サンプラーが読める音声フォーマットのタプル（既定 `None` = 制限なし）。定義ファイルの `audio.format` が非対応の場合、`ExportPlanBuilder` が警告ログを出して先頭のフォーマットへフォールバックする（例: KONTAKT 1 は FLAC 非対応のため `("wav",)` を返し、flac 指定は wav で出力される）。
 - `soundfile` の import は AudioExporter の関数内 lazy import に閉じる。
 
 ## 5. オーディオ出力
@@ -150,7 +153,7 @@ src/midi_sampling/export/
 midi-sampling export <instrument.yaml> [--format sfz] [--output <root>]
 ```
 
-- `--format` 省略時は `sfz`。未知の形式は定義エラー扱い。
+- `--format` 省略時は `sfz`。対応形式は `sfz` / `nki`。未知の形式は定義エラー扱い。
 - パッチの出力先は常に `<出力ルート>/<フォーマット別ディレクトリ名>/<name>/`（例: `patches/sfz/sc8850-cello/`）。フォーマット別ディレクトリ名は Writer の `directory_name`（§4）が決める。
 - `--output` は出力ルートを差し替える。省略時のルートは `<instrument.yaml のあるディレクトリ>/patches/`。
 - 出力ディレクトリ（`<name>/` 階層）が存在して空でない場合はエラー（§2-4）。
@@ -159,6 +162,6 @@ midi-sampling export <instrument.yaml> [--format sfz] [--output <root>]
 
 ## 8. 将来拡張のための注記
 
-- UVI Falcon / KONTAKT 対応時は `InstrumentModel` を共有し、`<format>_impl/` と `create_patch_writer` の分岐を追加する。
-- 排他グループは中間表現では「整数 ID＋名前」であり、Falcon の mute group / KONTAKT の Voice Group へも素直に写像できる。
+- UVI Falcon 対応時は `InstrumentModel` を共有し、`<format>_impl/` と `create_patch_writer` の分岐を追加する（KONTAKT 1 は `nki_impl/` としてこの方式で実装済み）。
+- 排他グループは中間表現では「整数 ID＋名前」であり、Falcon の mute group へも素直に写像できる（KONTAKT 1 では Polyphony の VoiceGroup へ写像済み）。
 - 形式固有のエスケープハッチを導入する場合は instrument_definition に形式名を key とするセクションを追加する方針（初版では未実装）。

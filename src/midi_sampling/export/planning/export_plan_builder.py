@@ -28,9 +28,16 @@ class ExportPlanBuilder:
     in definition order) so that every writer sees the same ids.
     """
 
-    def build(self, resolved: ResolvedInstrument) -> ExportPlan:
+    def build(
+        self,
+        resolved: ResolvedInstrument,
+        supported_audio_formats: tuple[str, ...] | None = None,
+    ) -> ExportPlan:
         definition = resolved.definition
-        suffix = AudioExporter(definition.audio.format).suffix
+        audio_format = self._resolve_audio_format(
+            definition.audio.format, supported_audio_formats
+        )
+        suffix = AudioExporter(audio_format).suffix
 
         release_decays: dict[str, float | None] = {
             trigger.plays.tone: trigger.rt_decay
@@ -95,10 +102,22 @@ class ExportPlanBuilder:
                 regions=tuple(regions),
                 exclusive_groups=groups,
             ),
-            audio_format=definition.audio.format,
+            audio_format=audio_format,
             bit_depth=definition.audio.bit_depth,
             audio_tasks=tuple(tasks),
         )
+
+    def _resolve_audio_format(
+        self, declared: str, supported: tuple[str, ...] | None
+    ) -> str:
+        if supported is None or declared in supported:
+            return declared
+        fallback = supported[0]
+        logger.warning(
+            f"audio.format {declared!r} is not supported by the selected "
+            f"patch format; exporting {fallback!r} instead"
+        )
+        return fallback
 
     def _relative_sample_path(
         self, tone: ResolvedToneSource, sample: ManifestSample, suffix: str
