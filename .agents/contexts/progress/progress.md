@@ -1,17 +1,17 @@
-# 現在の状態(2026-07-28 更新)
+# 現在の状態(2026-07-30 更新)
 
 ## 現状
 - `sampling_implementation.md` 実装完了(CLI `run` / `audit`)。詳細は `archives/2026-07-22-sampling-initial.md`
 - `postprocess_implementation.md` 実装完了(`src/midi_sampling/postprocess/`、CLI `postprocess`)
   - `sampling_implementation.md` §23 の「ポストプロセス後の派生マニフェスト」「トリミング・ループ処理とのマニフェスト統合」を解消
   - 実装プランは `.agents/plans/postprocess.md`
-- `export_implementation.md` 実装完了(`src/midi_sampling/export/`、CLI `export`)。SFZ のみ対応
-  - 実装プランは `.agents/plans/2026-0728-sfz-instrument-export.md`
+- `export_implementation.md` 実装完了(`src/midi_sampling/export/`、CLI `export`)。SFZ / KONTAKT 1 NKI 対応
+  - 実装プランは `.agents/plans/2026-0728-sfz-instrument-export.md`、`.agents/plans/2026-0730-kontakt1-nki-export.md`
   - 実データでのエクスポートと Sforzando での読み込みを人間が確認済み(2026-07-28)
-- `tests/` 286 件、全て成功(実デバイス不使用)
+- `tests/` 309 件、全て成功(実デバイス不使用)
 
 ## 未完了
-- `export` の UVI Falcon `*.uvip` / KONTAKT 1 `*.nki` 対応 — `abstractions/` の中間表現を共有し `<format>_impl/` と `create_patch_writer` の分岐を足す構造は用意済み
+- `export` の UVI Falcon `*.uvip` 対応 — `abstractions/` の中間表現を共有し `<format>_impl/` と `create_patch_writer` の分岐を足す構造は用意済み
 - `audit` のポストプロセスステージ対応 — 派生マニフェストは3種ハッシュを持つので判定は実装可能な状態
 
 ## 重要な判断・制約(なぜそうなっているか)
@@ -80,9 +80,39 @@ Sforzando での読み込み確認後、3件のフィードバックを反映:
 - 同じ方針で既存の Protocol も全て ABC へ統一: `PostprocessStage`(`TrimStage` / `LoopStage` / conftest `FakeStage` が明示継承)、`AudioDeviceInformationLoader` / `MidiDeviceInformationLoader`(具象は元々明示継承済み。conftest `FakeAudioInformationLoader` に継承を追加)。**本プロジェクトのインターフェース定義は今後も Protocol ではなく ABC を使う**
 - サンプルディレクトリ名は `Samples/`(大文字。ユーザーが SAMPLES_DIRECTORY_NAME を変更)
 
+## export KONTAKT 1 NKI 実装(2026-07-30)
+プランは `.agents/plans/2026-0730-kontakt1-nki-export.md`、仕様は `.agents/specs/kontakt1_nki_export.md`。フォーマット調査は `.agents/specs/research_kontakt_v1_nki_file_format.md`。
+
+- `--format nki` で KONTAKT 1 の `.nki`(36バイトヘッダー + zlib 圧縮 NiSS XML)を生成。`nki_impl/` は wav_info(RIFF走査) / nki_grouping(Group分割純関数) / nki_xml / nki_binary / nki_patch_writer に分割
+- **実ファイル照合が設計の核**: `examples/kontakt/example_kontakt_v1.nki`(KONTAKT 1 保存の実ファイル)を zlib 展開して XML 構造を確定し、テンプレートとして忠実に複製した。研究文書だけでは不明だった以下が確定:
+  - XML は **CRLF**・末尾改行なし。version 属性は必須(Program 0.50 / Group・Zone・Envelope 0.60 / IntMod 0.50 / ExtMod 0.80)。ヘッダー `0x0A` は 2
+  - **排他は Program 直下 `Polyphony` の `VoiceGroup` 要素で表現**し、NiSS_Group の `voiceGroup` はそのインデックス参照(-1 = 未割当)。排他グループごとに `maxNumVoices=1` + `kill_oldest` の VoiceGroup を作成(index 0 は既定 `<instrument>`/128声)
+  - ループなし Zone は `<Loops/>` を空要素として出力(省略ではない)
+  - Group/Zone には研究文書に無いパラメーター(`m_bMuted`・`mRetriggerInfo.*` 等)と子要素(GroupStart/Filter/FX スタブ/ExtModulators)があり、実ファイルの値を固定複製
+- Group 分割: キー `(exclusive_group, release_tone)`。index 0 は常に `default`。名前は `exec_%02d` / `release_%02d` / 複合 `exec_%02d_release_%02d`(ユーザー指定)。release の採番は plays 一意性バリデーターにより tone_id で定義と1:1対応
+- エンベロープは Group の volume AHDSR(ミリ秒)。attack/release は定義の秒から変換、hold=0 / decay=500ms / sustain=1.0(=0.0 dB、ユーザー確認済み)
+- `rt_decay` は KONTAKT 1 に相当機能が無く警告ログの上で無視(ユーザー決定)
+- **`InstrumentPatchWriter.supported_audio_formats`** を ABC に追加(既定 None)。NKI は `("wav",)` を返し、flac 定義でも `ExportPlanBuilder` が警告して wav へフォールバック(ユーザー決定。KONTAKT 1 は FLAC 非対応)
+- ヘッダー `0x1C`(参照サンプルの data チャンク合計)と Zone の `sampleEnd` は、executor が先に書き出した WAV を writer が RIFF 走査して取得(stdlib `wave` は float PCM を拒否するため自前実装)。conftest に `make_wav_bytes` / `replace_with_real_wavs` を追加(フェイクデバイスの WAV は `RIFF-fake-wav-data` で解析不能なため)
+- 未検証: `sampleEnd`=実フレーム数(実ファイルは 0)、ループありの `Loop` 要素(実ファイルに例なし、version=0.60 は推定)、実 KONTAKT での読み込み
+
+### 実機確認フィードバック対応(2026-07-30)
+実 KONTAKT でロード・演奏可能なことを人間が確認。`sampleEnd`=実フレーム数と `Loop` 要素(version=0.60)は正しく読まれた。3件のフィードバックを反映:
+- **`loopTuning=0` はサスティンループを壊す**。KONTAKT が Tune -12 semitone と読み込み、鍵盤押下中でもループせず停止した。tune 系は周波数比格納のためニュートラルは `1` → 修正済み。研究文書 §16.2 の「ループ位置とクロスフェード値の厳密な単位」のうち loopTuning が実機で確定した事例
+- filterCutoff / pitch のモジュレーションスロット(実ファイル由来)は不要 → volume AHDSR のみ出力に変更
+- インサート FX は不要 → いったん完全削除したが**ロード不能になった**(下記)
+
+### NiSS パーサは要素を固定順で読む(2026-07-30、重要)
+FX 要素を削除したビルドが `ERROR parsing input file at line 31: <syntax error>` でロード不能に。行 31 は削除前は `<FXDelay/>`、削除後は `<Groups>` — **KONTAKT の NiSS パーサは既知要素を固定順で逐次期待し、スロットの省略は構文エラー**と確定。対応:
+- Program FX スタブ 12 種・Group の Filter + FX スタブ 6 種を復元(参照ファイル通りの位置・順序)
+- 「FX を使わない」は空要素(FX スタブ)と `bypass=yes`(Filter。参照ファイルでは no だった)で表現
+- 生成 XML と参照ファイルの要素シーケンスを機械比較し、差分が「IntModulators 内の cutoff/pitch 2 スロット削除」のみであることを確認済み
+- **最終構成で実機の再読み込み・サスティンループ動作を人間が確認済み(2026-07-30)**。IntModulators のインデックス付き子要素の可変個数は許容されることが確定
+- テストは 310 件全緑
+
 ## 補足
 - `examples/sessions/postprocess.yaml` にポストプロセス定義サンプル
 - DSP結合テスト(tests/test_postprocess_stages_integration.py)は `pytest.importorskip` でガード。librosa 解析のため約70秒かかる
 
 ## 次回やること
-1. (未定。Falcon/KONTAKT 対応、または `audit` のステージ対応)
+1. (未定。Falcon 対応、または `audit` のステージ対応)

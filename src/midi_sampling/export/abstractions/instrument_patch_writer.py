@@ -52,6 +52,16 @@ class InstrumentPatchWriter(metaclass=abc.ABCMeta):
         """
         return self.format_id
 
+    @property
+    def supported_audio_formats(self) -> tuple[str, ...] | None:
+        """
+        Audio formats the target sampler can load, or None when the
+        format has no restriction. When the instrument definition asks
+        for an unsupported format, the export plan falls back to the
+        first entry with a warning instead of failing.
+        """
+        return None
+
     @abc.abstractmethod
     def write(self, context: PatchWriteContext) -> PatchWriteOutcome:
         ...

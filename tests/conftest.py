@@ -410,3 +410,45 @@ def make_instrument_definition(
     path = root / "instrument.yaml"
     path.write_text(instrument_yaml, encoding="utf-8")
     return path
+
+
+def make_wav_bytes(
+    frames: int,
+    channels: int = 1,
+    sample_width: int = 2,
+    sample_rate: int = 44100,
+    extra_chunks: tuple[tuple[bytes, bytes], ...] = (),
+) -> bytes:
+    """
+    A minimal but real PCM WAV, for writers that parse the exported
+    samples (the fake devices only write `RIFF-fake-wav-data`).
+    """
+    import struct
+
+    block_align = channels * sample_width
+    data = b"\x00" * (frames * block_align)
+    fmt = struct.pack(
+        "<HHIIHH",
+        1,
+        channels,
+        sample_rate,
+        sample_rate * block_align,
+        block_align,
+        sample_width * 8,
+    )
+    body = b"WAVE" + b"fmt " + struct.pack("<I", len(fmt)) + fmt
+    for chunk_id, payload in extra_chunks:
+        body += chunk_id + struct.pack("<I", len(payload)) + payload
+        if len(payload) % 2:
+            body += b"\x00"
+    body += b"data" + struct.pack("<I", len(data)) + data
+    return b"RIFF" + struct.pack("<I", len(body)) + body
+
+
+def replace_with_real_wavs(root: Path, frames: int = 100) -> None:
+    """
+    Rewrite every fake WAV below `root` as a real PCM file so parsing
+    writers (e.g. the NKI exporter) can read them.
+    """
+    for path in root.rglob("*.wav"):
+        path.write_bytes(make_wav_bytes(frames))
