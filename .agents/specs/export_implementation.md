@@ -26,7 +26,9 @@
 1. **既存マニフェストには一切書き込まない。** `resolved_definition_sha256` / `source_manifest_sha256` のハッシュ連鎖を壊すため（ディスカッション §3）。エクスポートは recorded/ ・ processed/ に対して完全に read-only。
 2. **ファイル名の逆解析をしない。** マッピングは全て postprocess_manifest の `samples[].mapping` から取得する（サンプリング仕様 §24、ポストプロセス仕様の派生マニフェスト単独復元原則）。
 3. **`sources` が参照できるのは postprocess_manifest のみ。** recorded/ の sample_manifest 直接参照は不可。postprocess を経ていない音色をエクスポートしたい場合は、trim/loop なしの postprocess を一度通す。
-4. 既存のエクスポート成果物は自動で上書き・削除・再開しない（postprocess と同じ原則）。出力ディレクトリが空でない場合はエラー。
+4. **エクスポートのみ既存出力を許容する。** 出力ルートは複数のインストゥルメントで共有する設計（§7.1）のため、既存ディレクトリ・ファイルが存在してもエラーにせず上書きする。sampling / postprocess の「既存出力があればエラー」原則は従来どおり維持する。
+   - 上書きは追記的で、削除・クリーンアップは一切行わない。定義から外した音色のサンプルは `Samples/` に残留する（既知の挙動）。
+   - `Samples/<tone-id>/` が既にファイルを含む場合、そのディレクトリにつき 1 回だけ警告ログを出す（サンプル 1 件ごとではない）。
 
 ## 3. instrument_definition スキーマ (schema_version: 1)
 
@@ -106,13 +108,16 @@ src/midi_sampling/export/
 - 中間表現 `InstrumentModel` は形式非依存。将来の Falcon / KONTAKT 対応は `<format>_impl/` の追加と `create_patch_writer` への分岐追加だけで済む構造とする。
 - `InstrumentPatchWriter` は Protocol ではなく**抽象基底クラス**とする。Python の Protocol は実装側の継承が文法上不要なため、「インターフェースを実装しているか」を継承関係で判別できない。形式の実装は明示的な継承で表明する。
   - 抽象プロパティ `format_id`（CLI `--format` / ファクトリの識別子）と抽象メソッド `write()` を持つ。
-  - プロパティ `directory_name` は出力レイアウト `<出力ルート>/<directory_name>/<パッチ名>/` のフォーマット別サブディレクトリ名を返す。既定実装は `format_id` を返し、慣習的なディレクトリ名が識別子と異なるフォーマットのみオーバーライドする。
+  - プロパティ `directory_name` は出力レイアウト `<出力ルート>/<directory_name>/{Samples,Instruments}/`（§7.1）のフォーマット別サブディレクトリ名を返す。既定実装は `format_id` を返し、慣習的なディレクトリ名が識別子と異なるフォーマットのみオーバーライドする。
+  - `write()` に渡す `PatchWriteContext` はパッチの配置先 `patch_directory`（＝ `<フォーマットルート>/Instruments/`）を持つ。writer は「パッチを `patch_directory` に書く」「`sample_path` はパッチファイルからの相対」の2点だけを知ればよく、`Instruments` / `Samples` というレイアウト名は writer 側に漏れない。
   - プロパティ `supported_audio_formats` は対象サンプラーが読める音声フォーマットのタプル（既定 `None` = 制限なし）。定義ファイルの `audio.format` が非対応の場合、`ExportPlanBuilder` が警告ログを出して先頭のフォーマットへフォールバックする（例: KONTAKT 1 は FLAC 非対応のため `("wav",)` を返し、flac 指定は wav で出力される）。
 - `soundfile` の import は AudioExporter の関数内 lazy import に閉じる。
 
 ## 5. オーディオ出力
 
-定義ファイルの `audio.format` で選択。出力は常にサンプルごとに `Samples/<tone-id>/<元ファイル名>.<ext>` へ書き出す（tone-id サブディレクトリでファイル名衝突を回避）。
+定義ファイルの `audio.format` で選択。出力は常にサンプルごとに `<フォーマットルート>/Samples/<tone-id>/<元ファイル名>.<ext>` へ書き出す（tone-id サブディレクトリでファイル名衝突を回避）。
+
+`Samples/` はフォーマットルート直下の共有ツリーであり、同じ tone-id を参照する複数のインストゥルメントは同じディレクトリを共有する（§7.1）。
 
 ### 5.1 wav（既定）
 
@@ -131,7 +136,7 @@ src/midi_sampling/export/
 
 ## 6. 中間表現 → SFZ マッピング
 
-出力は `<出力ディレクトリ>/<name>.sfz`（UTF-8、LF）。`sample=` は .sfz からの相対パス（`Samples/<tone-id>/...`、POSIX 区切り）。
+出力は `<フォーマットルート>/Instruments/<name>.sfz`（UTF-8、LF）。`sample=` は .sfz からの相対パス（`../Samples/<tone-id>/...`、POSIX 区切り）。パッチは `Instruments/` 配下にあり、`Samples/` はその 1 つ上の階層にあるため `../` が前置される。
 
 | 中間表現 | SFZ opcode |
 |---|---|
@@ -154,11 +159,28 @@ midi-sampling export <instrument.yaml> [--format sfz] [--output <root>]
 ```
 
 - `--format` 省略時は `sfz`。対応形式は `sfz` / `nki`。未知の形式は定義エラー扱い。
-- パッチの出力先は常に `<出力ルート>/<フォーマット別ディレクトリ名>/<name>/`（例: `patches/sfz/sc8850-cello/`）。フォーマット別ディレクトリ名は Writer の `directory_name`（§4）が決める。
 - `--output` は出力ルートを差し替える。省略時のルートは `<instrument.yaml のあるディレクトリ>/patches/`。
-- 出力ディレクトリ（`<name>/` 階層）が存在して空でない場合はエラー（§2-4）。
+- 既存出力があってもエラーにせず上書きする（§2-4）。
 - 終了コードは既存規約: 成功 0 / 実行失敗 1 / 定義・入力エラー 2。
 - 例外は `MidiSamplingError` を CLI が捕捉する既存方式（`export/exceptions.py` は全て `ExportError(MidiSamplingError)` 派生）。
+
+### 7.1 出力レイアウト
+
+フォーマットごとに 1 つのルート（`<出力ルート>/<フォーマット別ディレクトリ名>/`。例: `patches/sfz/`）を持ち、その配下でサンプルとパッチを種類別にまとめる。フォーマット別ディレクトリ名は Writer の `directory_name`（§4）が決める。
+
+```
+<出力ルート>/<フォーマット別ディレクトリ名>/
+├── Samples/
+│   ├── <tone-id1>/*.wav|.flac
+│   └── <tone-id2>/*.wav|.flac
+└── Instruments/
+    ├── <name1>.<ext>
+    └── <name2>.<ext>
+```
+
+- **パッチ単位でディレクトリを分けない。** 同じフォーマットの全インストゥルメントが 1 つの `Instruments/` に並び、`Samples/` を共有する。サンプラーソフト上でファイルを探しやすくするための構造であり、KONTAKT ライブラリの慣習（`Instruments/` + `Samples/` がライブラリルート直下）とも一致する。
+- 同じ tone-id を参照する複数のインストゥルメントは同じサンプル実体を共有する。tone-id が衝突した場合は後勝ちで上書きされ、警告ログが出る（§2-4）。
+- パッチ内のサンプル参照は必ずパッチファイルからの相対パス（`../Samples/<tone-id>/...`）。プランニング時に、出力ルート基準の書き出し先（`AudioExportTask.relative_path`）とパッチ基準の参照パス（`InstrumentRegion.sample_path`）を別々に組み立てる。
 
 ## 8. 将来拡張のための注記
 

@@ -30,7 +30,7 @@ class SfzPatchWriter(InstrumentPatchWriter):
 
     def write(self, context: PatchWriteContext) -> PatchWriteOutcome:
         instrument = context.instrument
-        patch_path = context.output_directory / f"{instrument.name}{PATCH_SUFFIX}"
+        patch_path = context.patch_directory / f"{instrument.name}{PATCH_SUFFIX}"
 
         content = self._render(instrument)
         try:

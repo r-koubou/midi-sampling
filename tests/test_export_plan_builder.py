@@ -68,7 +68,7 @@ class TestExportPlanBuilder:
         assert plan.instrument.envelope.release == 0.3
 
         region = plan.instrument.regions[0]
-        assert region.sample_path.startswith("Samples/tone-1/")
+        assert region.sample_path.startswith("../Samples/tone-1/")
         assert region.sample_path.endswith(".wav")
         assert region.trigger == "attack"
         assert region.exclusive_group is None
@@ -85,6 +85,24 @@ class TestExportPlanBuilder:
             (41, 43, 45, 1, 63),
             (41, 43, 45, 64, 127),
         }
+
+    def test_task_and_region_paths_use_different_bases(
+        self, tmp_path: Path, processed: Path
+    ):
+        plan = build(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+        # The task path is relative to the output root, the region path
+        # to the patch file one level below it in Instruments/.
+        for task, region in zip(plan.audio_tasks, plan.instrument.regions):
+            assert task.relative_path.startswith("Samples/tone-1/")
+            assert region.sample_path == f"../{task.relative_path}"
 
     def test_flac_format_changes_sample_extension(
         self, tmp_path: Path, processed: Path

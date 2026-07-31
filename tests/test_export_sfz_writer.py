@@ -18,7 +18,7 @@ def make_region(**overrides) -> InstrumentRegion:
     values = dict(
         tone_id="tone-1",
         source_path=Path("processed/tone-1/a.wav"),
-        sample_path="Samples/tone-1/a.wav",
+        sample_path="../Samples/tone-1/a.wav",
         root_note=38,
         key_low=36,
         key_high=40,
@@ -52,7 +52,7 @@ class TestSfzPatchWriter:
                 ),
                 make_region(
                     tone_id="tone-2",
-                    sample_path="Samples/tone-2/b.flac",
+                    sample_path="../Samples/tone-2/b.flac",
                     root_note=43,
                     key_low=41,
                     key_high=45,
@@ -66,7 +66,7 @@ class TestSfzPatchWriter:
         )
 
         outcome = SfzPatchWriter().write(
-            PatchWriteContext(instrument=instrument, output_directory=tmp_path)
+            PatchWriteContext(instrument=instrument, patch_directory=tmp_path)
         )
 
         assert outcome.patch_path == tmp_path / "test-instrument.sfz"
@@ -81,13 +81,13 @@ class TestSfzPatchWriter:
             "ampeg_release=0.3",
             "",
             "// tone: tone-1",
-            "<region> sample=Samples/tone-1/a.wav"
+            "<region> sample=../Samples/tone-1/a.wav"
             " lokey=36 hikey=40 pitch_keycenter=38 lovel=1 hivel=63"
             " loop_mode=loop_continuous loop_start=1000 loop_end=2000"
             " group=1 off_by=1 off_mode=fast",
             "",
             "// tone: tone-2",
-            "<region> sample=Samples/tone-2/b.flac trigger=release rt_decay=6"
+            "<region> sample=../Samples/tone-2/b.flac trigger=release rt_decay=6"
             " lokey=41 hikey=45 pitch_keycenter=43 lovel=64 hivel=127"
             " loop_mode=no_loop",
         ]
@@ -101,7 +101,7 @@ class TestSfzPatchWriter:
         )
 
         outcome = SfzPatchWriter().write(
-            PatchWriteContext(instrument=instrument, output_directory=tmp_path)
+            PatchWriteContext(instrument=instrument, patch_directory=tmp_path)
         )
 
         content = outcome.patch_path.read_text(encoding="utf-8")
@@ -117,7 +117,7 @@ class TestSfzPatchWriter:
         )
 
         outcome = SfzPatchWriter().write(
-            PatchWriteContext(instrument=instrument, output_directory=tmp_path)
+            PatchWriteContext(instrument=instrument, patch_directory=tmp_path)
         )
 
         raw = outcome.patch_path.read_bytes()

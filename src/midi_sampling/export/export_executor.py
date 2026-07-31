@@ -7,23 +7,25 @@ from midi_sampling.export.abstractions import (
     PatchWriteContext,
 )
 from midi_sampling.export.audio import AudioExporter
-from midi_sampling.export.exceptions import (
-    ExportExistingOutputError,
-    ExportWriteError,
+from midi_sampling.export.exceptions import ExportWriteError
+from midi_sampling.export.planning import (
+    INSTRUMENTS_DIRECTORY_NAME,
+    ExportPlan,
 )
-from midi_sampling.export.planning import ExportPlan
 
 logger = getLogger(__name__)
 
 
 class ExportExecutor:
     """
-    Write the audio files and the patch file into the output directory.
+    Write the audio files and the patch file into the output root, which
+    holds `Samples/<tone-id>/` and `Instruments/<name>.<ext>` for one
+    patch format.
 
-    Read-only with respect to the recorded and processed trees, and it
-    never overwrites existing export output: a non-empty output
-    directory is refused, matching the postprocess rule for derived
-    output.
+    Read-only with respect to the recorded and processed trees. Unlike
+    sampling and postprocess, an existing output root is accepted and
+    its files are overwritten: several instruments share one root by
+    design, so exporting is repeatable and additive.
     """
 
     def __init__(
@@ -36,40 +38,62 @@ class ExportExecutor:
         self._audio_exporter = audio_exporter
         self._progress = progress if progress is not None else (lambda message: None)
 
-    def execute(self, plan: ExportPlan, output_directory: Path) -> Path:
-        output_directory = Path(output_directory)
-        if output_directory.exists() and any(output_directory.iterdir()):
-            raise ExportExistingOutputError(
-                f"{output_directory}: output directory is not empty; "
-                f"existing export output is never overwritten"
-            )
+    def execute(self, plan: ExportPlan, output_root: Path) -> Path:
+        output_root = Path(output_root)
+        patch_directory = output_root / INSTRUMENTS_DIRECTORY_NAME
 
-        try:
-            output_directory.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            raise ExportWriteError(
-                f"{output_directory}: cannot create output directory: {e}"
-            ) from e
+        for directory in (output_root, patch_directory):
+            try:
+                directory.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                raise ExportWriteError(
+                    f"{directory}: cannot create output directory: {e}"
+                ) from e
 
         self._progress(
             f"Exporting {plan.instrument.name!r}: "
             f"{len(plan.audio_tasks)} sample(s) as {plan.audio_format}"
         )
 
+        self._warn_on_occupied_sample_directories(plan, output_root)
+
         for task in plan.audio_tasks:
             logger.debug(f"Writing {task.relative_path}")
             self._audio_exporter.export(
                 task.source_path,
-                output_directory / task.relative_path,
+                output_root / task.relative_path,
                 task.data_format,
             )
 
         outcome = self._writer.write(
             PatchWriteContext(
                 instrument=plan.instrument,
-                output_directory=output_directory,
+                patch_directory=patch_directory,
             )
         )
 
         self._progress(f"Wrote patch: {outcome.patch_path}")
         return outcome.patch_path
+
+    def _warn_on_occupied_sample_directories(
+        self, plan: ExportPlan, output_root: Path
+    ) -> None:
+        """
+        Warn once per `Samples/<tone-id>/` that already holds files.
+
+        Tone ids are the sample namespace of the whole output root, so an
+        occupied directory means this export or another instrument
+        already wrote that tone; its files are about to be replaced.
+        Warning per directory rather than per file keeps a routine
+        re-export from drowning in one line per sample.
+        """
+        seen: set[Path] = set()
+        for task in plan.audio_tasks:
+            directory = (output_root / task.relative_path).parent
+            if directory in seen:
+                continue
+            seen.add(directory)
+            if directory.exists() and any(directory.iterdir()):
+                logger.warning(
+                    f"{directory}: overwriting existing sample files"
+                )

@@ -31,18 +31,21 @@ class TestExportCli:
         assert result.exit_code == 0
         assert "export" in result.output
 
-    def test_exports_self_contained_sfz_patch(self, tmp_path: Path, instrument_file: Path):
+    def test_exports_sfz_patch_into_shared_format_root(
+        self, tmp_path: Path, instrument_file: Path
+    ):
         result = runner.invoke(cli.app, ["export", str(instrument_file)])
 
         assert result.exit_code == 0, result.output
-        patch_dir = tmp_path / "patches" / "sfz" / "test-instrument"
-        patch_path = patch_dir / "test-instrument.sfz"
+        format_root = tmp_path / "patches" / "sfz"
+        patch_path = format_root / "Instruments" / "test-instrument.sfz"
         assert patch_path.is_file()
-        assert len(list((patch_dir / "Samples" / "tone-1").glob("*.wav"))) == 4
+        assert len(list((format_root / "Samples" / "tone-1").glob("*.wav"))) == 4
 
         content = patch_path.read_text(encoding="utf-8")
         assert content.count("<region>") == 4
-        assert "sample=Samples/tone-1/" in content
+        # The patch sits one level below the samples root.
+        assert "sample=../Samples/tone-1/" in content
         assert "<global>" in content
         assert "ampeg_attack=0" in content
         assert "ampeg_release=0.3" in content
@@ -66,16 +69,48 @@ class TestExportCli:
         )
 
         assert result.exit_code == 0, result.output
-        # The <format>/<name> layout applies below the explicit root too.
-        assert (output / "sfz" / "test-instrument" / "test-instrument.sfz").is_file()
+        # The <format>/{Samples,Instruments} layout applies below the
+        # explicit root too.
+        assert (output / "sfz" / "Instruments" / "test-instrument.sfz").is_file()
+        assert (output / "sfz" / "Samples" / "tone-1").is_dir()
 
-    def test_existing_output_is_refused(self, tmp_path: Path, instrument_file: Path):
+    def test_re_exporting_overwrites_existing_output(
+        self, tmp_path: Path, instrument_file: Path
+    ):
         first = runner.invoke(cli.app, ["export", str(instrument_file)])
         assert first.exit_code == 0, first.output
 
         second = runner.invoke(cli.app, ["export", str(instrument_file)])
-        assert second.exit_code == 1
-        assert "never overwritten" in second.output
+        assert second.exit_code == 0, second.output
+        assert (
+            tmp_path / "patches" / "sfz" / "Instruments" / "test-instrument.sfz"
+        ).is_file()
+
+    def test_instruments_share_one_format_root(
+        self, tmp_path: Path, instrument_file: Path
+    ):
+        second_file = tmp_path / "second.yaml"
+        second_file.write_text(
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: second-instrument\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+            encoding="utf-8",
+        )
+
+        for definition in (instrument_file, second_file):
+            result = runner.invoke(cli.app, ["export", str(definition)])
+            assert result.exit_code == 0, result.output
+
+        format_root = tmp_path / "patches" / "sfz"
+        assert sorted(
+            path.name for path in (format_root / "Instruments").iterdir()
+        ) == ["second-instrument.sfz", "test-instrument.sfz"]
+        # Both patches reference the same shared Samples tree.
+        assert [path.name for path in (format_root / "Samples").iterdir()] == [
+            "tone-1"
+        ]
 
     def test_unknown_format_exits_with_definition_error(
         self, tmp_path: Path, instrument_file: Path
@@ -101,7 +136,7 @@ class TestNkiExportCli:
         replace_with_real_wavs(tmp_path / "processed")
         return make_instrument_definition(tmp_path)
 
-    def test_exports_self_contained_nki_patch(
+    def test_exports_nki_patch_into_shared_format_root(
         self, tmp_path: Path, instrument_file: Path
     ):
         result = runner.invoke(
@@ -109,10 +144,10 @@ class TestNkiExportCli:
         )
 
         assert result.exit_code == 0, result.output
-        patch_dir = tmp_path / "patches" / "nki" / "test-instrument"
-        patch_path = patch_dir / "test-instrument.nki"
+        format_root = tmp_path / "patches" / "nki"
+        patch_path = format_root / "Instruments" / "test-instrument.nki"
         assert patch_path.is_file()
-        assert len(list((patch_dir / "Samples" / "tone-1").glob("*.wav"))) == 4
+        assert len(list((format_root / "Samples" / "tone-1").glob("*.wav"))) == 4
 
         import zlib
 
@@ -140,6 +175,6 @@ class TestNkiExportCli:
         )
 
         assert result.exit_code == 0, result.output
-        samples = tmp_path / "patches" / "nki" / "test-instrument" / "Samples"
+        samples = tmp_path / "patches" / "nki" / "Samples"
         assert len(list(samples.rglob("*.wav"))) == 4
         assert list(samples.rglob("*.flac")) == []

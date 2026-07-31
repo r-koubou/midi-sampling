@@ -18,6 +18,7 @@ from midi_sampling.export.abstractions import (
 from midi_sampling.export.exceptions import ExportWriteError
 from midi_sampling.export.nki_impl import NkiPatchWriter
 from midi_sampling.export.nki_impl.nki_grouping import partition_groups
+from midi_sampling.export.planning import INSTRUMENTS_DIRECTORY_NAME
 from midi_sampling.export.nki_impl.wav_info import read_wav_data_info
 
 DEFAULT_ENVELOPE = InstrumentEnvelope(attack=0.0, release=0.3)
@@ -29,7 +30,7 @@ def make_region(**overrides) -> InstrumentRegion:
     values = dict(
         tone_id="tone-1",
         source_path=Path("processed/tone-1/a.wav"),
-        sample_path="Samples/tone-1/a.wav",
+        sample_path="../Samples/tone-1/a.wav",
         root_note=38,
         key_low=36,
         key_high=40,
@@ -55,20 +56,31 @@ def make_instrument(regions, exclusive_groups=(), **overrides) -> InstrumentMode
     return InstrumentModel(**values)
 
 
+def make_patch_directory(tmp_path: Path) -> Path:
+    """
+    The Instruments/ directory of an output root, so that the regions'
+    `../Samples/...` references land inside `tmp_path`.
+    """
+    patch_directory = tmp_path / INSTRUMENTS_DIRECTORY_NAME
+    patch_directory.mkdir(parents=True, exist_ok=True)
+    return patch_directory
+
+
 def write_region_wavs(
-    output_directory: Path, instrument: InstrumentModel, frames: int = 100
+    patch_directory: Path, instrument: InstrumentModel, frames: int = 100
 ) -> None:
     for region in instrument.regions:
-        path = output_directory / region.sample_path
+        path = patch_directory / region.sample_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(make_wav_bytes(frames))
 
 
 def write_patch(tmp_path: Path, instrument: InstrumentModel, frames: int = 100):
-    write_region_wavs(tmp_path, instrument, frames=frames)
+    patch_directory = make_patch_directory(tmp_path)
+    write_region_wavs(patch_directory, instrument, frames=frames)
     writer = NkiPatchWriter(clock=lambda: FIXED_TIME + 0.9)
     return writer.write(
-        PatchWriteContext(instrument=instrument, output_directory=tmp_path)
+        PatchWriteContext(instrument=instrument, patch_directory=patch_directory)
     )
 
 
@@ -210,14 +222,16 @@ class TestNkiPatchWriter:
             [
                 make_region(),
                 make_region(
-                    tone_id="tone-2", sample_path="Samples/tone-2/b.wav"
+                    tone_id="tone-2", sample_path="../Samples/tone-2/b.wav"
                 ),
             ]
         )
 
         outcome = write_patch(tmp_path, instrument, frames=100)
 
-        assert outcome.patch_path == tmp_path / "test-instrument.nki"
+        assert outcome.patch_path == (
+            tmp_path / INSTRUMENTS_DIRECTORY_NAME / "test-instrument.nki"
+        )
         raw = outcome.patch_path.read_bytes()
         header = struct.unpack("<4sIHH6I", raw[:0x24])
         assert header[0] == b"\x5e\xe5\x6e\xb3"
@@ -317,7 +331,7 @@ class TestNkiPatchWriter:
         assert parameters["lowVelocity"] == "1"
         assert parameters["highVelocity"] == "63"
         assert first.find("Sample/V[@name='file']").get("value") == (
-            "Samples\\tone-1\\a.wav"
+            "..\\Samples\\tone-1\\a.wav"
         )
 
         loop = first.find("Loops/Loop")
@@ -412,7 +426,7 @@ class TestNkiPatchWriter:
 
     def test_escapes_xml_attribute_values(self, tmp_path: Path):
         instrument = make_instrument(
-            [make_region(sample_path="Samples/tone-1/a&b.wav")],
+            [make_region(sample_path="../Samples/tone-1/a&b.wav")],
             name="amp&name's",
         )
 
@@ -420,7 +434,7 @@ class TestNkiPatchWriter:
         xml_text = decompress_xml(outcome.patch_path)
 
         assert 'name="amp&amp;name&apos;s"' in xml_text
-        assert 'value="Samples\\tone-1\\a&amp;b.wav"' in xml_text
+        assert 'value="..\\Samples\\tone-1\\a&amp;b.wav"' in xml_text
         program = ET.fromstring(xml_text)
         assert program.get("name") == "amp&name's"
 
@@ -442,6 +456,7 @@ class TestNkiPatchWriter:
         with pytest.raises(ExportWriteError):
             writer.write(
                 PatchWriteContext(
-                    instrument=instrument, output_directory=tmp_path
+                    instrument=instrument,
+                    patch_directory=make_patch_directory(tmp_path),
                 )
             )

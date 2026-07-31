@@ -8,12 +8,13 @@ from midi_sampling.export.abstractions.instrument_model import InstrumentModel
 @dataclass(frozen=True)
 class PatchWriteContext:
     """
-    Everything a writer needs to emit one patch file. The audio files
-    referenced by the regions have already been written below
-    `output_directory` when a writer runs.
+    Everything a writer needs to emit one patch file. The patch goes
+    into `patch_directory`; the audio files have already been written
+    when a writer runs and are reachable by joining `patch_directory`
+    with each region's `sample_path`.
     """
     instrument: InstrumentModel
-    output_directory: Path
+    patch_directory: Path
 
 
 @dataclass(frozen=True)
@@ -46,8 +47,8 @@ class InstrumentPatchWriter(metaclass=abc.ABCMeta):
     def directory_name(self) -> str:
         """
         Name of the per-format subdirectory in the output layout
-        `<output root>/<directory_name>/<patch name>/`. Defaults to
-        `format_id`; a format may override it when its conventional
+        `<output root>/<directory_name>/{Samples,Instruments}/`. Defaults
+        to `format_id`; a format may override it when its conventional
         directory name differs from the CLI identifier.
         """
         return self.format_id
