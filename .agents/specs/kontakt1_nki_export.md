@@ -9,13 +9,17 @@ XML の細部（version 属性、パラメーター順序、改行コード）�
 `examples/kontakt/example_kontakt_v1.nki`（KONTAKT 1 実ファイル）を
 テンプレートとして踏襲する。
 
-出力レイアウトは SFZ と同一:
+出力レイアウトは SFZ と同一（`export_implementation.md` §7.1）:
 
 ```
-patches/nki/<instrument name>/
-├── <instrument name>.nki
+patches/nki/
+├── Instruments/<instrument name>.nki
 └── Samples/<tone_id>/<stem>.wav
 ```
+
+ゾーンの `file` 値は NKI からの相対パス `..\Samples\<tone_id>\<stem>.wav` になる。
+これは NI 純正ライブラリと同じ `Instruments/` + `Samples/` 構成である。
+`..` を含む相対パスが正しく解決されることは実機で確認済み（2026-07-31）。
 
 ## 2. モジュール構成
 
@@ -33,7 +37,7 @@ src/midi_sampling/export/nki_impl/
   `ExportPlanBuilder.build(..., supported_audio_formats=...)` が非対応
   フォーマット（flac）を検出すると警告ログを出して wav へフォールバックする。
 - ヘッダー `0x1C` のサンプルデータ量とゾーンの `sampleEnd` は、
-  executor が先に書き出した `output_directory` 配下の WAV を
+  executor が先に書き出した WAV（`patch_directory / region.sample_path` で解決）を
   `wav_info.read_wav_data_info()` で走査して得る（stdlib のみ、`wave`
   モジュールは float PCM を拒否するため不使用）。
 

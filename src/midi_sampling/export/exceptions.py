@@ -38,11 +38,3 @@ class ExportWriteError(ExportError):
     Raised when the patch file cannot be written.
     """
     pass
-
-
-class ExportExistingOutputError(ExportError):
-    """
-    Raised when the patch output directory already contains files.
-    Existing export output is never overwritten or deleted automatically.
-    """
-    pass

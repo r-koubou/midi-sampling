@@ -11,6 +11,7 @@ from midi_sampling.export.abstractions import (
 from midi_sampling.export.audio import WAV_SUFFIX, AudioExporter
 from midi_sampling.export.exceptions import ExportDefinitionError
 from midi_sampling.export.planning.export_plan import (
+    PATCH_TO_ROOT_PREFIX,
     SAMPLES_DIRECTORY_NAME,
     AudioExportTask,
     ExportPlan,
@@ -58,14 +59,14 @@ class ExportPlanBuilder:
             rt_decay = release_decays.get(tone.tone_id)
 
             for sample in tone.manifest.samples:
-                relative_path = self._relative_sample_path(
+                relative_path = self._sample_output_path(
                     tone, sample, suffix
                 )
                 regions.append(
                     InstrumentRegion(
                         tone_id=tone.tone_id,
                         source_path=tone.directory / sample.file,
-                        sample_path=relative_path,
+                        sample_path=self._sample_reference_path(relative_path),
                         root_note=sample.mapping.root_note,
                         key_low=sample.mapping.key_low,
                         key_high=sample.mapping.key_high,
@@ -119,15 +120,26 @@ class ExportPlanBuilder:
         )
         return fallback
 
-    def _relative_sample_path(
+    def _sample_output_path(
         self, tone: ResolvedToneSource, sample: ManifestSample, suffix: str
     ) -> str:
+        """
+        Where the audio file is written, relative to the output root.
+        """
         stem = (
             sample.file[: -len(WAV_SUFFIX)]
             if sample.file.lower().endswith(WAV_SUFFIX)
             else sample.file
         )
         return f"{SAMPLES_DIRECTORY_NAME}/{tone.tone_id}/{stem}{suffix}"
+
+    def _sample_reference_path(self, output_path: str) -> str:
+        """
+        How a patch refers to that same file. Patches are written one
+        level below the output root, so the reference is the output path
+        seen from `<root>/Instruments/`.
+        """
+        return f"{PATCH_TO_ROOT_PREFIX}/{output_path}"
 
     def _resolve_loop(self, sample: ManifestSample) -> RegionLoop | None:
         loop = sample.loop

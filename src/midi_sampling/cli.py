@@ -71,7 +71,9 @@ OutputDirectoryOption = Annotated[
         "--output",
         "-o",
         help=(
-            "Output root; the patch is written to <output>/<format>/<name>. "
+            "Output root; the patch is written to "
+            "<output>/<format>/Instruments/<name>.<ext> and its samples to "
+            "<output>/<format>/Samples/<tone-id>/. "
             "Defaults to patches/ next to the instrument definition file."
         ),
         show_default=False,
@@ -215,8 +217,10 @@ def export(
     Generate a sampler patch from postprocessed sampling output.
 
     Reads an instrument definition, copies (or encodes) the processed
-    samples into a self-contained output directory and writes the patch
-    file next to them. Never modifies the recorded or processed trees.
+    samples into `<format>/Samples/` and writes the patch into
+    `<format>/Instruments/`, so that every instrument of one format
+    shares a single tree. Never modifies the recorded or processed
+    trees; existing export output is overwritten.
     """
     _init_logging(verbose)
 
@@ -237,7 +241,7 @@ def export(
     output_root = (
         output if output is not None else resolved.definition_path.parent / "patches"
     )
-    output_directory = output_root / writer.directory_name / plan.instrument.name
+    format_root = output_root / writer.directory_name
 
     from midi_sampling.export.audio import AudioExporter
     from midi_sampling.export.export_executor import ExportExecutor
@@ -251,7 +255,7 @@ def export(
     )
 
     try:
-        patch_path = executor.execute(plan, output_directory)
+        patch_path = executor.execute(plan, format_root)
     except MidiSamplingError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(EXIT_EXECUTION_FAILED)

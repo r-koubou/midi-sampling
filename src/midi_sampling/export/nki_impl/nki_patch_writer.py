@@ -47,14 +47,14 @@ class NkiPatchWriter(InstrumentPatchWriter):
 
     def write(self, context: PatchWriteContext) -> PatchWriteOutcome:
         instrument = context.instrument
-        patch_path = context.output_directory / f"{instrument.name}{PATCH_SUFFIX}"
+        patch_path = context.patch_directory / f"{instrument.name}{PATCH_SUFFIX}"
 
         self._warn_ignored_rt_decay(instrument)
 
         groups, region_groups = partition_groups(instrument)
         samples: dict[str, WavDataInfo] = {
             region.sample_path: read_wav_data_info(
-                context.output_directory / region.sample_path
+                context.patch_directory / region.sample_path
             )
             for region in instrument.regions
         }

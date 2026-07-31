@@ -110,6 +110,28 @@ FX 要素を削除したビルドが `ERROR parsing input file at line 31: <synt
 - **最終構成で実機の再読み込み・サスティンループ動作を人間が確認済み(2026-07-30)**。IntModulators のインデックス付き子要素の可変個数は許容されることが確定
 - テストは 310 件全緑
 
+## export 出力レイアウトの共有化(2026-07-31)
+プランは `.agents/plans/2026-0731-shared-export-layout.md`。仕様 `export_implementation.md` §7.1 を新設。
+
+- 出力をパッチ単位(`<root>/<format>/<name>/`)からフォーマット単位の共有ツリーへ変更(ユーザー要望: サンプラーソフト上でファイルを探しやすくするため)
+  ```
+  <root>/<format>/
+  ├── Samples/<tone-id>/*.wav|.flac
+  └── Instruments/<name>.<ext>
+  ```
+  これは KONTAKT ライブラリの慣習(`Instruments/` + `Samples/` がライブラリルート直下)とも一致する
+- **旧レイアウトは残さない**(ユーザー決定。CLI オプションでの切替も不要)
+- **2種類の相対パスを分離**したのが実装の核。以前は 1 本の文字列を両方に使い回していた:
+  - `AudioExportTask.relative_path` = 出力ルート基準 `Samples/<tone-id>/...`(変更なし)
+  - `InstrumentRegion.sample_path` = **パッチファイル基準** `../Samples/<tone-id>/...`
+  - `sample_path` の契約(「パッチファイルからの相対」)は元から docstring に書かれていたため、契約は不変で値だけが変わった
+- `PatchWriteContext.output_directory` → `patch_directory`(= `<format>/Instruments/`)。writer は「パッチを `patch_directory` に書く」「`sample_path` はパッチからの相対」だけを知ればよく、`Instruments`/`Samples` というレイアウト名は writer に漏れない。NKI の WAV 読み戻しも `patch_directory / sample_path` で解決
+- **export に限り既存出力を許容**(ユーザー決定)。`ExportExistingOutputError` を削除。sampling / postprocess の既存出力チェックは無変更
+  - 上書き警告は `Samples/<tone-id>/` **ディレクトリにつき 1 回**。当初サンプル1件ごとに出す実装にしたが、90サンプルの再エクスポートで警告が90行出て実用に耐えないため集約した
+  - 削除・クリーンアップはしないため、定義から外した音色のサンプルは残留する(既知の挙動として仕様に明記)
+- 実機データ(90サンプル)で sfz / nki 両方をエクスポートし、レイアウト・`sample=../Samples/...`・NKI XML の `..\Samples\...`・再実行時の上書きを確認。テストは 317 件全緑
+- **`..` 相対パスの解決を実機で確認済み(ユーザー、2026-07-31)**。sfz / nki とも `Instruments/` 配下のパッチから 1 階層上の `Samples/` を正しく参照できる。KONTAKT・Sforzando ともに `..` を含む相対サンプルパスを扱えることが確定した
+
 ## 補足
 - `examples/sessions/postprocess.yaml` にポストプロセス定義サンプル
 - DSP結合テスト(tests/test_postprocess_stages_integration.py)は `pytest.importorskip` でガード。librosa 解析のため約70秒かかる

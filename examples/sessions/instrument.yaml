@@ -10,13 +10,17 @@
 # - 相対パスはこのファイルの所在ディレクトリが基準
 # - 絶対パス・URL・`~`・環境変数・glob は使用不可
 # - recorded/ / processed/ は読むだけで、決して書き換えない
-# - 出力先は <出力ルート>/<フォーマット名>/<name>/ (既定ルート: このファイルの隣の patches/)。
-#   sfz なら patches/sfz/<name>/ になる。空でない場合はエラーになる
+# - 出力先は <出力ルート>/<フォーマット名>/ (既定ルート: このファイルの隣の patches/)。
+#   sfz なら patches/sfz/ 配下に次の構造で出力される:
+#     patches/sfz/Samples/<音色ID>/*.wav|.flac   ... サンプル(全楽器で共有)
+#     patches/sfz/Instruments/<name>.sfz         ... パッチ本体
+#   同じフォーマットの複数楽器を 1 箇所にまとめるため、既存の出力があっても
+#   エラーにはならず上書きされる (サンプリング・ポストプロセスは従来どおりエラー)
 
 schema_version: 1
 kind: instrument_definition
 
-# パッチ名。出力ファイル名(<name>.sfz)と既定の出力ディレクトリ名に使われる
+# パッチ名。出力ファイル名(Instruments/<name>.sfz)に使われる
 name: sc8850-cello
 
 # エクスポートするオーディオ形式(省略時: wav)
