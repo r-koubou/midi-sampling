@@ -14,8 +14,12 @@ runner = CliRunner()
 
 
 @pytest.fixture
-def instrument_file(tmp_path: Path) -> Path:
-    make_processed_output(tmp_path)
+def processed(tmp_path: Path) -> Path:
+    return make_processed_output(tmp_path)
+
+
+@pytest.fixture
+def instrument_file(tmp_path: Path, processed: Path) -> Path:
     return make_instrument_definition(tmp_path)
 
 
@@ -111,6 +115,51 @@ class TestExportCli:
         assert [path.name for path in (format_root / "Samples").iterdir()] == [
             "tone-1"
         ]
+
+    def test_output_subdirectory_nests_the_patch(self, tmp_path: Path, processed):
+        instrument_file = make_instrument_definition(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: 8850-00-00-piano1\n"
+            "output:\n"
+            "  subdirectory: '8850/Piano'\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+        result = runner.invoke(cli.app, ["export", str(instrument_file)])
+
+        assert result.exit_code == 0, result.output
+        format_root = tmp_path / "patches" / "sfz"
+        patch_path = (
+            format_root / "Instruments" / "8850" / "Piano" / "8850-00-00-piano1.sfz"
+        )
+        assert patch_path.is_file()
+        # Samples stay in the shared flat tree, reached by three steps up.
+        assert (format_root / "Samples" / "tone-1").is_dir()
+        content = patch_path.read_text(encoding="utf-8")
+        assert "sample=../../../Samples/tone-1/" in content
+
+    def test_unsafe_output_subdirectory_exits_with_definition_error(
+        self, tmp_path: Path, processed
+    ):
+        instrument_file = make_instrument_definition(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            "output:\n"
+            "  subdirectory: '../escape'\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+        result = runner.invoke(cli.app, ["export", str(instrument_file)])
+
+        assert result.exit_code == 2
+        assert "output.subdirectory" in result.output
+        assert not (tmp_path / "patches").exists()
 
     def test_unknown_format_exits_with_definition_error(
         self, tmp_path: Path, instrument_file: Path

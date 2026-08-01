@@ -104,6 +104,42 @@ class TestExportPlanBuilder:
             assert task.relative_path.startswith("Samples/tone-1/")
             assert region.sample_path == f"../{task.relative_path}"
 
+    @pytest.mark.parametrize(
+        "output_section, subdirectory, prefix",
+        [
+            ("", (), "../"),
+            ("output:\n  subdirectory: '8850'\n", ("8850",), "../../"),
+            (
+                "output:\n  subdirectory: '8850/Piano'\n",
+                ("8850", "Piano"),
+                "../../../",
+            ),
+        ],
+    )
+    def test_sample_reference_depth_follows_the_subdirectory(
+        self,
+        tmp_path: Path,
+        processed: Path,
+        output_section: str,
+        subdirectory: tuple[str, ...],
+        prefix: str,
+    ):
+        plan = build(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            f"{output_section}"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+        assert plan.patch_subdirectory == subdirectory
+        for task, region in zip(plan.audio_tasks, plan.instrument.regions):
+            # The written file never moves; only the way in changes.
+            assert task.relative_path.startswith("Samples/tone-1/")
+            assert region.sample_path == f"{prefix}{task.relative_path}"
+
     def test_flac_format_changes_sample_extension(
         self, tmp_path: Path, processed: Path
     ):

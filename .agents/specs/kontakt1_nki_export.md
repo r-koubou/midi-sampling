@@ -21,6 +21,13 @@ patches/nki/
 これは NI 純正ライブラリと同じ `Instruments/` + `Samples/` 構成である。
 `..` を含む相対パスが正しく解決されることは実機で確認済み（2026-07-31）。
 
+定義ファイルの `output.subdirectory` を指定すると NKI は
+`Instruments/<subdirectory>/<instrument name>.nki` へ出力され、`file` 値の `..\`
+が階層数ぶん増える（例: `8850/Piano` なら `..\..\..\Samples\...`）。
+多階層でも実機で解決されることは確認済み（2026-08-01）。
+`<NiSS_Program name>`（KONTAKT のラック表示名）は常に定義の `name` そのままで、
+ディレクトリ構造は混ざらない。
+
 ## 2. モジュール構成
 
 ```

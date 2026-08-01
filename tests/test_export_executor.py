@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from conftest import make_wav_bytes
 from midi_sampling.export.abstractions import (
     InstrumentEnvelope,
@@ -10,6 +12,7 @@ from midi_sampling.export.abstractions import (
     PatchWriteOutcome,
 )
 from midi_sampling.export.audio import AudioExporter
+from midi_sampling.export.exceptions import ExportWriteError
 from midi_sampling.export.export_executor import ExportExecutor
 from midi_sampling.export.planning import AudioExportTask, ExportPlan
 
@@ -42,12 +45,15 @@ def make_plan(
     source: Path,
     name: str = "test-instrument",
     files: tuple[str, ...] = ("a.wav", "b.wav"),
+    patch_subdirectory: tuple[str, ...] = (),
 ) -> ExportPlan:
     """
     One tone with several samples, so that warnings emitted per tone
     directory are distinguishable from warnings emitted per file.
     """
     relative_paths = tuple(f"Samples/tone-1/{file}" for file in files)
+    # One step up per level: Instruments/ plus the subdirectory.
+    prefix = "/".join([".."] * (1 + len(patch_subdirectory)))
     return ExportPlan(
         instrument=InstrumentModel(
             name=name,
@@ -56,7 +62,7 @@ def make_plan(
                 InstrumentRegion(
                     tone_id="tone-1",
                     source_path=source,
-                    sample_path=f"../{relative_path}",
+                    sample_path=f"{prefix}/{relative_path}",
                     root_note=38,
                     key_low=36,
                     key_high=40,
@@ -81,6 +87,7 @@ def make_plan(
             )
             for relative_path in relative_paths
         ),
+        patch_subdirectory=patch_subdirectory,
     )
 
 
@@ -118,6 +125,70 @@ class TestExportExecutorLayout:
         context = writer.contexts[0]
         region = context.instrument.regions[0]
         assert (context.patch_directory / region.sample_path).is_file()
+
+
+class TestExportExecutorPatchSubdirectory:
+    def test_patch_is_nested_while_samples_stay_shared(self, tmp_path: Path):
+        source = make_source(tmp_path)
+        writer = FakePatchWriter()
+        output_root = tmp_path / "out"
+
+        patch_path = make_executor(writer).execute(
+            make_plan(source, patch_subdirectory=("8850", "Piano")), output_root
+        )
+
+        assert patch_path == (
+            output_root
+            / "Instruments"
+            / "8850"
+            / "Piano"
+            / f"test-instrument{PATCH_SUFFIX}"
+        )
+        # Only the patch moves; the sample tree is unchanged.
+        assert (output_root / "Samples" / "tone-1" / "a.wav").is_file()
+
+    def test_nested_region_paths_still_resolve(self, tmp_path: Path):
+        source = make_source(tmp_path)
+        writer = FakePatchWriter()
+
+        make_executor(writer).execute(
+            make_plan(source, patch_subdirectory=("8850", "Piano")),
+            tmp_path / "out",
+        )
+
+        context = writer.contexts[0]
+        for region in context.instrument.regions:
+            assert region.sample_path.startswith("../../../Samples/")
+            assert (context.patch_directory / region.sample_path).is_file()
+
+    def test_patches_of_different_subdirectories_coexist(self, tmp_path: Path):
+        source = make_source(tmp_path)
+        writer = FakePatchWriter()
+        output_root = tmp_path / "out"
+        executor = make_executor(writer)
+
+        for subdirectory in (("8850", "Piano"), ("8850", "Organ"), ()):
+            executor.execute(
+                make_plan(source, patch_subdirectory=subdirectory), output_root
+            )
+
+        instruments = output_root / "Instruments"
+        assert (instruments / f"test-instrument{PATCH_SUFFIX}").is_file()
+        assert (instruments / "8850" / "Piano" / f"test-instrument{PATCH_SUFFIX}").is_file()
+        assert (instruments / "8850" / "Organ" / f"test-instrument{PATCH_SUFFIX}").is_file()
+
+    def test_overlong_patch_path_fails_before_writing(self, tmp_path: Path):
+        source = make_source(tmp_path)
+        output_root = tmp_path / "out"
+        deep = tuple("x" * 60 for _ in range(5))
+
+        with pytest.raises(ExportWriteError, match="full path is longer"):
+            make_executor(FakePatchWriter()).execute(
+                make_plan(source, patch_subdirectory=deep), output_root
+            )
+
+        # Nothing was written: the check runs before the first sample.
+        assert not (output_root / "Samples").exists()
 
 
 class TestExportExecutorExistingOutput:

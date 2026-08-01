@@ -14,14 +14,33 @@
 #   sfz なら patches/sfz/ 配下に次の構造で出力される:
 #     patches/sfz/Samples/<音色ID>/*.wav|.flac   ... サンプル(全楽器で共有)
 #     patches/sfz/Instruments/<name>.sfz         ... パッチ本体
+#                                                    (output.subdirectory で
+#                                                     さらに下へ分類できる)
 #   同じフォーマットの複数楽器を 1 箇所にまとめるため、既存の出力があっても
 #   エラーにはならず上書きされる (サンプリング・ポストプロセスは従来どおりエラー)
 
 schema_version: 1
 kind: instrument_definition
 
-# パッチ名。出力ファイル名(Instruments/<name>.sfz)に使われる
+# パッチ名。出力ファイル名(Instruments/<name>.sfz)になり、同時に
+# パッチ内部のプログラム名(KONTAKT のラック表示名)にもなる。
+# ディレクトリ構造は name に混ぜず、下の output.subdirectory で指定する
 name: sc8850-cello
+
+# パッチの配置先(省略可)。省略時は Instruments/ 直下
+#
+# subdirectory は Instruments/ からの相対サブディレクトリ。区切りは / のみ
+# (\ は不可)。パッチが数百規模になったときに音源バンク・カテゴリ単位で
+# 分類するためのもので、サンプルは Samples/ の共有ツリーのまま動かない
+#
+# 例) subdirectory: '8850/Piano' なら
+#     patches/sfz/Instruments/8850/Piano/<name>.sfz
+#     patches/sfz/Samples/<音色ID>/*.wav|.flac      ... 場所は変わらない
+#
+# 注意: 数字だけの階層はクォートすること('8850')。8850 は YAML の整数になる
+#
+# output:
+#   subdirectory: '8850/Cello'
 
 # エクスポートするオーディオ形式(省略時: wav)
 #   wav  : バイト単位のコピー。smpl ループチャンクもそのまま保持される

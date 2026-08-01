@@ -38,7 +38,10 @@
 schema_version: 1
 kind: instrument_definition
 
-name: sc8850-drums          # パッチ名。出力ファイル名・既定出力ディレクトリ名の基礎
+name: sc8850-drums          # パッチ名。出力ファイル名とパッチ内部のプログラム名になる
+
+output:                     # 省略可
+  subdirectory: 8850/Drums  # Instruments/ 配下のサブディレクトリ（省略時は直下）
 
 audio:                      # 省略可。省略時は format: wav
   format: flac              # wav | flac
@@ -66,7 +69,8 @@ release_triggers:           # 省略可
 
 ### 3.1 検証規則（モデルバリデータ）
 
-- `name` は空でなく、ファイル名に使えない文字（`\ / : * ? " < > |`）を含まない。
+- `name` は空でなく、ファイル名に使えない文字（`\ / : * ? " < > |`）を含まない。`name` はファイル名であると同時に**パッチ内部のプログラム名**（SFZ 先頭コメント、NKI の `<NiSS_Program name>`。KONTAKT のラック表示名）でもあるため、ディレクトリ構造を `name` に混ぜてはならない。配置先は `output.subdirectory` で指定する。
+- `output.subdirectory` はパス参照であり、検証は他のパス同様リゾルバが行う（§3.2）。
 - `sources` 内の `tone` 重複禁止。
 - `exclusive_groups` の `name` 重複禁止。同一グループ内の `(tone, root_note)` 重複禁止。members は2件以上。
 - `exclusive_groups` / `release_triggers` が参照する `tone` は `sources` で宣言済みであること。
@@ -85,6 +89,10 @@ release_triggers:           # 省略可
 - 1つの region が複数の排他グループに属さないこと（プランニング時に検証）。
 - 複数の `sources` が同一マニフェスト（解決後パス）を指していないこと。
 - FLAC 選択時のビット深度制約（§5）。
+- `output.subdirectory`（指定時）:
+  - 区切りは `/` のみ。既存のパス参照規則（相対パスのみ、URL・`~`・glob・絶対パス拒否）を適用する。
+  - 各セグメントを共有の `OutputPathValidator.validate_component`（`sampling/validation/`）で検証する。これにより不正文字（`\ : * ? " < > |` と制御文字）、末尾のドット・スペース（**`.` と `..` はこれで弾かれ、出力ルート外への脱出を防ぐ**）、Windows 予約デバイス名（`CON` 等）、255 文字超をまとめて拒否する。エクスポートが共有バリデータを使う唯一の箇所。
+  - YAML の型は `StrictStr`（プロジェクト共通）。`subdirectory: 8850` は YAML の整数になるため `'8850'` とクォートが必要。
 
 ## 4. モジュール構成
 
@@ -136,7 +144,7 @@ src/midi_sampling/export/
 
 ## 6. 中間表現 → SFZ マッピング
 
-出力は `<フォーマットルート>/Instruments/<name>.sfz`（UTF-8、LF）。`sample=` は .sfz からの相対パス（`../Samples/<tone-id>/...`、POSIX 区切り）。パッチは `Instruments/` 配下にあり、`Samples/` はその 1 つ上の階層にあるため `../` が前置される。
+出力は `<フォーマットルート>/Instruments/[<subdirectory>/]<name>.sfz`（UTF-8、LF）。`sample=` は .sfz からの相対パス（POSIX 区切り）で、`../` の数はパッチの階層に追従する（§7.1）。
 
 | 中間表現 | SFZ opcode |
 |---|---|
@@ -174,13 +182,28 @@ midi-sampling export <instrument.yaml> [--format sfz] [--output <root>]
 │   ├── <tone-id1>/*.wav|.flac
 │   └── <tone-id2>/*.wav|.flac
 └── Instruments/
-    ├── <name1>.<ext>
-    └── <name2>.<ext>
+    ├── <name1>.<ext>                        # output.subdirectory 省略時
+    ├── <name2>.<ext>
+    └── 8850/Piano/<name3>.<ext>             # output.subdirectory: 8850/Piano
 ```
 
-- **パッチ単位でディレクトリを分けない。** 同じフォーマットの全インストゥルメントが 1 つの `Instruments/` に並び、`Samples/` を共有する。サンプラーソフト上でファイルを探しやすくするための構造であり、KONTAKT ライブラリの慣習（`Instruments/` + `Samples/` がライブラリルート直下）とも一致する。
+- **パッチ単位でディレクトリを分けない。** 同じフォーマットの全インストゥルメントが 1 つの `Instruments/` ツリーに集まり、`Samples/` を共有する。サンプラーソフト上でファイルを探しやすくするための構造であり、KONTAKT ライブラリの慣習（`Instruments/` + `Samples/` がライブラリルート直下）とも一致する。
 - 同じ tone-id を参照する複数のインストゥルメントは同じサンプル実体を共有する。tone-id が衝突した場合は後勝ちで上書きされ、警告ログが出る（§2-4）。
-- パッチ内のサンプル参照は必ずパッチファイルからの相対パス（`../Samples/<tone-id>/...`）。プランニング時に、出力ルート基準の書き出し先（`AudioExportTask.relative_path`）とパッチ基準の参照パス（`InstrumentRegion.sample_path`）を別々に組み立てる。
+- パッチ内のサンプル参照は必ずパッチファイルからの相対パス。プランニング時に、出力ルート基準の書き出し先（`AudioExportTask.relative_path`）とパッチ基準の参照パス（`InstrumentRegion.sample_path`）を別々に組み立てる。
+
+#### パッチのサブディレクトリ（`output.subdirectory`）
+
+数百パッチ規模で `Instruments/` 直下が平坦なままだと視認・検索の負荷が上がるため、パッチのみサブディレクトリへ配置できる。
+
+- **`Samples/` は対象外。** 同じ tone-id を複数のインストゥルメントが共有するため、サンプルの置き場所は一意に定まらない。サンプルはフラットな共有ツリーのまま。
+- **`../` の深さはサブディレクトリの階層数に追従する。** `Instruments/` の 1 階層＋サブディレクトリ階層ぶん、1 レベルにつき 1 ステップ。
+  - 省略時: `sample=../Samples/<tone-id>/...`
+  - `8850/Piano`: `sample=../../../Samples/<tone-id>/...`（NKI では `..\..\..\Samples\...`）
+  - 1 階層・多階層とも Sforzando / KONTAKT の実機で解決を確認済み（2026-07-31 / 2026-08-01）。
+- **Writer は階層を知らない。** executor が `Instruments/` ＋サブディレクトリを `mkdir(parents=True)` して `PatchWriteContext.patch_directory` に渡すため、writer 側の契約（「パッチを `patch_directory` に書く」「`sample_path` はパッチからの相対」）は不変。
+- サブディレクトリが異なれば同名のパッチが共存できる。同一パスなら既存仕様どおり上書きされる（パッチの上書きに警告は出さない。再エクスポートは日常操作のため）。
+- `output.subdirectory` を変更すると旧パスのパッチが残留する（§2-4 の stale ファイルと同じ既知の挙動）。
+- パス長: サブディレクトリのぶん伸びるため、executor がパッチディレクトリに対し `OutputPathValidator.validate_full_path` を実行し、Windows の 259 文字制限を**サンプル書き出し前に**検出する。
 
 ## 8. 将来拡張のための注記
 
