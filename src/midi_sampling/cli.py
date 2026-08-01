@@ -73,7 +73,8 @@ OutputDirectoryOption = Annotated[
         help=(
             "Output root; the patch is written to "
             "<output>/<format>/Instruments/<name>.<ext> and its samples to "
-            "<output>/<format>/Samples/<tone-id>/. "
+            "<output>/<format>/Samples/<tone-id>/. The definition's "
+            "output.subdirectory nests the patch below Instruments/. "
             "Defaults to patches/ next to the instrument definition file."
         ),
         show_default=False,
@@ -218,7 +219,8 @@ def export(
 
     Reads an instrument definition, copies (or encodes) the processed
     samples into `<format>/Samples/` and writes the patch into
-    `<format>/Instruments/`, so that every instrument of one format
+    `<format>/Instruments/` (optionally nested by the definition's
+    `output.subdirectory`), so that every instrument of one format
     shares a single tree. Never modifies the recorded or processed
     trees; existing export output is overwritten.
     """
