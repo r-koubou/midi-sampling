@@ -13,7 +13,9 @@ from midi_sampling.postprocess.manifest import (
     PostprocessManifest,
     PostprocessManifestRepository,
 )
+from midi_sampling.sampling.exceptions import InvalidOutputPathError
 from midi_sampling.sampling.loading import YamlDefinitionLoader
+from midi_sampling.sampling.validation import OutputPathValidator
 
 logger = getLogger(__name__)
 
@@ -35,10 +37,15 @@ class ResolvedInstrument:
     """
     A fully resolved instrument definition. Planning and execution never
     have to touch YAML files again.
+
+    `patch_subdirectory` holds the validated components of
+    `output.subdirectory`, relative to `Instruments/`; it is empty when
+    the patch goes directly into `Instruments/`.
     """
     definition_path: Path
     definition: InstrumentDefinition
     tones: tuple[ResolvedToneSource, ...]
+    patch_subdirectory: tuple[str, ...] = ()
 
 
 class ExportResolver:
@@ -61,6 +68,7 @@ class ExportResolver:
             if manifest_repository is not None
             else PostprocessManifestRepository()
         )
+        self._path_validator = OutputPathValidator()
 
     def resolve(self, definition_path: Path) -> ResolvedInstrument:
         definition_path = Path(definition_path)
@@ -96,6 +104,9 @@ class ExportResolver:
             definition_path=definition_path,
             definition=definition,
             tones=tuple(tones),
+            patch_subdirectory=self._resolve_patch_subdirectory(
+                definition_path, definition
+            ),
         )
         self._validate_exclusive_group_notes(resolved)
         self._validate_flac_bit_depths(resolved)
@@ -210,6 +221,36 @@ class ExportResolver:
                 raise ExportDefinitionError(
                     f"{resolved.definition_path}: tone {tone.tone_id!r}: {e}"
                 ) from e
+
+    def _resolve_patch_subdirectory(
+        self, definition_path: Path, definition: InstrumentDefinition
+    ) -> tuple[str, ...]:
+        """
+        Split `output.subdirectory` into validated path components.
+
+        `/` is the only separator, so that one directory has exactly one
+        spelling. Each component goes through the shared
+        `OutputPathValidator`, which also rejects `.` and `..` (they end
+        with a period), Windows reserved device names and control
+        characters — the same rules the recorded and processed trees use.
+        """
+        raw = definition.output.subdirectory
+        if raw is None:
+            return ()
+
+        context = f"{definition_path}: output.subdirectory"
+        self._reject_unsupported_reference(raw, context)
+
+        components = raw.split("/")
+        for component in components:
+            try:
+                self._path_validator.validate_component(component, context)
+            except InvalidOutputPathError as e:
+                # Name the whole value too, but only when it adds
+                # something the component message does not already show.
+                detail = "" if component == raw else f" (in {raw!r})"
+                raise ExportDefinitionError(f"{e}{detail}") from e
+        return tuple(components)
 
     def _reject_unsupported_reference(self, raw: str, context: str) -> None:
         """

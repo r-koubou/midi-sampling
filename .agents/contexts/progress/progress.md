@@ -132,6 +132,29 @@ FX 要素を削除したビルドが `ERROR parsing input file at line 31: <synt
 - 実機データ(90サンプル)で sfz / nki 両方をエクスポートし、レイアウト・`sample=../Samples/...`・NKI XML の `..\Samples\...`・再実行時の上書きを確認。テストは 317 件全緑
 - **`..` 相対パスの解決を実機で確認済み(ユーザー、2026-07-31)**。sfz / nki とも `Instruments/` 配下のパッチから 1 階層上の `Samples/` を正しく参照できる。KONTAKT・Sforzando ともに `..` を含む相対サンプルパスを扱えることが確定した
 
+## export パッチのサブディレクトリ配置(2026-08-01)
+プランは `.agents/plans/2026-0801-patch-output-subdirectory.md`。仕様 `export_implementation.md` §7.1 に「パッチのサブディレクトリ」節を追加。
+
+- 数百パッチ規模だと `Instruments/` 直下が平坦で視認・検索の負荷が上がるため、パッチのみサブディレクトリへ配置できるようにした(ユーザー要望)
+  ```yaml
+  name: 8850-00-00-piano1     # ファイル名＋プログラム名
+  output:
+    subdirectory: '8850/Piano'
+  ```
+  → `Instruments/8850/Piano/8850-00-00-piano1.nki`
+- **`name` にスラッシュを許す案は採らなかった**(ユーザー決定)。`name` はファイル名だけでなく**パッチ内部のメタデータ**にも埋め込まれるため:
+  - NKI `<NiSS_Program name>` = KONTAKT のラック表示名、SFZ の先頭コメント
+  - `name` をパスとして解釈すると表示名が `8850/Piano/Piano1` になるか、最終セグメントのみ採ると `8850/…/Piano1` と `8851/…/Piano1` がラック上で区別できない
+  - **表示名と配置先は直交する概念**なので専用フィールドで分離した
+- **`Samples/` は対象外**。同じ tone-id を複数のインストゥルメントが共有するため置き場所が一意に定まらない。フラットな共有ツリーのまま
+- **検証は resolver に集約し、共有バリデータを再利用**。`OutputPathValidator.validate_component`(sampling/validation/) を各セグメントに適用するだけで、不正文字・末尾ドット/スペース(**`.` `..` はこれで弾かれ出力ルート外への脱出を防ぐ**)・Windows 予約デバイス名・255文字超をまとめて拒否できた。既存の `_reject_unsupported_reference` と併せて URL/`~`/glob/絶対パスも拒否。export が共有バリデータを使う初の箇所
+- **`../` の深さを可変化**。`PATCH_TO_ROOT_PREFIX`(1階層固定) を `PATCH_TO_ROOT_STEP` に改め、`1 + len(patch_subdirectory)` ぶん繰り返す
+- **Writer は完全に無変更**。executor が `Instruments/` ＋サブディレクトリを mkdir して `patch_directory` に渡すだけで済んだ。前回の `PatchWriteContext` 再設計(patch_directory 化)がそのまま効いた
+- executor に `validate_full_path` を追加し、Windows 259 文字制限をサンプル書き出し**前**に検出
+- **YAML の型の落とし穴**: `subdirectory: 8850` は YAML の整数になり `StrictStr` に弾かれる。プロジェクト共通の StrictStr 方針は維持し、クォートが必要な旨を仕様・examples に明記＋テストで挙動を固定
+- 実データ(90サンプル)で検証済み: `Instruments/8850/Piano/` へ出力、sfz が `sample=../../../Samples/...`、NKI XML が `..\..\..\Samples\...` で全90ゾーン解決、`<NiSS_Program name>` は `8850-00-00-piano1` のまま、フラットなパッチと同じルートで共存。不正値(`../escape` / `C:/evil` / `CON` / `8850\Piano`)は exit 2。テストは 349 件全緑
+- **多階層 `..` の解決を実機で確認済み(ユーザー、2026-08-01)**。`Instruments/8850/Piano/` の 2 階層構成で KONTAKT / Sforzando ともにサンプル missing なくロードできた。1 階層(2026-07-31)と合わせ、階層数に依存せず相対パスが解決されることが確定
+
 ## 補足
 - `examples/sessions/postprocess.yaml` にポストプロセス定義サンプル
 - DSP結合テスト(tests/test_postprocess_stages_integration.py)は `pytest.importorskip` でガード。librosa 解析のため約70秒かかる

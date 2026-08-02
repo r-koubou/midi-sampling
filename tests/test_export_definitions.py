@@ -75,6 +75,26 @@ class TestInstrumentDefinition:
             InstrumentDefinition.model_validate(data)
 
 
+class TestPatchOutput:
+    def test_output_defaults_to_no_subdirectory(self):
+        definition = InstrumentDefinition.model_validate(base_definition())
+
+        assert definition.output.subdirectory is None
+
+    def test_subdirectory_is_kept_verbatim(self):
+        # The path rules live in the resolver, like every other path
+        # reference of this schema; the model only carries the string.
+        data = base_definition() | {"output": {"subdirectory": "8850/Piano"}}
+        definition = InstrumentDefinition.model_validate(data)
+
+        assert definition.output.subdirectory == "8850/Piano"
+
+    def test_unknown_output_key_is_rejected(self):
+        data = base_definition() | {"output": {"directory": "8850"}}
+        with pytest.raises(ValidationError):
+            InstrumentDefinition.model_validate(data)
+
+
 class TestAudioSettings:
     def test_flac_with_bit_depth_is_accepted(self):
         data = base_definition() | {"audio": {"format": "flac", "bit_depth": 24}}

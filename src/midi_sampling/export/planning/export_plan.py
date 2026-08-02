@@ -7,10 +7,11 @@ from midi_sampling.export.definitions import AudioFormat
 SAMPLES_DIRECTORY_NAME = "Samples"
 INSTRUMENTS_DIRECTORY_NAME = "Instruments"
 
-# Step from a patch file back up to the output root. The patch lives in
-# `<root>/<INSTRUMENTS_DIRECTORY_NAME>/`, one level below the samples
-# root, so every sample reference inside a patch is prefixed with this.
-PATCH_TO_ROOT_PREFIX = ".."
+# One step from a patch file towards the output root. A patch lives in
+# `<root>/<INSTRUMENTS_DIRECTORY_NAME>/<subdirectory…>/`, so a sample
+# reference inside a patch repeats this once per level; the depth is the
+# caller's to decide (see `ExportPlanBuilder._sample_reference_path`).
+PATCH_TO_ROOT_STEP = ".."
 
 
 @dataclass(frozen=True)
@@ -30,8 +31,12 @@ class ExportPlan:
     """
     A fully resolved export: the sampler-agnostic instrument model plus
     the audio files it references. No YAML structures are held here.
+
+    `patch_subdirectory` is where the patch goes below `Instruments/`,
+    already validated; empty means directly in `Instruments/`.
     """
     instrument: InstrumentModel
     audio_format: AudioFormat
     bit_depth: int | None
     audio_tasks: tuple[AudioExportTask, ...]
+    patch_subdirectory: tuple[str, ...] = ()

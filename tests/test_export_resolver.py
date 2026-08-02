@@ -191,3 +191,87 @@ class TestFlacValidation:
         )
         resolved = ExportResolver().resolve(path)
         assert resolved.definition.audio.bit_depth == 24
+
+
+class TestPatchSubdirectory:
+    def instrument_with(self, tmp_path: Path, subdirectory: str) -> Path:
+        # Single-quoted YAML: backslashes stay literal, so a Windows-style
+        # separator reaches the validator instead of tripping the parser.
+        return make_instrument_definition(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            "output:\n"
+            f"  subdirectory: '{subdirectory}'\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+
+    def test_absent_output_resolves_to_no_subdirectory(
+        self, instrument_file: Path
+    ):
+        resolved = ExportResolver().resolve(instrument_file)
+
+        assert resolved.patch_subdirectory == ()
+
+    def test_subdirectory_is_split_into_components(
+        self, tmp_path: Path, processed: Path
+    ):
+        path = self.instrument_with(tmp_path, "8850/Piano")
+        resolved = ExportResolver().resolve(path)
+
+        assert resolved.patch_subdirectory == ("8850", "Piano")
+
+    def test_single_component_is_accepted(self, tmp_path: Path, processed: Path):
+        path = self.instrument_with(tmp_path, "8850")
+        resolved = ExportResolver().resolve(path)
+
+        assert resolved.patch_subdirectory == ("8850",)
+
+    def test_unquoted_number_is_rejected_as_not_a_string(
+        self, tmp_path: Path, processed: Path
+    ):
+        """
+        `subdirectory: 8850` is a YAML integer, and every string field of
+        this project is StrictStr. An all-digit component must be quoted.
+        """
+        path = make_instrument_definition(
+            tmp_path,
+            "schema_version: 1\n"
+            "kind: instrument_definition\n"
+            "name: test-instrument\n"
+            "output:\n"
+            "  subdirectory: 8850\n"
+            "sources:\n"
+            "  - { tone: tone-1, manifest: processed/tone-1/manifest.yaml }\n",
+        )
+        with pytest.raises(ExportDefinitionError, match="valid string"):
+            ExportResolver().resolve(path)
+
+    @pytest.mark.parametrize(
+        "subdirectory, message",
+        [
+            ("../escape", "period"),
+            ("8850/../escape", "period"),
+            (".", "period"),
+            ("/8850", "absolute paths"),
+            ("C:/8850", "absolute paths"),
+            ("8850\\Piano", "invalid character"),
+            ("~/8850", "'~' expansion"),
+            ("8850/*", "glob patterns"),
+            ("https://example.com/x", "URL"),
+            ("", "must not be empty"),
+            ("8850/", "must not be empty"),
+            ("8850//Piano", "must not be empty"),
+            ("CON", "reserved device name"),
+            ("8850/nul", "reserved device name"),
+            ("8850 /Piano", "space or a period"),
+        ],
+    )
+    def test_unsafe_subdirectory_is_rejected(
+        self, tmp_path: Path, processed: Path, subdirectory: str, message: str
+    ):
+        path = self.instrument_with(tmp_path, subdirectory)
+        with pytest.raises(ExportDefinitionError, match=message):
+            ExportResolver().resolve(path)

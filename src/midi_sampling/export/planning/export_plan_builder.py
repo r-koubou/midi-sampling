@@ -11,7 +11,7 @@ from midi_sampling.export.abstractions import (
 from midi_sampling.export.audio import WAV_SUFFIX, AudioExporter
 from midi_sampling.export.exceptions import ExportDefinitionError
 from midi_sampling.export.planning.export_plan import (
-    PATCH_TO_ROOT_PREFIX,
+    PATCH_TO_ROOT_STEP,
     SAMPLES_DIRECTORY_NAME,
     AudioExportTask,
     ExportPlan,
@@ -66,7 +66,9 @@ class ExportPlanBuilder:
                     InstrumentRegion(
                         tone_id=tone.tone_id,
                         source_path=tone.directory / sample.file,
-                        sample_path=self._sample_reference_path(relative_path),
+                        sample_path=self._sample_reference_path(
+                            relative_path, resolved.patch_subdirectory
+                        ),
                         root_note=sample.mapping.root_note,
                         key_low=sample.mapping.key_low,
                         key_high=sample.mapping.key_high,
@@ -106,6 +108,7 @@ class ExportPlanBuilder:
             audio_format=audio_format,
             bit_depth=definition.audio.bit_depth,
             audio_tasks=tuple(tasks),
+            patch_subdirectory=resolved.patch_subdirectory,
         )
 
     def _resolve_audio_format(
@@ -133,13 +136,17 @@ class ExportPlanBuilder:
         )
         return f"{SAMPLES_DIRECTORY_NAME}/{tone.tone_id}/{stem}{suffix}"
 
-    def _sample_reference_path(self, output_path: str) -> str:
+    def _sample_reference_path(
+        self, output_path: str, patch_subdirectory: tuple[str, ...]
+    ) -> str:
         """
-        How a patch refers to that same file. Patches are written one
-        level below the output root, so the reference is the output path
-        seen from `<root>/Instruments/`.
+        How a patch refers to that same file: the output path seen from
+        the directory the patch is written to. That is `Instruments/`
+        plus the patch subdirectory, so one step up per level.
         """
-        return f"{PATCH_TO_ROOT_PREFIX}/{output_path}"
+        depth = 1 + len(patch_subdirectory)
+        prefix = "/".join([PATCH_TO_ROOT_STEP] * depth)
+        return f"{prefix}/{output_path}"
 
     def _resolve_loop(self, sample: ManifestSample) -> RegionLoop | None:
         loop = sample.loop

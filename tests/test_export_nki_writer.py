@@ -56,12 +56,15 @@ def make_instrument(regions, exclusive_groups=(), **overrides) -> InstrumentMode
     return InstrumentModel(**values)
 
 
-def make_patch_directory(tmp_path: Path) -> Path:
+def make_patch_directory(
+    tmp_path: Path, subdirectory: tuple[str, ...] = ()
+) -> Path:
     """
-    The Instruments/ directory of an output root, so that the regions'
-    `../Samples/...` references land inside `tmp_path`.
+    The Instruments/ directory of an output root (plus an optional patch
+    subdirectory), so that the regions' `../Samples/...` references land
+    inside `tmp_path`.
     """
-    patch_directory = tmp_path / INSTRUMENTS_DIRECTORY_NAME
+    patch_directory = tmp_path.joinpath(INSTRUMENTS_DIRECTORY_NAME, *subdirectory)
     patch_directory.mkdir(parents=True, exist_ok=True)
     return patch_directory
 
@@ -437,6 +440,31 @@ class TestNkiPatchWriter:
         assert 'value="..\\Samples\\tone-1\\a&amp;b.wav"' in xml_text
         program = ET.fromstring(xml_text)
         assert program.get("name") == "amp&name's"
+
+    def test_nested_patch_keeps_the_program_name_path_free(self, tmp_path: Path):
+        """
+        A patch subdirectory only lengthens the sample references; the
+        program name KONTAKT shows in its rack stays the instrument name.
+        """
+        instrument = make_instrument(
+            [make_region(sample_path="../../../Samples/tone-1/a.wav")],
+            name="8850-00-00-piano1",
+        )
+        patch_directory = make_patch_directory(tmp_path, ("8850", "Piano"))
+        write_region_wavs(patch_directory, instrument)
+
+        outcome = NkiPatchWriter(clock=lambda: FIXED_TIME).write(
+            PatchWriteContext(
+                instrument=instrument, patch_directory=patch_directory
+            )
+        )
+
+        assert outcome.patch_path == patch_directory / "8850-00-00-piano1.nki"
+        assert (tmp_path / "Samples" / "tone-1" / "a.wav").is_file()
+        xml_text = decompress_xml(outcome.patch_path)
+        program = ET.fromstring(xml_text)
+        assert program.get("name") == "8850-00-00-piano1"
+        assert 'value="..\\..\\..\\Samples\\tone-1\\a.wav"' in xml_text
 
     def test_warns_when_rt_decay_is_ignored(self, tmp_path: Path, caplog):
         instrument = make_instrument(

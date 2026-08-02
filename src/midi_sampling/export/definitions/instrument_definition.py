@@ -45,6 +45,22 @@ class AudioSettingsDefinition(BaseModel):
         return self
 
 
+class PatchOutputDefinition(BaseModel):
+    """
+    Where the patch file is placed inside the output layout.
+
+    `subdirectory` is a `/`-separated path relative to `Instruments/`,
+    for grouping hundreds of patches (e.g. `8850/Piano`). Omitting it
+    writes the patch directly into `Instruments/`. Only the patch moves:
+    `Samples/` stays a flat shared tree because several instruments can
+    reference the same tone. The path rules are checked by the resolver
+    (`ExportResolver`), like every other path in this schema.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    subdirectory: StrictStr | None = None
+
+
 class SourceReference(BaseModel):
     """
     One tone of the postprocess output. `manifest` is relative to the
@@ -122,6 +138,7 @@ class InstrumentDefinition(BaseModel):
     kind: Literal["instrument_definition"]
 
     name: StrictStr
+    output: PatchOutputDefinition = Field(default_factory=PatchOutputDefinition)
     audio: AudioSettingsDefinition = Field(default_factory=AudioSettingsDefinition)
     envelope: EnvelopeDefinition = Field(default_factory=EnvelopeDefinition)
     sources: list[SourceReference] = Field(min_length=1)

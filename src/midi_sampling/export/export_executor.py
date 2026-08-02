@@ -12,6 +12,8 @@ from midi_sampling.export.planning import (
     INSTRUMENTS_DIRECTORY_NAME,
     ExportPlan,
 )
+from midi_sampling.sampling.exceptions import InvalidOutputPathError
+from midi_sampling.sampling.validation import OutputPathValidator
 
 logger = getLogger(__name__)
 
@@ -19,8 +21,9 @@ logger = getLogger(__name__)
 class ExportExecutor:
     """
     Write the audio files and the patch file into the output root, which
-    holds `Samples/<tone-id>/` and `Instruments/<name>.<ext>` for one
-    patch format.
+    holds `Samples/<tone-id>/` and `Instruments/` for one patch format.
+    The patch goes into `Instruments/` plus the plan's optional
+    subdirectory.
 
     Read-only with respect to the recorded and processed trees. Unlike
     sampling and postprocess, an existing output root is accepted and
@@ -37,10 +40,22 @@ class ExportExecutor:
         self._writer = writer
         self._audio_exporter = audio_exporter
         self._progress = progress if progress is not None else (lambda message: None)
+        self._path_validator = OutputPathValidator()
 
     def execute(self, plan: ExportPlan, output_root: Path) -> Path:
         output_root = Path(output_root)
-        patch_directory = output_root / INSTRUMENTS_DIRECTORY_NAME
+        patch_directory = output_root.joinpath(
+            INSTRUMENTS_DIRECTORY_NAME, *plan.patch_subdirectory
+        )
+
+        # A patch subdirectory can push the path past the Windows limit,
+        # so check before writing any sample.
+        try:
+            self._path_validator.validate_full_path(
+                patch_directory, "patch directory"
+            )
+        except InvalidOutputPathError as e:
+            raise ExportWriteError(str(e)) from e
 
         for directory in (output_root, patch_directory):
             try:
