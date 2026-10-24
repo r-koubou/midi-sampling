@@ -18,45 +18,9 @@ uv sync
 
 ### ポストプロセス(トリミング・ループ検出)も使う場合
 
-ポストプロセスが依存する2つのパッケージは **PyPI 未公開**のため、
-リポジトリを手元に clone し、`pyproject.toml` の `[tool.uv.sources]` に
-**相対パス**で場所を教える必要があります。
-
-#### 1. DSP リポジトリを clone する
-
-既定では midi-sampling と**同じ親ディレクトリ**に並んでいることを想定しています。
-
-```bash
-cd ..   # midi-sampling の親ディレクトリへ
-git clone git@github.com:r-koubou/sample-loop-detector.git
-git clone git@github.com:r-koubou/sample-trimmer.git
-cd midi-sampling
-```
-
-```text
-<親ディレクトリ>/
-├─ midi-sampling/          ← このリポジトリ
-├─ sample-loop-detector/
-└─ sample-trimmer/
-```
-
-#### 2. 必要なら `pyproject.toml` の相対パスを編集する
-
-上記と異なる場所に clone した場合は、`[tool.uv.sources]` のパスを実際の配置に
-合わせて書き換えてください。
-
-```toml
-[tool.uv.sources]
-sample-loop-detector = { path = "../sample-loop-detector", editable = true }
-wav-silence-trimmer  = { path = "../sample-trimmer",       editable = true }
-```
-
-- パスは `pyproject.toml` の所在ディレクトリが基準です。
-- `wav-silence-trimmer` の clone 先ディレクトリ名は `sample-trimmer` です
-  (パッケージ名とディレクトリ名が異なる点に注意)。
-- `editable = true` なので、DSP 側を編集すると再インストールなしで反映されます。
-
-#### 3. extra を指定して同期する
+ポストプロセスが依存する2つの波形処理パッケージは、このリポジトリの `packages/` 配下に
+[uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) のメンバーとして同梱しています。
+追加の clone は不要で、extra を指定して同期するだけで使えます。
 
 ```bash
 uv sync --extra postprocess
@@ -68,6 +32,34 @@ uv sync --extra postprocess
 
 `[tool.uv.sources]` は「どこから取得するか」を指定するだけで、
 インストール対象に含めるかどうかは `--extra` の指定で決まります。
+
+## リポジトリ構成
+
+```text
+midi-sampling/
+├─ src/midi_sampling/          ← 本体(サンプリング・ポストプロセス適用・エクスポート)
+├─ tests/
+└─ packages/                   ← uv workspace メンバー(独立したパッケージ)
+   ├─ sample-loop-detector/    ← サステインループ検出・smpl チャンク埋め込み
+   └─ wav-silence-trimmer/     ← 前後の無音トリミング
+```
+
+- `packages/` 配下は midi-sampling を知らない汎用の WAV ライブラリです。
+  midi-sampling からは `src/midi_sampling/postprocess/stages/` でのみ import します。
+- メンバーは editable で入るため、編集は再インストールなしで反映されます。
+- メンバーのテスト・品質チェックはパッケージ単位で実行します。
+
+```bash
+# sample-loop-detector (pytest / ruff / mypy strict / coverage 85%)
+cd packages/sample-loop-detector
+uv run --package sample-loop-detector pytest --cov
+uv run --package sample-loop-detector ruff check .
+uv run --package sample-loop-detector mypy
+
+# wav-silence-trimmer
+cd packages/wav-silence-trimmer
+uv run --package wav-silence-trimmer pytest
+```
 
 ## 使い方
 

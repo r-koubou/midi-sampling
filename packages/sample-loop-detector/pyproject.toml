@@ -37,6 +37,8 @@ package = true
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Design docs are not code; newer ruff would also format their code fences.
+extend-exclude = [".agents"]
 
 [tool.ruff.lint]
 select = [
@@ -73,6 +75,8 @@ fail_under = 85
 python_version = "3.12"
 strict = true
 packages = ["sample_loop_detector"]
+# Check the sources in place rather than the editable install, which has no py.typed.
+mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = [
