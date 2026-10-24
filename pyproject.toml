@@ -44,17 +44,19 @@ dev = [
     "pytest>=8.0",
 ]
 
-# Neither post-processing package is published to PyPI yet, so the `postprocess`
-# extra is resolved from the sibling checkouts during development. Remove this
-# section once both are on PyPI. `tool.uv.sources` is development-only metadata
-# and is not written into built distributions.
-#
-# These sources only tell uv WHERE to get the packages; they are still optional
-# dependencies, so the extra has to be requested explicitly:
+# The post-processing packages live in this repository as uv workspace members
+# under packages/. They stay independent distributions (own pyproject, tests and
+# quality gates) and are imported only from src/midi_sampling/postprocess/stages/.
+[tool.uv.workspace]
+members = ["packages/*"]
+
+# `tool.uv.sources` is development-only metadata and is not written into built
+# distributions. These sources only tell uv WHERE to get the packages; they are
+# still optional dependencies, so the extra has to be requested explicitly:
 #   uv sync --extra postprocess
 [tool.uv.sources]
-sample-loop-detector = { path = "../sample-loop-detector", editable = true }
-wav-silence-trimmer = { path = "../sample-trimmer", editable = true }
+sample-loop-detector = { workspace = true }
+wav-silence-trimmer = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

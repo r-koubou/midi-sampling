@@ -1,4 +1,4 @@
-# 現在の状態(2026-07-30 更新)
+# 現在の状態(2026-10-25 更新)
 
 ## 現状
 - `sampling_implementation.md` 実装完了(CLI `run` / `audit`)。詳細は `archives/2026-07-22-sampling-initial.md`
@@ -16,7 +16,7 @@
 
 ## 重要な判断・制約(なぜそうなっているか)
 - 波形処理は取り込まず、別リポジトリの汎用WAVライブラリへ optional extra で依存する。境界は「サンプリング vs ポストプロセス」ではなく「純粋DSPライブラリ vs ワークフロー」。DSP側の単体リリースと独自品質ゲート(loop-detector は mypy strict / coverage 85%)を保つため
-  - `wav-silence-trimmer`(../sample-trimmer)、`sample-loop-detector`(../sample-loop-detector)
+  - `wav-silence-trimmer`(packages/wav-silence-trimmer)、`sample-loop-detector`(packages/sample-loop-detector)。2026-10-25 に uv workspace メンバーとして本リポジトリへ統合(下記)
 - **中間ファイルに `.wav.part` を使わない**。`.work/` 配下に置き必ず `.wav` 拡張子とする
   - libsndfile は書込時に拡張子でフォーマット推定するため。サンプリング側で実際に踏んだ罠を設計で回避する
   - `.part.wav` も不可。残骸が通常のWAVとして glob に拾われ §14 の意図を壊す
@@ -36,13 +36,16 @@
   - `src/` に 3.14 固有構文は無し。3.13.9 で既存134件が全て成功することを確認済み
 - `soundfile` は3プロジェクトとも **`>=0.14`** に統一済み(2026-07-26)
   - 当初 loop-detector が `>=0.13,<0.14` を要求し解決不能だったが、DSP側の上限を外して解消した
-- 2パッケージとも PyPI 未公開のため `[tool.uv.sources]` で兄弟ディレクトリを**相対パス参照**している。**公開したらこのセクションを削除すること**
-  - 他者が clone しただけでは解決できないため、README のセットアップに DSP リポジトリの clone 手順と相対パス編集の必要性を明記した
-  - `wav-silence-trimmer` の clone 先ディレクトリ名は `sample-trimmer`(パッケージ名と不一致)
-  - 検討したが採用しなかった代替案(2026-07-26):
-    - **git submodule**: 固定コミットが submodule と `uv.lock` の二重管理になる。`git submodule update --init` の手順も増える
-    - **uv の git ソース**(`{ git = "...", branch = "main" }`): 検証済みで動作し `uv.lock` が sha を固定する(`#ec8c3c9` / `#c58708d`)。clone 直後に動く利点があるが、DSP側を uv キャッシュへ clone するため **editable なローカル編集ができなくなる**。3プロジェクトを並行開発する現状を優先して見送り
-    - 将来 git ソースへ移行する場合、DSP側に `v0.1.0` 等のタグを切って `tag = ` で参照するのが望ましい
+- **DSP 2パッケージを uv workspace メンバーとして統合**(2026-10-25、プラン `.agents/plans/2026-1025-integrate-dsp-uv-workspace.md`)
+  - 経緯: `[tool.uv.sources]` で兄弟ディレクトリ(`../sample-loop-detector` 等)を相対パス参照していたが、Renovate 導入後、Renovate の作業環境にリポジトリ外のパスが無く `uv.lock` 更新 PR がエラーになった。git submodule 化も試したが、実質 midi-sampling 専用のライブラリなのでリポジトリごと統合した
+  - `git subtree add` で履歴ごと取り込み(`packages/sample-loop-detector`、`packages/wav-silence-trimmer`)。ディレクトリ名はパッケージ名に合わせ、旧リポジトリ名 `sample-trimmer` との不一致を解消
+  - `[tool.uv.workspace] members = ["packages/*"]`、sources は `{ workspace = true }`。`uv.lock` はルートに一本化(メンバーの `uv.lock`・`renovate.json`・`.python-version`・`.prototools`・`.claude/settings.json`・誤コミットの `.coverage` は削除)
+  - **パッケージ境界は不変**: 独立ディストリビューションのまま。optional extra `postprocess`、`stages/` 内の遅延 import、`PostprocessDependencyError` もそのまま
+  - メンバーのテストは `uv run --package <name>` で個別実行(各メンバーが `tests/conftest.py` を持つためルート pytest に混ぜない)。メンバーの dev 依存(mypy/ruff/pytest-cov)も `uv.lock` に入る
+  - 統合時に loop-detector の品質ゲートを修正: mypy が editable インストール(py.typed なし)を見て失敗していた(**統合前から**の不具合)ため `mypy_path = "src"`、ruff 0.17 が Markdown のコードフェンスも整形対象にしたため `extend-exclude = [".agents"]`
+  - trimmer のビルドバックエンドは hatchling のまま(workspace はメンバーごとに異なってよい)
+  - 旧リポジトリ(GitHub の sample-loop-detector / sample-trimmer)の archive・移転案内は未対応(人間が判断)
+  - 不採用にした案: **git submodule**(参照コミットの更新が別作業になる)、**uv の git ソース**(editable 編集不可)、**midi_sampling への完全取り込み**(境界・品質ゲートの再設計が必要。必要なら同一リポジトリ内の移動で後から可能)
 - **`[tool.uv.sources]` は取得元を教えるだけで、インストールはしない。** optional extra なので明示指定が必要:
   - `uv sync --extra postprocess`(素の `uv sync` は extra を入れず、既に入っていれば**削除**する)
   - 単発なら `uv run --extra postprocess midi-sampling postprocess <yaml>`
