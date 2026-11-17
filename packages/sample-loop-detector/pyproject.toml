@@ -7,7 +7,7 @@ name = "sample-loop-detector"
 version = "0.1.0"
 description = "Automatic sustain loop point detector for sampled instrument WAV files"
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.15,<3.16"
 license = "MIT"
 authors = [
     { name = "R-Koubou" }
